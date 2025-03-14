@@ -11,13 +11,17 @@ using ObstacleLib.SpriteLib;
 using ObstacleLib.SpriteLib.Add;
 using ControlLib;
 using ScreenLib;
+using UIFramework.Sights;
+
+
 namespace UIFramework;
-public class Gun : UIElement
+public class Gun : AnimationObject
 {
+    Sight? Sights { get; set; }
     public Gun(BottomBinding bottomBinding, Vector2f position, params string[] paths)
         : base(bottomBinding)
     {
-        this.ScreenCoordination = position;
+        this.PositionOnScreen = position;
 
         IsAnimation = true;
         this.AnimationState.AddFrames(ImageLoader.TexturesLoad(paths));
@@ -31,7 +35,7 @@ public class Gun : UIElement
     public Gun(BottomBinding bottomBinding, Vector2f position, string path)
         :base(bottomBinding)
     {
-        this.ScreenCoordination = position;
+        this.PositionOnScreen = position;
 
         var frames = TextureLib.ImageLoader.TextureLoad(path);
         if(frames is not null) 
@@ -44,14 +48,13 @@ public class Gun : UIElement
     }
 
 
-    public override TextureObstacle? Render()
+    public override void UpdateInfo()
     {
         if (AnimationState.Index == AnimationState.AmountFrame - 1)
         {
             AnimationManager.DefiningDesiredSprite(AnimationState, -1);
             IsAnimatingOnPress = false;
         }
-
         if (AnimationState.IsAnimation && BottomBinding.IsPress == true || IsAnimatingOnPress == true)
         {
             IsAnimatingOnPress = true;
@@ -63,6 +66,9 @@ public class Gun : UIElement
             AnimationManager.DefiningDesiredSprite(AnimationState, -1);
             AnimationState.IsAnimation = true;
         }
-        return AnimationState.CurrentFrame;
+
+
+        if (AnimationState.CurrentFrame is not null)
+            RenderSprite.Texture = AnimationState.CurrentFrame.Texture;
     }
 }

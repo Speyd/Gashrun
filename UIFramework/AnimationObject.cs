@@ -10,44 +10,50 @@ using ControlLib;
 using static System.Net.Mime.MediaTypeNames;
 namespace UIFramework;
 
-public abstract class UIElement
+public abstract class AnimationObject : IUIElement
 {
-    static List<UIElement> RendererUIElement { get; } = new List<UIElement>();
-
-    public BottomBinding BottomBinding { get; set; }
-
-    private Vector2f _screenCoordination;
-    public Vector2f ScreenCoordination 
+    private Vector2f _positionOnScreen;
+    public Vector2f PositionOnScreen 
     {
-        get => _screenCoordination;
+        get => _positionOnScreen;
         set
         {
-            _screenCoordination = value;
+            _positionOnScreen = value;
             RenderSprite.Position = value;
         }
     }
-
     public Sprite RenderSprite { get; set; } = new Sprite();
+    public List<Drawable> Drawables { get; init; } = new List<Drawable>();
+
+
+    public BottomBinding BottomBinding { get; set; }
     protected AnimationState AnimationState { get; init; } = new AnimationState();
 
+
     public float _scaleX = 1.0f;
+    private float _originScaleX = 0;
     public float ScaleX 
     {
         get => _scaleX;
         set
         {
             _scaleX = value / Screen.MultWidth;
+            _originScaleX = value;
+
             RenderSprite.Scale = new Vector2f(_scaleX, _scaleY);
             SetPositionCenter();
         } 
     }
     public float _scaleY = 1.0f;
+    private float _originScaleY = 0;
     public float ScaleY
     {
         get => _scaleY;
         set
         {
             _scaleY = value / Screen.MultHeight;
+            _originScaleY = value;
+
             RenderSprite.Scale = new Vector2f(_scaleX, _scaleY);
             SetPositionCenter();
         }
@@ -67,23 +73,28 @@ public abstract class UIElement
      
 
     private float _percentShiftX = 0;
+    private float _originPercentShiftX = 0;
+
     public float PercentShiftX 
     {
         get => _percentShiftX;
         set
         {
             _percentShiftX =  -value / Screen.MultWidth;
+            _originPercentShiftX = -value;
             SetPositionCenter();
         }
     }
 
     private float _percentShiftY = 0;
+    private float _originPercentShiftY = 0;
     public float PercentShiftY
     {
         get => _percentShiftY;
         set
         {
             _percentShiftY = value / Screen.MultHeight;
+            _originPercentShiftY = value;
             SetPositionCenter();
         }
     }
@@ -101,25 +112,34 @@ public abstract class UIElement
     }
     public bool IsAnimatingOnPress { get; protected set; } = false;
 
-    public UIElement(BottomBinding bottomBinding)
+
+    public AnimationObject(BottomBinding bottomBinding)
     {
         BottomBinding = bottomBinding;
+        Drawables.Add(RenderSprite);
 
-        RendererUIElement.Add(this);
+        Screen.WidthChangesFun += UpdateScreenInfo;
+        Screen.HeightChangesFun += UpdateScreenInfo;
+
+        IUIElement.RendererUIElement.Add(this);
     }
 
-    public abstract TextureObstacle? Render();
-    public static void RenderUIs()
+
+    public abstract void UpdateInfo();
+    public virtual void UpdateScreenInfo()
     {
-        foreach (var ui in RendererUIElement)
-        {
-            var uiFrame = ui.Render();
-            if (uiFrame is not null)
-            {
-                ui.RenderSprite.Texture = uiFrame.Texture;
-                Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, ui.RenderSprite);
-            }
-        }
+        PercentShiftX = _originPercentShiftX;
+        PercentShiftY = _originPercentShiftY;
+
+        ScaleX = _originScaleX;
+        ScaleY = _originScaleY;
+    }
+    public virtual void Hide()
+    {
+        if (Drawables.Count > 0)
+            Drawables.Clear();
+        else
+            Drawables.Add(RenderSprite);
     }
 
     public void SetPositionCenter()
@@ -131,7 +151,7 @@ public abstract class UIElement
         Vector2f texture = new Vector2f(textureSize.Value.X, textureSize.Value.Y);
 
         Vector2f screenSize = new Vector2f(Screen.Setting.HalfWidth, Screen.Setting.HalfHeight);
-        ScreenCoordination = SetShiftCoordination(screenSize, texture);
+        PositionOnScreen = SetShiftCoordination(screenSize, texture);
     }
     Vector2f SetShiftCoordination(Vector2f value, Vector2f textureSize)
     {
@@ -147,7 +167,6 @@ public abstract class UIElement
 
         return newCoordination;
     }
-
     public void SetScale(float scale)
     {
         ScaleX = scale;

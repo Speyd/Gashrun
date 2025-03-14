@@ -20,8 +20,11 @@ using MoveLib.Angle;
 using MoveLib.Move;
 using ProtoRender.Object;
 using UIFramework;
+using UIFramework.Sights;
+using UIFramework.Sights.Crosses;
 
 Screen.Initialize(1000, 600);
+
 
 DateTime from = DateTime.Now;
 string mainBold = Path.Combine("Resources", "FontText", "ArialBold.ttf");
@@ -42,15 +45,29 @@ Bottom bottomW = new Bottom(VirtualKey.W);
 Bottom bottomS = new Bottom(VirtualKey.S);
 Bottom bottomA = new Bottom(VirtualKey.A);
 Bottom bottomD = new Bottom(VirtualKey.D);
+Bottom bottomN = new Bottom(VirtualKey.N);
 Bottom bottomLeftMouse = new Bottom(VirtualKey.LeftButton);
 Bottom bottomC = new Bottom(VirtualKey.C);
 Bottom bottomCtrl = new Bottom(VirtualKey.LeftControl);
 List<Bottom> controls = new List<Bottom>() { bottomC, bottomCtrl };
+List<Bottom> controlsHide = new List<Bottom>() { bottomN, bottomCtrl };
+
+CrossSight crossSight = new CrossSight(4, Color.Red)
+{
+    WidthCross = 5,
+    HeightCross = 5,
+    IndentFromCenter = 10,
+    RotationType = RotationType.AroundItsAxis,
+    GeneralDegreeObject = 45,
+    StartDegree = 45,
+    GeneralDegreePosition = 90
+};
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
 ControlLib.BottomBinding keyBindingForward = new ControlLib.BottomBinding(bottomW, MovePositions.Move, new object[] { map, player, 1, 0 });
 ControlLib.BottomBinding keyBindingBackward = new ControlLib.BottomBinding(bottomS, MovePositions.Move, new object[] { map, player, -1, 0 });
 ControlLib.BottomBinding keyBindingLeft = new ControlLib.BottomBinding(bottomA, MovePositions.Move, new object[] { map, player, 0, -1 });
 ControlLib.BottomBinding keyBindingRight = new ControlLib.BottomBinding(bottomD, MovePositions.Move, new object[] { map, player, 0, 1 });
+ControlLib.BottomBinding keyBindingHideCross = new ControlLib.BottomBinding(controlsHide, crossSight.Hide, 350);
 control.AddBottomBind(new BottomBinding(new Bottom(VirtualKey.Q), Screen.Window.Close));
 control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), MoveAngle.ResetAngle, new object[] { player }));
 control.AddBottomBind(keyBindingForward);
@@ -58,6 +75,8 @@ control.AddBottomBind(keyBindingBackward);
 control.AddBottomBind(keyBindingLeft);
 control.AddBottomBind(keyBindingRight);
 control.AddBottomBind(keyBindingHideMap);
+control.AddBottomBind(keyBindingHideCross);
+
 
 BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, DrawLib.Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
 control.AddBottomBind(shoot);
@@ -71,16 +90,19 @@ Floor floor = new Floor();
 RenderPartsWorld renderPartsWorld = new RenderPartsWorld(sky, floor);
 //230 170
 Texture tex = new Texture(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")));
-UIElement uIElement = new Gun(shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
+IUIElement uIElement = new Gun(shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
     SpeedAnimation = 5,
-    PercentShiftX = 7,
+    PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
     ScaleX = 1.25f
 };
-RenderLib.HitBox.VisualizerHitBox.VisualizerType = RenderLib.HitBox.VisualizerHitBoxType.VisualizeRayRenderable;
+//Sight sight = new RoundSight(Color.Blue, 4);
+
+//Screen.ScreenHeight = 1000;
+//Screen.ScreenWidth = 1500;
 try
 {
     while (Screen.Window.IsOpen)
@@ -94,7 +116,7 @@ try
         miniMap.Render(map);
 
         player.MakePressed();
-        UIElement.RenderUIs();
+        IUIElement.Render();
         //algorithm.CalculationAlgorithm();
         RenderLib.HitBox.VisualizerHitBox.Render(map, player);
         fpsChecker.Track();
@@ -112,13 +134,6 @@ try
         //Screen.Window.Draw(point);
 
         Screen.OutputPriority?.DrawingByPriority();
-        CircleShape point = new CircleShape(3)
-        {
-            FillColor = Color.Red,
-            Position = new Vector2f(Screen.Setting.HalfWidth, Screen.Setting.HalfHeight)
-        };
-
-        Screen.Window.Draw(point);
         Screen.Window.Display();
     }
 }
