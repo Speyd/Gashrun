@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ProtoRender.Object;
 using ScreenLib;
+using ScreenLib.Output;
 using SFML.Graphics;
 using SFML.System;
 using static System.Formats.Asn1.AsnWriter;
@@ -68,6 +69,8 @@ public class CrossSight : Sight
             UpdateVertexArray();
         }
     }
+
+
     private float _heightCross = 0;
     private float _originHeightCross = 0;
     public float HeightCross
@@ -83,6 +86,7 @@ public class CrossSight : Sight
 
     private float _indentFromCenter = 0;
     private float _originIndentFromCenter = 0;
+
     public float IndentFromCenter 
     {
         get => _indentFromCenter;
@@ -94,7 +98,30 @@ public class CrossSight : Sight
         }
     }
 
-    public RotationType RotationType { get; set; } = RotationType.AroundCertainPosition;
+
+    private bool _invertCrossParts = true;
+    public bool InvertCrossParts 
+    {
+        get => _invertCrossParts;
+        set
+        {
+            _invertCrossParts = value;
+            UpdateInvertCrossParts();
+        }
+    }
+
+    private Predicate<int> _invertPredicate = (index => index % 2 != 0 ? false : true);
+    public Predicate<int> InvertPredicate 
+    {
+        get => _invertPredicate;
+        set
+        {
+            _invertPredicate = value;
+            UpdateInvertCrossParts();
+        }
+    }
+
+    public RotationType RotationObjectType { get; set; } = RotationType.AroundCertainPosition;
     private Cross[] Crosses { get; set; }
 
     #region Constructor
@@ -104,7 +131,7 @@ public class CrossSight : Sight
         {
             Crosses[i] = new Cross(StartDegree + i * GeneralDegreePosition, GeneralDegreeObject)
             {
-                IsReverse = (i + 1) % 2 != 0 ? false : true
+                IsReverse = InvertCrossParts ? InvertPredicate(i + 1) : false
             };
 
             Drawables.Add(Crosses[i].VertexArray);
@@ -112,15 +139,16 @@ public class CrossSight : Sight
     }
     public CrossSight(int amountCross, Vector2f positionOnScreen, Color color)
     {
-        _amountCross = amountCross;
+        if (amountCross <= 0)
+            throw new ArgumentException("Amount of crosses must be greater than zero.", nameof(amountCross));
+        PositionOnScreen = positionOnScreen;
+        FillColor = color;
 
         Crosses = new Cross[_amountCross];
         CreateCrosses();
 
-        FillColor = color;
-        PositionOnScreen = positionOnScreen;
-
         UpdateVertexArray();
+
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
     }
@@ -129,18 +157,12 @@ public class CrossSight : Sight
     { }
     #endregion
 
-    private Vector2f SetCenterRotate(Cross cross)
+    private Vector2f SetCenterRotate(Cross cross) => RotationObjectType switch
     {
-        switch(RotationType)
-        {
-            case RotationType.AroundItsAxis:
-                return Cross.CalculateCenter(cross.PointPositions);
-            case RotationType.AroundCertainPosition:
-                return PositionOnScreen;
-            default:
-                return Cross.CalculateCenter(cross.PointPositions);
-        }
-    }
+        RotationType.AroundItsAxis => Cross.CalculateCenter(cross.PointPositions),
+        RotationType.AroundCertainPosition => PositionOnScreen,
+        _ => Cross.CalculateCenter(cross.PointPositions)
+    };
     public Cross? GetCross(int index)
     {
         if(index < 0 || index >= Crosses.Length)
@@ -149,42 +171,77 @@ public class CrossSight : Sight
         return Crosses[index];
     }
 
+    private void UpdateCross(Cross cross)
+    {
+        cross.UpdatePosition(PositionOnScreen, IndentFromCenter, WidthCross, HeightCross);
+        cross.UpdateRotationObject(SetCenterRotate(cross));
+    }
     private void UpdateVertexArray()
     {
         foreach (var cross in Crosses)
-        {
-            cross.UpdatePosition(PositionOnScreen, IndentFromCenter, WidthCross, HeightCross);
-            cross.UpdateRotationObject(SetCenterRotate(cross));
-        }
+            UpdateCross(cross);
     }
     private void UpdateObjectDegree()
     {
-        foreach (var cross in Crosses) 
+        foreach (var cross in Crosses)
+        {
             cross.DegreeObject = GeneralDegreeObject;
-        UpdateVertexArray();
+            UpdateCross(cross);
+        }
     }
     private void UpdatePositionDegree()
     {
         for (int i = 0; i < Crosses.Length; i++)
         {
             Crosses[i].DegreePosition = StartDegree + i * GeneralDegreePosition;
+            UpdateCross(Crosses[i]);
         }
-        UpdateVertexArray();
     }
     private void UpdateAmountCross()
     {
         Drawables.Clear();
-        Cross[] newCrosses = new Cross[_amountCross];
 
-        Array.Copy(Crosses, newCrosses, Crosses.Length);
+        int newSize = Math.Min(Crosses.Length, AmountCross);
+        Cross[] newCrosses = new Cross[newSize];
+
+
+        for (int i = 0; i < newSize; i++)
+        {
+            if (i <= Crosses.Length - 1)
+                newCrosses[i] = Crosses[i];
+            else
+            {
+                newCrosses[i] = new Cross(StartDegree + i * GeneralDegreePosition, GeneralDegreeObject)
+                {
+                    IsReverse = InvertCrossParts ? InvertPredicate(i + 1) : false
+                };
+                UpdateCross(newCrosses[i]);
+            }
+
+            Drawables.Add(newCrosses[i].VertexArray);
+        }
 
         Crosses = newCrosses;
-        foreach(var cross in Crosses)
-            Drawables.Add(cross.VertexArray);
+    }
+    private void UpdateInvertCrossParts()
+    {
+        for (int i = 0; i < _amountCross; i++)
+        {
+            if(InvertCrossParts == false && Crosses[i].IsReverse)
+                Crosses[i].IsReverse = false; 
+            else if(InvertCrossParts == true)
+                Crosses[i].IsReverse = InvertPredicate(i + 1);
 
-        UpdateVertexArray();
+            UpdateCross(Crosses[i]);
+        }
     }
 
+    public override void Render()
+    {
+        UpdateInfo();
+        foreach (var draw in Drawables)
+            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+    }
     public override void UpdateInfo() { }
     public override void UpdateScreenInfo()
     {

@@ -1,4 +1,6 @@
 ﻿using ProtoRender.Object;
+using ScreenLib.Output;
+using ScreenLib;
 using SFML.Graphics;
 using SFML.System;
 using System;
@@ -6,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UIFramework.Render;
 
 
 namespace UIFramework.Sights;
@@ -19,13 +22,14 @@ public abstract class Sight : IUIElement
     public Sight(Drawable drawable)
     {
         Drawables.Add(drawable);
-        IUIElement.RendererUIElement.Add(this);
+        UIRender.AddToPriority(RenderOrder.Indicators, this);
     }
     public Sight()
     {
-        IUIElement.RendererUIElement.Add(this);
+        UIRender.AddToPriority(RenderOrder.Indicators, this);
     }
 
+    public abstract void Render();
     public abstract void UpdateInfo();
     public abstract void UpdateScreenInfo();
     public abstract void Hide();

@@ -22,6 +22,7 @@ using ProtoRender.Object;
 using UIFramework;
 using UIFramework.Sights;
 using UIFramework.Sights.Crosses;
+using UIFramework.Render;
 
 Screen.Initialize(1000, 600);
 
@@ -57,11 +58,12 @@ CrossSight crossSight = new CrossSight(4, Color.Red)
     WidthCross = 5,
     HeightCross = 5,
     IndentFromCenter = 10,
-    RotationType = RotationType.AroundItsAxis,
+    RotationObjectType = RotationType.AroundItsAxis,
     GeneralDegreeObject = 45,
-    StartDegree = 45,
+    StartDegree = 90,
     GeneralDegreePosition = 90
 };
+
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
 ControlLib.BottomBinding keyBindingForward = new ControlLib.BottomBinding(bottomW, MovePositions.Move, new object[] { map, player, 1, 0 });
 ControlLib.BottomBinding keyBindingBackward = new ControlLib.BottomBinding(bottomS, MovePositions.Move, new object[] { map, player, -1, 0 });
@@ -116,7 +118,7 @@ try
         miniMap.Render(map);
 
         player.MakePressed();
-        IUIElement.Render();
+        UIRender.DrawingByPriority();
         //algorithm.CalculationAlgorithm();
         RenderLib.HitBox.VisualizerHitBox.Render(map, player);
         fpsChecker.Track();

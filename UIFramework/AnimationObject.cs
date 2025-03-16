@@ -7,9 +7,9 @@ using ScreenLib;
 using ScreenLib.Output;
 using TextureLib;
 using ControlLib;
-using static System.Net.Mime.MediaTypeNames;
-namespace UIFramework;
+using UIFramework.Render;
 
+namespace UIFramework;
 public abstract class AnimationObject : IUIElement
 {
     private Vector2f _positionOnScreen;
@@ -121,9 +121,16 @@ public abstract class AnimationObject : IUIElement
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
 
-        IUIElement.RendererUIElement.Add(this);
+        UIRender.AddToPriority(RenderOrder.Hands, this);
     }
 
+
+    public virtual void Render()
+    {
+        UpdateInfo();
+        foreach (var draw in Drawables)
+            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+    }
 
     public abstract void UpdateInfo();
     public virtual void UpdateScreenInfo()

@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using ScreenLib.Output;
 
 namespace UIFramework.Sights;
 public class RoundSight : Sight
@@ -73,6 +73,12 @@ public class RoundSight : Sight
     { }
 
 
+    public override void Render()
+    {
+        UpdateInfo();
+        foreach (var draw in Drawables)
+            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+    }
     public override void UpdateInfo() { }
     public override void UpdateScreenInfo(){ }
     public override void Hide()
