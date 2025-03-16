@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 
 namespace UIFramework.Sights.Crosses;
-public enum RotationType
+public enum SizeMode
 {
-    AroundItsAxis,
-    AroundCertainPosition
+    Reverse = -1,
+    Standard = 1,
 }

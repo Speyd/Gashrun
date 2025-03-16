@@ -1,8 +1,10 @@
 ﻿using ScreenLib;
 using SFML.Graphics;
 using SFML.System;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -110,14 +112,16 @@ public class Cross
 
 
     }
-    private void UpdateVertexArray(Vector2f indentPosition, float widthCross, float heightCross)
+    private void UpdateVertexArray(Vector2f indentPosition, SizeMode sizeMode, float widthCross, float heightCross)
     {
-        if (IsReverse)
-            SetVertex(indentPosition, heightCross, widthCross); 
-        else
-            SetVertex(indentPosition, widthCross, heightCross);
+        bool shouldSwapSizes = IsReverse && sizeMode == SizeMode.Reverse;
+        float finalWidth = shouldSwapSizes ? heightCross : widthCross;
+        float finalHeight = shouldSwapSizes ? widthCross : heightCross;
+
+        SetVertex(indentPosition, finalWidth, finalHeight);
     }
-    public void UpdatePosition(Vector2f PositionCenterSight, float indentFromCenter, float widthCross, float heightCross)
+
+    public void UpdatePosition(Vector2f PositionCenterSight, SizeMode sizeMode, float indentFromCenter, float widthCross, float heightCross)
     {
         float xOffset = DirectionPosition.X * indentFromCenter;
         float yOffset = DirectionPosition.Y * indentFromCenter;
@@ -127,7 +131,7 @@ public class Cross
             Screen.Setting.HalfHeight + yOffset
         );
 
-        UpdateVertexArray(indentPosition, widthCross, heightCross);
+        UpdateVertexArray(indentPosition, sizeMode, widthCross, heightCross);
         ResetVertexArray();
     }
 

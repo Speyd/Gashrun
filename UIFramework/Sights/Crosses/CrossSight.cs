@@ -109,6 +109,18 @@ public class CrossSight : Sight
             UpdateInvertCrossParts();
         }
     }
+    private bool _invertSizesCros = false;
+
+    private SizeMode _sizeMode = SizeMode.Standard;
+    public SizeMode SizeMode
+    {
+        get => _sizeMode;
+        set
+        {
+            _sizeMode = value;
+            UpdateVertexArray();
+        }
+    }
 
     private Predicate<int> _invertPredicate = (index => index % 2 != 0 ? false : true);
     public Predicate<int> InvertPredicate 
@@ -173,7 +185,7 @@ public class CrossSight : Sight
 
     private void UpdateCross(Cross cross)
     {
-        cross.UpdatePosition(PositionOnScreen, IndentFromCenter, WidthCross, HeightCross);
+        cross.UpdatePosition(PositionOnScreen, SizeMode, IndentFromCenter, WidthCross, HeightCross);
         cross.UpdateRotationObject(SetCenterRotate(cross));
     }
     private void UpdateVertexArray()

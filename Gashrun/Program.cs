@@ -55,13 +55,15 @@ List<Bottom> controlsHide = new List<Bottom>() { bottomN, bottomCtrl };
 
 CrossSight crossSight = new CrossSight(4, Color.Red)
 {
-    WidthCross = 5,
-    HeightCross = 5,
-    IndentFromCenter = 10,
+    WidthCross = 10,
+    HeightCross = 15,
+    IndentFromCenter = 25,
     RotationObjectType = RotationType.AroundItsAxis,
     GeneralDegreeObject = 45,
     StartDegree = 90,
-    GeneralDegreePosition = 90
+    GeneralDegreePosition = 90,
+    InvertCrossParts = true,
+ 
 };
 
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
