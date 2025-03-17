@@ -10,7 +10,7 @@ using ControlLib;
 using UIFramework.Render;
 
 namespace UIFramework;
-public abstract class AnimationObject : IUIElement
+public abstract class AnimationObject : Animation, IUIElement
 {
     private Vector2f _positionOnScreen;
     public Vector2f PositionOnScreen 
@@ -27,8 +27,6 @@ public abstract class AnimationObject : IUIElement
 
 
     public BottomBinding BottomBinding { get; set; }
-    protected AnimationState AnimationState { get; init; } = new AnimationState();
-
 
     public float _scaleX = 1.0f;
     private float _originScaleX = 0;
@@ -60,18 +58,6 @@ public abstract class AnimationObject : IUIElement
     }
 
 
-    private int _speedAnimation = 100;
-    public int SpeedAnimation 
-    {
-        get => _speedAnimation;
-        set
-        {
-            _speedAnimation = value;
-            AnimationState.Speed = value;
-        }
-    }
-     
-
     private float _percentShiftX = 0;
     private float _originPercentShiftX = 0;
 
@@ -99,17 +85,6 @@ public abstract class AnimationObject : IUIElement
         }
     }
 
-
-    public bool _isAnimation = false;
-    public bool IsAnimation 
-    {
-        get => _isAnimation;
-        set
-        {
-            _isAnimation = value;
-            AnimationState.IsAnimation = value;
-        }
-    }
     public bool IsAnimatingOnPress { get; protected set; } = false;
 
 
@@ -131,7 +106,6 @@ public abstract class AnimationObject : IUIElement
         foreach (var draw in Drawables)
             Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
     }
-
     public abstract void UpdateInfo();
     public virtual void UpdateScreenInfo()
     {
@@ -148,6 +122,7 @@ public abstract class AnimationObject : IUIElement
         else
             Drawables.Add(RenderSprite);
     }
+
 
     public void SetPositionCenter()
     {

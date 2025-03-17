@@ -45,6 +45,7 @@ public class Gun : AnimationObject
         : this(bottomBinding, new Vector2f(), path)
     {
         SetPositionCenter();
+        Console.WriteLine(AnimationState.AmountFrame);
     }
 
 
@@ -52,18 +53,18 @@ public class Gun : AnimationObject
     {
         if (AnimationState.Index == AnimationState.AmountFrame - 1)
         {
-            AnimationManager.DefiningDesiredSprite(AnimationState, -1);
+            UpdateFrame();
             IsAnimatingOnPress = false;
         }
         if (AnimationState.IsAnimation && BottomBinding.IsPress == true || IsAnimatingOnPress == true)
         {
             IsAnimatingOnPress = true;
-            AnimationManager.DefiningDesiredSprite(AnimationState, -1);
+            UpdateFrame();
         }
         else if (AnimationState.IsAnimation && BottomBinding.IsPress == false)
         {
             AnimationState.IsAnimation = false;
-            AnimationManager.DefiningDesiredSprite(AnimationState, -1);
+            UpdateFrame();
             AnimationState.IsAnimation = true;
         }
 

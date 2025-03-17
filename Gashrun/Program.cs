@@ -23,9 +23,11 @@ using UIFramework;
 using UIFramework.Sights;
 using UIFramework.Sights.Crosses;
 using UIFramework.Render;
+using UIFramework.IndicatorsBar;
+using UIFramework.IndicatorsBar.Content;
+using HitBoxLib.PositionObject;
 
 Screen.Initialize(1000, 600);
-
 
 DateTime from = DateTime.Now;
 string mainBold = Path.Combine("Resources", "FontText", "ArialBold.ttf");
@@ -55,15 +57,14 @@ List<Bottom> controlsHide = new List<Bottom>() { bottomN, bottomCtrl };
 
 CrossSight crossSight = new CrossSight(4, Color.Red)
 {
-    WidthCross = 10,
-    HeightCross = 15,
-    IndentFromCenter = 25,
+    WidthCross = 5,
+    HeightCross = 5,
+    IndentFromCenter = 10,
     RotationObjectType = RotationType.AroundItsAxis,
     GeneralDegreeObject = 45,
     StartDegree = 90,
     GeneralDegreePosition = 90,
-    InvertCrossParts = true,
- 
+    //InvertCrossParts = true,
 };
 
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
@@ -103,10 +104,28 @@ IUIElement uIElement = new Gun(shoot, ResourceManager.GetPath(Path.Combine("Reso
     ScaleY = 1.3f,
     ScaleX = 1.25f
 };
-//Sight sight = new RoundSight(Color.Blue, 4);
 
+AnimationContent a = new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "small.gif")))
+{
+    IsAnimation = true,
+    SpeedAnimation = 8
+};
+//new ColorContent(Color.Green)
+FillBar bb = new FillBar(a, new ColorContent(Color.Red), 80, 20)
+{
+    BorderThickness = 10,
+    Width = 400,
+    Height = 100,
+    PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
+    BorderFillColor = Color.Black,
+    
+};
+//FillBar Bar = new FillBar(bb, new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif"))), new ColorContent(Color.Red));
+//Sight sight = new RoundSight(Color.Blue, 4);
 //Screen.ScreenHeight = 1000;
 //Screen.ScreenWidth = 1500;
+
+
 try
 {
     while (Screen.Window.IsOpen)

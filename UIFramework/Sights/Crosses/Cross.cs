@@ -109,9 +109,8 @@ public class Cross
         PointPositions[PointType.LeftBottom] = new Vector2f(LeftTop.X, LeftTop.Y - heightCross);
         PointPositions[PointType.RightTop] = new Vector2f(LeftTop.X + widthCross, LeftTop.Y);
         PointPositions[PointType.RightBottom] = new Vector2f(LeftTop.X + widthCross, LeftTop.Y - heightCross);
-
-
     }
+
     private void UpdateVertexArray(Vector2f indentPosition, SizeMode sizeMode, float widthCross, float heightCross)
     {
         bool shouldSwapSizes = IsReverse && sizeMode == SizeMode.Reverse;

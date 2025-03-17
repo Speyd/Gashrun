@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ScreenLib.Output;
+using UIFramework.Render;
 
 namespace UIFramework.Sights;
 public class RoundSight : Sight
@@ -50,6 +51,9 @@ public class RoundSight : Sight
 
     public RoundSight(Vector2f positionOnScreen, SFML.Graphics.Color color, float radius)
     {
+        if (_radius <= 0)
+            throw new ArgumentException("Radius of RoundSight must be greater than zero.", nameof(_radius));
+
         _fillColor = color;
         _radius = radius;
 
@@ -64,6 +68,7 @@ public class RoundSight : Sight
         Screen.HeightChangesFun += UpdateHeight;
 
         Drawables.Add(Circle);
+        UIRender.AddToPriority(RenderOrder.Indicators, this);
     }
     public RoundSight(SFML.Graphics.Color color, float radius)
         :this(new Vector2f(Screen.Setting.HalfWidth, Screen.Setting.HalfHeight), color, radius)

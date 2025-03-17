@@ -65,7 +65,7 @@ public class CrossSight : Sight
         set
         {
             _originWidthCross = value;
-            _widthCross = value / Screen.ScreenRatio;
+            _widthCross = value / Screen.MultWidth;
             UpdateVertexArray();
         }
     }
@@ -79,7 +79,7 @@ public class CrossSight : Sight
         set
         {
             _originHeightCross = value;
-            _heightCross = value / Screen.ScreenRatio;
+            _heightCross = value / Screen.MultHeight;
             UpdateVertexArray();
         }
     }
@@ -93,7 +93,9 @@ public class CrossSight : Sight
         set
         {
             _originIndentFromCenter = value;
-            _indentFromCenter = value / Screen.ScreenRatio;
+            _indentFromCenter = Screen.ScreenRatio >= 1? 
+                value / Screen.ScreenRatio:
+                value * Screen.ScreenRatio;
             UpdateVertexArray();
         }
     }
@@ -109,7 +111,17 @@ public class CrossSight : Sight
             UpdateInvertCrossParts();
         }
     }
-    private bool _invertSizesCros = false;
+    private Predicate<int> _invertPredicate = (index => index % 2 != 0 ? false : true);
+    public Predicate<int> InvertPredicate
+    {
+        get => _invertPredicate;
+        set
+        {
+            _invertPredicate = value;
+            UpdateInvertCrossParts();
+        }
+    }
+
 
     private SizeMode _sizeMode = SizeMode.Standard;
     public SizeMode SizeMode
@@ -122,19 +134,10 @@ public class CrossSight : Sight
         }
     }
 
-    private Predicate<int> _invertPredicate = (index => index % 2 != 0 ? false : true);
-    public Predicate<int> InvertPredicate 
-    {
-        get => _invertPredicate;
-        set
-        {
-            _invertPredicate = value;
-            UpdateInvertCrossParts();
-        }
-    }
-
     public RotationType RotationObjectType { get; set; } = RotationType.AroundCertainPosition;
     private Cross[] Crosses { get; set; }
+
+
 
     #region Constructor
     void CreateCrosses()
@@ -153,6 +156,8 @@ public class CrossSight : Sight
     {
         if (amountCross <= 0)
             throw new ArgumentException("Amount of crosses must be greater than zero.", nameof(amountCross));
+
+        _amountCross = amountCross;
         PositionOnScreen = positionOnScreen;
         FillColor = color;
 
@@ -168,6 +173,8 @@ public class CrossSight : Sight
        : this(amountCross, new Vector2f(Screen.Setting.HalfWidth, Screen.Setting.HalfHeight), color)
     { }
     #endregion
+
+
 
     private Vector2f SetCenterRotate(Cross cross) => RotationObjectType switch
     {
