@@ -7,11 +7,24 @@ using System.Text;
 using System.Threading.Tasks;
 using TextureLib;
 
-namespace UIFramework;
-public class Animation
+
+namespace UIFramework.Animation;
+public class AnimationHandler
 {
     protected AnimationState AnimationState { get; init; }
 
+
+    private void UpdateFrameAnimation()
+    {
+        if (_isAnimation == false)
+        {
+            _isAnimation = true;
+            while (AnimationState.Index != 0)
+                UpdateFrameAnimation();
+
+            _isAnimation = false;
+        }
+    }
     public bool _isAnimation = true;
     public bool IsAnimation
     {
@@ -20,6 +33,8 @@ public class Animation
         {
             _isAnimation = value;
             AnimationState.IsAnimation = value;
+
+            UpdateFrameAnimation();
         }
     }
     private int _speedAnimation = 100;
@@ -33,12 +48,12 @@ public class Animation
         }
     }
 
-    public Animation(params string[] paths)
+    public AnimationHandler(params string[] paths)
     {
         AnimationState = new AnimationState();
-        var frames = TextureLib.ImageLoader.TexturesLoad(paths);
+        var frames = ImageLoader.TexturesLoad(paths);
         if (frames is not null)
-            this.AnimationState.AddFrames(frames);
+            AnimationState.AddFrames(frames);
     }
 
     public virtual void UpdateFrame(float angle = 0)
@@ -51,11 +66,11 @@ public class Animation
     }
     public virtual void RemoveFrame(int index)
     {
-        if(index < 0 || index >= AnimationState.AmountFrame) 
+        if (index < 0 || index >= AnimationState.AmountFrame)
             return;
 
         var frame = AnimationState.GetFrame(index);
-        if(frame is not null)
+        if (frame is not null)
             AnimationState.RemoveFrame(frame);
     }
 }

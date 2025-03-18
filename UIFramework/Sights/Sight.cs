@@ -14,6 +14,8 @@ using UIFramework.Render;
 namespace UIFramework.Sights;
 public abstract class Sight : IUIElement
 {
+    public virtual float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
+    public virtual float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
     public virtual Vector2f PositionOnScreen { get; set; }
     public List<Drawable> Drawables { get; init; } = new List<Drawable>();
 

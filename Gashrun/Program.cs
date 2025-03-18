@@ -19,7 +19,6 @@ using MiniMapLib.ObjectInMap.Positions;
 using MoveLib.Angle;
 using MoveLib.Move;
 using ProtoRender.Object;
-using UIFramework;
 using UIFramework.Sights;
 using UIFramework.Sights.Crosses;
 using UIFramework.Render;
@@ -29,6 +28,9 @@ using HitBoxLib.PositionObject;
 using RayTracingLib.Detection;
 using RayTracingLib;
 using DrawLib;
+using UIFramework.Animation;
+using ProtoRender.WindowInterface;
+using UIFramework.Weapon;
 
 Screen.Initialize(1000, 600);
 DateTime from = DateTime.Now;
@@ -89,8 +91,8 @@ control.AddBottomBind(keyBindingHideMap);
 control.AddBottomBind(keyBindingHideCross);
 
 
-BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
-control.AddBottomBind(shoot);
+//BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
+//control.AddBottomBind(shoot);
 player.OnControlAction += control.MakePressed;
 
 
@@ -101,7 +103,10 @@ Floor floor = new Floor();
 RenderPartsWorld renderPartsWorld = new RenderPartsWorld(sky, floor);
 //230 170
 Texture tex = new Texture(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")));
-IUIElement uIElement = new Gun(shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
+
+BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, Drawing.DrawingPoint, 0, new object[] { map, player, 30, Color.Red });
+
+UIAnimation uIElement = new UIAnimation(shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
     SpeedAnimation = 5,
@@ -110,6 +115,17 @@ IUIElement uIElement = new Gun(shoot, ResourceManager.GetPath(Path.Combine("Reso
     ScaleY = 1.3f,
     ScaleX = 1.25f
 };
+BottomBinding shootGun = new ControlLib.BottomBinding(new Bottom(VirtualKey.R), 350);
+RenderText textMa = new RenderText("", 24, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), ResourceManager.GetMainPath(mainBold), Color.Yellow);
+Magazine magazine = new Magazine(control, shootGun, textMa, 4, 12);
+
+BottomBinding shoot3 = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.LeftButton) }, 350);
+Gun gun = new Gun(uIElement, magazine, shoot, shoot3);
+BottomBinding shootGun2 = new ControlLib.BottomBinding(bottomLeftMouse, gun.Shoot, 350);
+
+//control.AddBottomBind(shoot);
+control.AddBottomBind(shoot3);
+
 
 AnimationContent a = new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "small.gif")))
 {

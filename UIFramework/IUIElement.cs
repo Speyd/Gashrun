@@ -9,16 +9,18 @@ using SFML.Graphics;
 using SFML.System;
 using ProtoRender.Object;
 
-namespace UIFramework
-{
-    public interface IUIElement
-    {
-        public Vector2f PositionOnScreen { get; set; }
-        public List<Drawable> Drawables { get; init; }
 
-        public void Render();
-        public void UpdateInfo();
-        public void UpdateScreenInfo();
-        public void Hide();
-    }
+namespace UIFramework;
+public interface IUIElement
+{
+    float PreviousScreenWidth { get; }
+    float PreviousScreenHeight { get; }
+
+    Vector2f PositionOnScreen { get; set; }
+    List<Drawable> Drawables { get; init; }
+
+    void Render();
+    void UpdateInfo();
+    void UpdateScreenInfo();
+    void Hide();
 }

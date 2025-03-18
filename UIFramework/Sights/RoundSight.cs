@@ -62,8 +62,8 @@ public class RoundSight : Sight
         };
         PositionOnScreen = positionOnScreen;
 
-        Screen.WidthChangesFun += UpdateWidth;
-        Screen.HeightChangesFun += UpdateHeight;
+        Screen.WidthChangesFun += UpdateScreenInfo;
+        Screen.HeightChangesFun += UpdateScreenInfo;
 
         Drawables.Add(Circle);
         UIRender.AddToPriority(RenderOrder.Indicators, this);
@@ -83,7 +83,25 @@ public class RoundSight : Sight
             Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
     }
     public override void UpdateInfo() { }
-    public override void UpdateScreenInfo(){ }
+    public override void UpdateScreenInfo()
+    {
+        UpdateWidth();
+        UpdateHeight();
+    }
+    public void UpdateWidth()
+    {
+        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
+        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
+
+        PreviousScreenWidth = Screen.ScreenWidth;
+    }
+    public void UpdateHeight()
+    {
+        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
+        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
+
+        PreviousScreenHeight = Screen.ScreenHeight;
+    }
     public override void Hide()
     {
         if (Drawables.Count > 0)
@@ -91,16 +109,7 @@ public class RoundSight : Sight
         else
             Drawables.Add(Circle);
     }
-    public void UpdateWidth()
-    {
-        float scale = (Screen.ScreenHeight / PositionOnScreen.Y) / (Screen.ScreenWidth / PositionOnScreen.X);
-        PositionOnScreen = new Vector2f(PositionOnScreen.X / scale, PositionOnScreen.Y);
-    }
-    public void UpdateHeight()
-    {
-        float scale = (Screen.ScreenHeight / PositionOnScreen.Y) / (Screen.ScreenWidth / PositionOnScreen.X);
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * scale);
-    }
+
 
     public void SetCircleShape(float radius, Color color)
     {

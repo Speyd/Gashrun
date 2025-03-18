@@ -5,9 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using AnimationLib;
 using SFML.Graphics;
+using UIFramework.Animation;
 
 namespace UIFramework.IndicatorsBar.Content;
-public class AnimationContent : Animation, IBarContent
+public class AnimationContent : AnimationHandler, IBarContent
 {
     public AnimationContent(params string[] paths)
         : base(paths)

@@ -16,6 +16,9 @@ using NGenerics.DataStructures.General;
 namespace UIFramework.IndicatorsBar;
 public class Bar: IUIElement
 {
+    public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
+    public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
+
     protected Vector2f _positionOnScreen;
     public virtual Vector2f PositionOnScreen
     {
@@ -27,6 +30,8 @@ public class Bar: IUIElement
         }
     }
     public virtual List<Drawable> Drawables { get; init; } = new List<Drawable>();
+
+
 
     protected virtual void UpdateBorderSize()
     {
@@ -45,8 +50,6 @@ public class Bar: IUIElement
             UpdateBorderSize();
         }
     }
-
-
     protected float _height = 0;
     public float OriginHeight { get; protected set; } = 0;
     public virtual float Height
@@ -59,6 +62,7 @@ public class Bar: IUIElement
             UpdateBorderSize();
         }
     }
+
 
 
     private SFML.Graphics.Color _borderFillColor = Color.Black;
@@ -97,6 +101,8 @@ public class Bar: IUIElement
         }
     }
 
+
+
     private void SetTextureRect()
     {
         if (FillTexture is null)
@@ -118,8 +124,10 @@ public class Bar: IUIElement
         }
     }
 
-    private float _borderThickness = 5;
-    public float _originBorderThickness { get; private set; } = 0;
+
+
+    protected float _borderThickness = 5;
+    public float _originBorderThickness { get; protected set; } = 0;
     public virtual float BorderThickness 
     {
         get => _borderThickness;
@@ -141,8 +149,6 @@ public class Bar: IUIElement
     {
         Border = new RectangleShape();
 
-        Screen.WidthChangesFun += UpdateWidth;
-        Screen.HeightChangesFun += UpdateHeight;
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
 
@@ -160,19 +166,26 @@ public class Bar: IUIElement
     { }
     public virtual void UpdateScreenInfo()
     {
+        UpdateWidth();
+        UpdateHeight();
+
         Width = OriginWidth;
         Height = OriginHeight;
         BorderThickness = _originBorderThickness;
     }
-    public virtual void UpdateWidth()
+    public void UpdateWidth()
     {
-        float scale =  (Screen.ScreenWidth / PositionOnScreen.X);
-        PositionOnScreen = new Vector2f(PositionOnScreen.X / scale, PositionOnScreen.Y);
+        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
+        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
+
+        PreviousScreenWidth = Screen.ScreenWidth;
     }
-    public virtual void UpdateHeight()
+    public void UpdateHeight()
     {
-        float scale = (Screen.ScreenHeight / PositionOnScreen.Y);
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * scale);
+        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
+        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
+
+        PreviousScreenHeight = Screen.ScreenHeight;
     }
     public virtual void Hide()
     {

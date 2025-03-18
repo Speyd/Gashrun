@@ -12,6 +12,7 @@ using UIFramework.Render;
 using UIFramework.IndicatorsBar.Content;
 using UIFramework.IndicatorsBar.Filler;
 
+
 namespace UIFramework.IndicatorsBar;
 public class FillBar : Bar
 {
@@ -51,6 +52,23 @@ public class FillBar : Bar
             OriginHeight = value;
             _height = value / Screen.MultHeight;
             UpdateBordersSize();
+        }
+    }
+
+    public override float BorderThickness
+    {
+        get => _borderThickness;
+        set
+        {
+            _originBorderThickness = value;
+            _borderThickness = Screen.ScreenRatio >= 1 ?
+                value / Screen.ScreenRatio :
+                value * Screen.ScreenRatio;
+
+            Border.OutlineThickness = _borderThickness;
+
+            UpdateBorderSize();
+            UpdatePosition();
         }
     }
 
