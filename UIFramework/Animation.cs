@@ -39,8 +39,6 @@ public class Animation
         var frames = TextureLib.ImageLoader.TexturesLoad(paths);
         if (frames is not null)
             this.AnimationState.AddFrames(frames);
-
-        Console.WriteLine(AnimationState.AmountFrame);
     }
 
     public virtual void UpdateFrame(float angle = 0)

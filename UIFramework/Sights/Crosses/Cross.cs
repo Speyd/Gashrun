@@ -92,8 +92,6 @@ public class Cross
         : this(0, 0)
     { }
 
-    public void UpdateInfo(){}
-
     private void ResetVertexArray()
     {
         VertexArray[0] = new Vertex(PointPositions[PointType.LeftBottom], FillColor);
@@ -111,16 +109,14 @@ public class Cross
         PointPositions[PointType.RightBottom] = new Vector2f(LeftTop.X + widthCross, LeftTop.Y - heightCross);
     }
 
-    private void UpdateVertexArray(Vector2f indentPosition, SizeMode sizeMode, float widthCross, float heightCross)
+    private void UpdateVertexArray(Vector2f indentPosition, float widthCross, float heightCross)
     {
-        bool shouldSwapSizes = IsReverse && sizeMode == SizeMode.Reverse;
-        float finalWidth = shouldSwapSizes ? heightCross : widthCross;
-        float finalHeight = shouldSwapSizes ? widthCross : heightCross;
+        float finalWidth = IsReverse ? heightCross : widthCross;
+        float finalHeight = IsReverse ? widthCross : heightCross;
 
         SetVertex(indentPosition, finalWidth, finalHeight);
     }
-
-    public void UpdatePosition(Vector2f PositionCenterSight, SizeMode sizeMode, float indentFromCenter, float widthCross, float heightCross)
+    public void UpdatePosition(Vector2f PositionCenterSight, float indentFromCenter, float widthCross, float heightCross)
     {
         float xOffset = DirectionPosition.X * indentFromCenter;
         float yOffset = DirectionPosition.Y * indentFromCenter;
@@ -130,7 +126,7 @@ public class Cross
             Screen.Setting.HalfHeight + yOffset
         );
 
-        UpdateVertexArray(indentPosition, sizeMode, widthCross, heightCross);
+        UpdateVertexArray(indentPosition, widthCross, heightCross);
         ResetVertexArray();
     }
 

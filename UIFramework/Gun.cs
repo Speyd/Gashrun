@@ -45,7 +45,6 @@ public class Gun : AnimationObject
         : this(bottomBinding, new Vector2f(), path)
     {
         SetPositionCenter();
-        Console.WriteLine(AnimationState.AmountFrame);
     }
 
 

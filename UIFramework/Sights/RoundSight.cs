@@ -14,7 +14,6 @@ namespace UIFramework.Sights;
 public class RoundSight : Sight
 {
     private Vector2f _positionOnScreen;
-    private Vector2f _originPositionOnScreen;
     public override Vector2f PositionOnScreen 
     {
         get => _positionOnScreen;
@@ -62,7 +61,6 @@ public class RoundSight : Sight
             FillColor = this.FillColor,
         };
         PositionOnScreen = positionOnScreen;
-        _originPositionOnScreen = positionOnScreen;
 
         Screen.WidthChangesFun += UpdateWidth;
         Screen.HeightChangesFun += UpdateHeight;

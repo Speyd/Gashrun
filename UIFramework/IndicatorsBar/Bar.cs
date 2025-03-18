@@ -34,13 +34,13 @@ public class Bar: IUIElement
         Border.Origin = new Vector2f(-_borderThickness, _height + _borderThickness);
     }
     protected float _width = 0;
-    public float _originWidth { get; protected set; } = 0;
+    public float OriginWidth { get; protected set; } = 0;
     public virtual float Width
     {
         get => _width;
         set
         {
-            _originWidth = value;
+            OriginWidth = value;
             _width = value / Screen.MultWidth;
             UpdateBorderSize();
         }
@@ -48,13 +48,13 @@ public class Bar: IUIElement
 
 
     protected float _height = 0;
-    public float _originHeight { get; protected set; } = 0;
+    public float OriginHeight { get; protected set; } = 0;
     public virtual float Height
     {
         get => _height;
         set
         {
-            _originHeight = value;
+            OriginHeight = value;
             _height = value / Screen.MultHeight;
             UpdateBorderSize();
         }
@@ -160,8 +160,8 @@ public class Bar: IUIElement
     { }
     public virtual void UpdateScreenInfo()
     {
-        Width = _originWidth;
-        Height = _originHeight;
+        Width = OriginWidth;
+        Height = OriginHeight;
         BorderThickness = _originBorderThickness;
     }
     public virtual void UpdateWidth()

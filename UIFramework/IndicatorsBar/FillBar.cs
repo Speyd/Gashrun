@@ -37,7 +37,7 @@ public class FillBar : Bar
         get => _width;
         set
         {
-            _originWidth = value;
+            OriginWidth = value;
             _width = value / Screen.MultWidth;
 
             UpdateBordersSize();
@@ -48,7 +48,7 @@ public class FillBar : Bar
         get => _height;
         set
         {
-            _originHeight = value;
+            OriginHeight = value;
             _height = value / Screen.MultHeight;
             UpdateBordersSize();
         }

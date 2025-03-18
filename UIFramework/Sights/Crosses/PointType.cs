@@ -4,13 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UIFramework.Sights.Crosses
+
+namespace UIFramework.Sights.Crosses;
+public enum PointType
 {
-    public enum PointType
-    {
-        LeftTop,
-        LeftBottom,
-        RightTop,
-        RightBottom,
-    }
+    LeftTop,
+    LeftBottom,
+    RightTop,
+    RightBottom,
 }

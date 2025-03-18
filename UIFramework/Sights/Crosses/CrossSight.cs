@@ -8,7 +8,8 @@ using ScreenLib;
 using ScreenLib.Output;
 using SFML.Graphics;
 using SFML.System;
-using static System.Formats.Asn1.AsnWriter;
+
+
 namespace UIFramework.Sights.Crosses;
 public class CrossSight : Sight
 {
@@ -65,7 +66,9 @@ public class CrossSight : Sight
         set
         {
             _originWidthCross = value;
-            _widthCross = value / Screen.MultWidth;
+            _widthCross = Screen.ScreenRatio >= 1 ?
+                value / Screen.ScreenRatio :
+                value * Screen.ScreenRatio;
             UpdateVertexArray();
         }
     }
@@ -79,14 +82,16 @@ public class CrossSight : Sight
         set
         {
             _originHeightCross = value;
-            _heightCross = value / Screen.MultHeight;
+            _heightCross = Screen.ScreenRatio >= 1 ?
+                value / Screen.ScreenRatio :
+                value * Screen.ScreenRatio;
             UpdateVertexArray();
         }
     }
 
+
     private float _indentFromCenter = 0;
     private float _originIndentFromCenter = 0;
-
     public float IndentFromCenter 
     {
         get => _indentFromCenter;
@@ -111,6 +116,8 @@ public class CrossSight : Sight
             UpdateInvertCrossParts();
         }
     }
+
+
     private Predicate<int> _invertPredicate = (index => index % 2 != 0 ? false : true);
     public Predicate<int> InvertPredicate
     {
@@ -122,19 +129,8 @@ public class CrossSight : Sight
         }
     }
 
-
-    private SizeMode _sizeMode = SizeMode.Standard;
-    public SizeMode SizeMode
-    {
-        get => _sizeMode;
-        set
-        {
-            _sizeMode = value;
-            UpdateVertexArray();
-        }
-    }
-
     public RotationType RotationObjectType { get; set; } = RotationType.AroundCertainPosition;
+
     private Cross[] Crosses { get; set; }
 
 
@@ -192,7 +188,7 @@ public class CrossSight : Sight
 
     private void UpdateCross(Cross cross)
     {
-        cross.UpdatePosition(PositionOnScreen, SizeMode, IndentFromCenter, WidthCross, HeightCross);
+        cross.UpdatePosition(PositionOnScreen, IndentFromCenter, WidthCross, HeightCross);
         cross.UpdateRotationObject(SetCenterRotate(cross));
     }
     private void UpdateVertexArray()

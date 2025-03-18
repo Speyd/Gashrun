@@ -26,9 +26,11 @@ using UIFramework.Render;
 using UIFramework.IndicatorsBar;
 using UIFramework.IndicatorsBar.Content;
 using HitBoxLib.PositionObject;
+using RayTracingLib.Detection;
+using RayTracingLib;
+using DrawLib;
 
 Screen.Initialize(1000, 600);
-
 DateTime from = DateTime.Now;
 string mainBold = Path.Combine("Resources", "FontText", "ArialBold.ttf");
 FPS fpsChecker = new FPS("FPS: ", 24, new Vector2f(10, 10), ResourceManager.GetMainPath(mainBold), Color.White);
@@ -36,6 +38,10 @@ FPS fpsChecker = new FPS("FPS: ", 24, new Vector2f(10, 10), ResourceManager.GetM
 
 string mainFillWall = Path.Combine("Resources", "Image", "WallTexture", "Wall1.png");
 Map map = new(new TexturedWall(ResourceManager.GetMainPath(mainFillWall)), 10, 10);
+MultiWall multiWall = new MultiWall();
+multiWall.AddLevelWall(new TexturedWall(ResourceManager.GetMainPath(mainFillWall)));
+multiWall.AddLevelWall(new TexturedWall(ResourceManager.GetMainPath(mainFillWall)));
+
 Player player = new Player(500, 500)
 {
     MaxRenderTile = 1200,
@@ -57,14 +63,14 @@ List<Bottom> controlsHide = new List<Bottom>() { bottomN, bottomCtrl };
 
 CrossSight crossSight = new CrossSight(4, Color.Red)
 {
-    WidthCross = 5,
+    WidthCross = 10,
     HeightCross = 5,
-    IndentFromCenter = 10,
+    IndentFromCenter = 15,
     RotationObjectType = RotationType.AroundItsAxis,
-    GeneralDegreeObject = 45,
-    StartDegree = 90,
+    GeneralDegreeObject = 0,
+    StartDegree = 0,
     GeneralDegreePosition = 90,
-    //InvertCrossParts = true,
+    InvertCrossParts = true,
 };
 
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
@@ -83,7 +89,7 @@ control.AddBottomBind(keyBindingHideMap);
 control.AddBottomBind(keyBindingHideCross);
 
 
-BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, DrawLib.Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
+BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
 control.AddBottomBind(shoot);
 player.OnControlAction += control.MakePressed;
 

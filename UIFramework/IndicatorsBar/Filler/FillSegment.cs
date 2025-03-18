@@ -21,23 +21,11 @@ public class FillSegment
         Content.UpdateContent(Fill);
         Fill.OutlineColor = Color.Transparent;
     }
-
-    private float GetMult()
-    {
-        float height = (Screen.MultHeight < 1 ? Screen.MultHeight : 0) / 2;
-        float width = (Screen.MultWidth < 1 ? Screen.MultWidth : 0) / 2;
-
-        float mult = 2 + height + width;
-        if (Screen.ScreenHeight > Screen.ScreenWidth)
-            return mult / Screen.ScreenRatio;
-        else
-            return mult * Screen.ScreenRatio;
-    }
     public void SetPositionBar(Bar mainBar, float addWidth = 0)
     {
         UpdateSize(mainBar);
 
-        float mainThickness = mainBar._originBorderThickness / GetMult();
+        float mainThickness = mainBar.BorderThickness / 2;
         UpdateOriginSize(mainBar, mainThickness);
         UpdatePosition(mainBar, mainThickness, addWidth);
     }
