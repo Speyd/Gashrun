@@ -35,7 +35,6 @@ public class RoundSight : Sight
         }
     }
 
-
     private float _radius = 1f;
     public float Radius
     {

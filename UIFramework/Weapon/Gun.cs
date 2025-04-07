@@ -14,42 +14,31 @@ using ScreenLib;
 using UIFramework.Animation;
 using ProtoRender.WindowInterface;
 using DrawLib;
+using UIFramework.Weapon.Patron;
+using EntityLib;
 
 
 namespace UIFramework.Weapon;
 public class Gun
 {
+    public Entity Owner { get; set; }
     public UIAnimation Animation { get; set; }
     public Magazine Magazine { get; set; }
-    BottomBinding shoot;
-    public Gun(UIAnimation animation, Magazine magazine, BottomBinding shoot, BottomBinding bottomBinding)
+
+    public Gun(Entity owner, UIAnimation animation, Magazine magazine, BottomBinding bottomBinding)
     {
+        Owner = owner;
         Animation = animation;
 
-        bottomBinding.ExecutableFunction = Shoot;
+        bottomBinding.ExecutableFunction = Shot;
         Animation.BottomBinding = bottomBinding;
 
         Magazine = magazine;
-        this.shoot = shoot;
     }
 
-    public void Shoot()
+    public void Shot()
     {
-        if (Animation.BottomBinding is null)
-            return;
-
-        Magazine.UseAmmo();
-        if (Magazine.AmmoInGun == 0 && Magazine.CurrentAmmoInMagazine == 0 || Magazine.IsReload)
-        {
-            shoot.IsFreeze = true;
-            Animation.IsAnimation = false;
-        }
-        else if (shoot.IsFreeze == true && (Magazine.AmmoInGun > 0 || Magazine.CurrentAmmoInMagazine > 0))
-        {
-            shoot.IsFreeze = false;
-            Animation.IsAnimation = true;
-        }
-
-        shoot.Listen();
+        bool hasAmmo = Magazine.UseAmmo(Owner);
+        Animation.IsAnimation = hasAmmo;
     }
 }

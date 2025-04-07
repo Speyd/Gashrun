@@ -143,4 +143,16 @@ public class FillBar : Bar
         Forward.Content.UpdateContent(Forward.Fill);
         Backward.Content.UpdateContent(Backward.Fill);
     }
+    public override void Hide()
+    {
+        if (Drawables.Count > 0)
+            Drawables.Clear();
+        else
+        {
+            Drawables.Add(Border);
+            Drawables.Add(Forward.Fill);
+            Drawables.Add(Backward.Fill);
+
+        }
+    }
 }

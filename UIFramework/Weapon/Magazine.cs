@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using UIFramework.Render;
 using System.Diagnostics;
 using UIFramework.Weapon.Patron;
-
+using EntityLib;
 
 namespace UIFramework.Weapon;
 public class Magazine : IUIElement
@@ -32,7 +32,7 @@ public class Magazine : IUIElement
     public List<Drawable> Drawables { get; init; } = new();
 
 
-    IPatron Patron { get; set; }
+    public IBullet Bullet { get; set; }
 
 
     private uint _originCharacterSize;
@@ -89,7 +89,7 @@ public class Magazine : IUIElement
 
 
     public bool IsReload = false;
-    Stopwatch stopwatch = new Stopwatch();
+    public Stopwatch Stopwatch { get; init; } = new Stopwatch();
     private float _timeToReloadMls = 2000;
     public float TimeToReloadMls
     {
@@ -102,8 +102,10 @@ public class Magazine : IUIElement
     }
 
 
-    public Magazine(Control control, BottomBinding reloadBind, RenderText textMagazine, int maxAmmoInMagazine, int maxTotalAmmo)
+    public Magazine(Control control, BottomBinding reloadBind, RenderText textMagazine, IBullet bullet, int maxAmmoInMagazine, int maxTotalAmmo)
     {
+        Bullet = bullet;
+
         ReloadBind = new BottomBinding(reloadBind.Bottoms, Reload, reloadBind.WaitingTimeMilliseconds, reloadBind.FixedParameters);
         control.AddBottomBind(ReloadBind);
 
@@ -123,18 +125,19 @@ public class Magazine : IUIElement
 
     private bool IsReloadMagazine()
     {
-        if (!stopwatch.IsRunning)
+        if (!Stopwatch.IsRunning && AmmoInGun != 0)
         {
             IsReload = true;
-            stopwatch.Start();
+            Stopwatch.Start();
 
             return true;
         }
-        else if (stopwatch.IsRunning && stopwatch.ElapsedMilliseconds >= TimeToReloadMls)
+        else if (Stopwatch.IsRunning && Stopwatch.ElapsedMilliseconds >= TimeToReloadMls)
         {
             IsReload = false;
-            stopwatch.Stop();
-            stopwatch.Reset();
+            Stopwatch.Stop();
+            Stopwatch.Reset();
+
             return false;
         }
         return true;
@@ -160,18 +163,20 @@ public class Magazine : IUIElement
             AmmoInGun -= ammoToReload;
         }
     }
-    public void UseAmmo()
+    public bool UseAmmo(Entity owner)
     {
-        if (IsReload == true || stopwatch.IsRunning && IsReload == false)
-        {
-            IsReload = true;
-            return;
-        }
+        if (IsReload == true || (AmmoInGun == 0 && CurrentAmmoInMagazine == 0))
+            return false;
 
         if (CurrentAmmoInMagazine > 0)
+        {
             CurrentAmmoInMagazine--;
-        else if (CurrentAmmoInMagazine == 0)
+            Bullet.Flight(owner);
+        }
+        if (CurrentAmmoInMagazine == 0)
             Reload();
+
+        return true;
     }
 
     public void Render()

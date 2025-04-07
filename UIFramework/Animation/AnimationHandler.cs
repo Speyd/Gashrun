@@ -17,13 +17,7 @@ public class AnimationHandler
     private void UpdateFrameAnimation()
     {
         if (_isAnimation == false)
-        {
-            _isAnimation = true;
-            while (AnimationState.Index != 0)
-                UpdateFrameAnimation();
-
-            _isAnimation = false;
-        }
+            AnimationState.CurrentFrame = AnimationState.GetFrame(0);
     }
     public bool _isAnimation = true;
     public bool IsAnimation
