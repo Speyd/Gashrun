@@ -7,14 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.AnimationLib" Version="1.1.5" />
-    <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.2.2" />
-    <PackageReference Include="EnginePseudo3D.DrawLib" Version="1.2.7" />
-    <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.1.2" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="1.3.0" />
-    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="1.1.3" />
-    <PackageReference Include="EnginePseudo3D.RayTracingLib" Version="1.2.4" />
-    <PackageReference Include="EnginePseudo3D.TextureLib" Version="1.1.0" />
+    <PackageReference Include="EnginePseudo3D.AnimationLib" Version="1.1.8" />
+    <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.5.9" />
+    <PackageReference Include="EnginePseudo3D.DrawLib" Version="1.5.6" />
+    <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.2.8" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="1.6.7" />
+    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="1.5.0" />
+    <PackageReference Include="EnginePseudo3D.TextureLib" Version="1.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ObjectFramework\ObjectFramework.csproj" />
   </ItemGroup>
 
 </Project>

@@ -12,9 +12,8 @@ using System.Threading.Tasks;
 using UIFramework.Render;
 using System.Diagnostics;
 using UIFramework.Weapon.Patron;
-using EntityLib;
 
-namespace UIFramework.Weapon;
+namespace UIFramework.Weapon.BulletMagazine;
 public class Magazine : IUIElement
 {
     public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
@@ -30,9 +29,6 @@ public class Magazine : IUIElement
         }
     }
     public List<Drawable> Drawables { get; init; } = new();
-
-
-    public IBullet Bullet { get; set; }
 
 
     private uint _originCharacterSize;
@@ -57,34 +53,11 @@ public class Magazine : IUIElement
         }
     }
 
-    public BottomBinding ReloadBind { get; set; }
-
-    public int CurrentAmmoInMagazine { get; set; }
-    public int AmmoInGun { get; set; }
+    public ControlLib.BottomBinding ReloadBind { get; set; }
 
 
-
-    private int _maxAmmoInMagazine;
-    public int MaxAmmoInMagazine
-    {
-        get => _maxAmmoInMagazine;
-        init
-        {
-            _maxAmmoInMagazine = value;
-            CurrentAmmoInMagazine = value;
-        }
-    }
-
-    private int _maxTotalAmmo;
-    public int MaxTotalAmmo
-    {
-        get => _maxTotalAmmo;
-        init
-        {
-            _maxTotalAmmo = value;
-            AmmoInGun = value;
-        }
-    }
+    public BulletStack BulletStack { get; set; }
+    public BulletStack BulletStorage { get; set; }
 
 
 
@@ -102,22 +75,23 @@ public class Magazine : IUIElement
     }
 
 
-    public Magazine(Control control, BottomBinding reloadBind, RenderText textMagazine, IBullet bullet, int maxAmmoInMagazine, int maxTotalAmmo)
+    public Magazine(ControlLib.Control control, ControlLib.BottomBinding reloadBind, RenderText textMagazine, IBullet bullet, int maxAmmoInMagazine, int maxTotalAmmo)
     {
-        Bullet = bullet;
 
-        ReloadBind = new BottomBinding(reloadBind.Bottoms, Reload, reloadBind.WaitingTimeMilliseconds, reloadBind.FixedParameters);
+        ReloadBind = new ControlLib.BottomBinding(reloadBind.Bottoms, Reload, reloadBind.WaitingTimeMilliseconds, reloadBind.FixedParameters);
         control.AddBottomBind(ReloadBind);
 
-        MaxAmmoInMagazine = maxAmmoInMagazine;
-        MaxTotalAmmo = maxTotalAmmo;
+        BulletStack = new BulletStack(maxAmmoInMagazine, bullet);
+        BulletStorage = new BulletStack(maxTotalAmmo, bullet);
 
         AmmoText = textMagazine;
         PositionOnScreen = textMagazine.Text.Position;
 
+
+
+
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
-
 
         Drawables.Add(AmmoText.Text);
         UIRender.AddToPriority(RenderOrder.Indicators, this);
@@ -125,7 +99,7 @@ public class Magazine : IUIElement
 
     private bool IsReloadMagazine()
     {
-        if (!Stopwatch.IsRunning && AmmoInGun != 0)
+        if (!Stopwatch.IsRunning && BulletStorage.Capacity != 0)
         {
             IsReload = true;
             Stopwatch.Start();
@@ -147,38 +121,51 @@ public class Magazine : IUIElement
         if (IsReloadMagazine())
             return;
 
-        if (CurrentAmmoInMagazine == 0)
+        if (BulletStack.Capacity == 0)
         {
-            int ammoToReload = Math.Min(AmmoInGun, MaxAmmoInMagazine);
+            int ammoToReload = Math.Min(BulletStorage.Capacity, BulletStack.MaxCapacity);
 
-            CurrentAmmoInMagazine = ammoToReload;
-            AmmoInGun -= ammoToReload;
+            BulletStack.AddBullet(BulletStorage.GetBullet(ammoToReload));
         }
         else
         {
-            int ammoNeeded = MaxAmmoInMagazine - CurrentAmmoInMagazine;
-            int ammoToReload = Math.Min(AmmoInGun, ammoNeeded);
+            int ammoNeeded = BulletStack.MaxCapacity - BulletStack.Capacity;
+            int ammoToReload = Math.Min(BulletStorage.Capacity, ammoNeeded);
 
-            CurrentAmmoInMagazine += ammoToReload;
-            AmmoInGun -= ammoToReload;
+            BulletStack.AddBullet(BulletStorage.GetBullet(ammoToReload));
         }
     }
-    public bool UseAmmo(Entity owner)
+    public async Task<bool> UseAmmoAsync(ProtoRender.Object.IUnit owner)
     {
-        if (IsReload == true || (AmmoInGun == 0 && CurrentAmmoInMagazine == 0))
+        if (IsReload == true || (BulletStorage.Capacity == 0 && BulletStack.Capacity == 0))
             return false;
 
-        if (CurrentAmmoInMagazine > 0)
+        if (BulletStack.Capacity > 0)
         {
-            CurrentAmmoInMagazine--;
-            Bullet.Flight(owner);
+            var bullet = BulletStack.GetBullet();
+            if (bullet != null)
+                await bullet.FlightAsync(owner);
+
         }
-        if (CurrentAmmoInMagazine == 0)
+        if (BulletStack.Capacity == 0)
             Reload();
 
         return true;
     }
+    public bool UseAmmo(ProtoRender.Object.IUnit owner)
+    {
+        if (IsReload == true || (BulletStorage.Capacity == 0 && BulletStack.Capacity == 0))
+            return false;
 
+        if (BulletStack.Capacity > 0)
+        {
+            BulletStack.GetBullet()?.Flight(owner);
+        }
+        if (BulletStack.Capacity == 0)
+            Reload();
+
+        return true;
+    }
     public void Render()
     {
         UpdateInfo();
@@ -191,7 +178,7 @@ public class Magazine : IUIElement
             Reload();
 
         string lastText = AmmoText.Text.DisplayedString;
-        AmmoText.Text.DisplayedString = $"{AmmoInGun} : {CurrentAmmoInMagazine}";
+        AmmoText.Text.DisplayedString = $"{BulletStorage.Capacity} : {BulletStack.Capacity}";
         AmmoText.Text.Origin = new Vector2f(AmmoText.Text.GetLocalBounds().Width, 0);
 
         AdjustTextPosition(lastText);
@@ -247,3 +234,4 @@ public class Magazine : IUIElement
     }
 
 }
+

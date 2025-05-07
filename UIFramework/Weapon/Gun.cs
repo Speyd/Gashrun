@@ -15,27 +15,31 @@ using UIFramework.Animation;
 using ProtoRender.WindowInterface;
 using DrawLib;
 using UIFramework.Weapon.Patron;
-using EntityLib;
-
+using UIFramework.Weapon.BulletMagazine;
 
 namespace UIFramework.Weapon;
 public class Gun
 {
-    public Entity Owner { get; set; }
+    public ProtoRender.Object.IUnit Owner { get; set; }
     public UIAnimation Animation { get; set; }
     public Magazine Magazine { get; set; }
 
-    public Gun(Entity owner, UIAnimation animation, Magazine magazine, BottomBinding bottomBinding)
+    public Gun(ProtoRender.Object.IUnit owner, UIAnimation animation, Magazine magazine, ControlLib.BottomBinding bottomBinding)
     {
         Owner = owner;
         Animation = animation;
 
-        bottomBinding.ExecutableFunction = Shot;
+        bottomBinding.ExecutableFunction = ShotAsync;
         Animation.BottomBinding = bottomBinding;
 
         Magazine = magazine;
     }
 
+    public async Task ShotAsync()
+    {
+        bool hasAmmo = await Magazine.UseAmmoAsync(Owner);
+        Animation.IsAnimation = hasAmmo;
+    }
     public void Shot()
     {
         bool hasAmmo = Magazine.UseAmmo(Owner);

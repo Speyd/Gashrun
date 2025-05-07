@@ -30,7 +30,7 @@ public class UIAnimation : AnimationHandler, IUIElement
     public List<Drawable> Drawables { get; init; } = new List<Drawable>();
 
 
-    public BottomBinding? BottomBinding { get; set; } = null;
+    public ControlLib.BottomBinding? BottomBinding { get; set; } = null;
 
     public float _scaleX = 1.0f;
     private float _originScaleX = 0;
@@ -98,7 +98,7 @@ public class UIAnimation : AnimationHandler, IUIElement
 
 
     #region Constructor 
-    public UIAnimation(Vector2f position, BottomBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(Vector2f position, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
     {
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
@@ -111,7 +111,7 @@ public class UIAnimation : AnimationHandler, IUIElement
 
         UIRender.AddToPriority(RenderOrder.Hands, this);
     }
-    public UIAnimation(BottomBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
         : this(new Vector2f(), bottomBinding, paths)
     {
         SetPositionCenter();

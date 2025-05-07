@@ -1,18 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.Core" Version="1.7.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\UIFramework\UIFramework.csproj" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="1.6.7" />
   </ItemGroup>
 
 </Project>
