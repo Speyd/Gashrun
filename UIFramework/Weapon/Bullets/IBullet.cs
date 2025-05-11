@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UIFramework.Weapon.Patron;
+namespace UIFramework.Weapon.Bullets;
 public interface IBullet
 {
     float Damage { get; set; }

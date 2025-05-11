@@ -1,19 +1,8 @@
-﻿using AnimationLib;
-using ObstacleLib.SpriteLib;
-using SFML.System;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MapLib;
-using ScreenLib;
+﻿using ObstacleLib.SpriteLib;
 using System.Collections.Concurrent;
-using ObstacleLib;
 using ProtoRender.Object;
 using ProtoRender.RenderAlgorithm;
-using ObjectFramework;
-using System.Reflection;
+using System.Diagnostics;
 
 namespace UIFramework.Weapon;
 public class HitEffect
@@ -22,8 +11,8 @@ public class HitEffect
     private static ConcurrentQueue<int> FreeIds = new();
     private static readonly Result jammerResult = new Result();
 
-    private readonly TimeSpan Lifetime;
-    private readonly DateTime CreationTime;
+    private readonly long LifetimeMilliseconds;
+    private readonly Stopwatch Stopwatch = new();
 
     private int Id { get; set; }
     public SpriteObstacle ObjectEffect { get; set; }
@@ -32,21 +21,21 @@ public class HitEffect
 
     private static readonly object _lock = new();
 
-    public static void Render()
+    public static void Render(IUnit observer)
     {
         List<int> toRemove = new();
         List<HitEffect> effectsSnapshot = new();
 
         lock (ListUpdateEffect)
         {
-            effectsSnapshot = ListUpdateEffect.Values.ToList(); // copy safely
+            effectsSnapshot = ListUpdateEffect.Values.ToList();
         }
 
         Parallel.ForEach(effectsSnapshot, effect =>
         {
-            effect.UpdateCheckRemove(toRemove); // mark for removal
+            effect.UpdateCheckRemove(toRemove);
             if (effect.Owner is not null)
-                effect.ObjectEffect?.Render(jammerResult, effect.Owner);
+                effect.ObjectEffect?.Render(jammerResult, observer);
         });
 
         lock (_lock)
@@ -58,19 +47,18 @@ public class HitEffect
 
 
 
-    public HitEffect(SpriteObstacle objectEffect, TimeSpan lifetime)
+    public HitEffect(SpriteObstacle objectEffect, long lifetimeMilliseconds)
     {
-        Lifetime = lifetime;
-        CreationTime = DateTime.UtcNow;
+        LifetimeMilliseconds = lifetimeMilliseconds;
+        Stopwatch.Restart();
 
         Id = GetNextId();
-
         ObjectEffect = new SpriteObstacle(objectEffect);
     }
-    public HitEffect(TimeSpan lifetime)
+    public HitEffect(long lifetimeMilliseconds)
     {
-        Lifetime = lifetime;
-        CreationTime = DateTime.UtcNow;
+        LifetimeMilliseconds = lifetimeMilliseconds;
+        Stopwatch.Restart();
 
         Id = GetNextId();
     }
@@ -90,7 +78,7 @@ public class HitEffect
     {
         lock (_lock)
         {
-            var newEffect = new HitEffect(ObjectEffect, Lifetime);
+            var newEffect = new HitEffect(ObjectEffect, LifetimeMilliseconds);
             newEffect.Owner = owner;
 
             newEffect.ObjectEffect.X.Axis = x;
@@ -102,7 +90,7 @@ public class HitEffect
     }
     public int Create(IUnit owner, SpriteObstacle spriteObstacle)
     {
-        var newEffect = new HitEffect(spriteObstacle, new TimeSpan(-1));
+        var newEffect = new HitEffect(spriteObstacle, -1);
         newEffect.ObjectEffect = spriteObstacle;
         newEffect.Owner = owner;
 
@@ -124,11 +112,11 @@ public class HitEffect
     {
         lock (_lock)
         {
-            if (Lifetime.Ticks != -1 &&
-            DateTime.UtcNow - CreationTime >= Lifetime &&
-            ObjectEffect is not null)
+            if (LifetimeMilliseconds != -1 &&
+                Stopwatch.ElapsedMilliseconds >= LifetimeMilliseconds &&
+                ObjectEffect is not null)
             {
-                toRemove.Add(Id); // откладываем удаление
+                toRemove.Add(Id);
             }
         }
 

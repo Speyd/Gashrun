@@ -1,77 +1,32 @@
 ﻿using AnimationLib;
 using HitBoxLib.HitBoxSegment;
 using HitBoxLib.PositionObject;
-using MapLib;
 using ObstacleLib;
 using ObstacleLib.SpriteLib;
 using ScreenLib;
 using SFML.System;
 using ProtoRender.Object;
+using ProtoRender.Map;
 using HitBoxLib.Data.Observer;
 using System.Collections.Concurrent;
-
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-//using ScreenLib;
-
-
-//namespace MoveLib;
-//public static class Setting
-//{
-//    //Speed
-//    /// <summary>Entity movement speed</summary>
-//    public static float MoveSpeed { get; set; } = 150f;
-//    /// <summary>Normalizes mouse sensitivity depending on fps</summary>
-//    public static double MoveSpeedAngel { get; set; } = 1;
-
-//    //TempsValue
-//    public static double TempVerticalAngle = 0.0;
-//    public static double TempAngle = 0.0;
-
-//    //Settig Control
-//    /// <summary>Minimum collision distance to an object</summary>
-//    public static float MinDistanceFromWall { get; set; } = 100;
-//    /// <summary>Mouse sensitivity</summary>
-//    public static float MouseSensitivity { get; set; } = 0.001f;
-//    public static bool IsMouseCaptured { get; set; } = true;
-
-//    //Settig Mouse
-//    /// <summary>Limits camera rotation vertically above the middle of the screen</summary>
-//    public static double MinVerticalAngle { get; set; } = -Math.PI / 2;
-//    /// <summary>Limits camera rotation vertically below the middle of the screen</summary>
-//    public static double MaxVerticalAngle { get; set; } = Math.PI / 2;
-
-//}
+using ObjectFramework.Death;
 
 namespace ObjectFramework;
-public class Unit : SpriteObstacle, IUnit
+public class Unit : SpriteObstacle, IUnit, IDamageable
 {
-    //Speed
-    /// <summary>Entity movement speed</summary>
+    #region IMoveble
     public float MoveSpeed { get; set; } = 200f;
-    /// <summary>Normalizes mouse sensitivity depending on fps</summary>
     public double MoveSpeedAngel { get; set; } = 1;
-
-    //TempsValue
     public double TempVerticalAngle { get; set; } = 0.0;
     public double TempAngle { get; set; } = 0.0;
-
-    //Settig Control
-    /// <summary>Minimum collision distance to an object</summary>
     public float MinDistanceFromWall { get; set; } = 100;
-    /// <summary>Mouse sensitivity</summary>
     public float MouseSensitivity { get; set; } = 0.001f;
     public bool IsMouseCaptured { get; set; } = true;
 
-    //Settig Mouse
-    /// <summary>Limits camera rotation vertically above the middle of the screen</summary>
     public double MinVerticalAngle { get; set; } = -Math.PI / 2;
-    /// <summary>Limits camera rotation vertically below the middle of the screen</summary>
     public double MaxVerticalAngle { get; set; } = Math.PI / 2;
-    public ConcurrentDictionary<IUnit, byte> IgnoreCollisionObjects { get; set; } = new();
+    public ConcurrentDictionary<IObject, byte> IgnoreCollisionObjects { get; set; } = new();
+    #endregion
 
     #region IUnit
     //-----------------------Angle-----------------------
@@ -131,22 +86,19 @@ public class Unit : SpriteObstacle, IUnit
     public double ProjCoeff { get; private set; }
     #endregion
 
-    public DeathAnimation DeathAnimation { get; set; }
-    public Action? DeathAction { get; set; }
-    public Action<float>? DamageAction { get; set; }
-
+    #region IDamageable
     private void SetHp(float maxHp)
     {
-        if(maxHp < _hp)
+        if (maxHp < _hp)
             Hp = maxHp;
     }
     private float _maxHp = 0;
-    public float MaxHp 
+    public float MaxHp
     {
         get => _maxHp;
         private set
         {
-            _maxHp = value > 0? value: _maxHp;
+            _maxHp = value > 0 ? value : _maxHp;
             SetHp(_maxHp);
         }
     }
@@ -157,20 +109,40 @@ public class Unit : SpriteObstacle, IUnit
             DeathAction?.Invoke();
     }
     private float _hp = 0;
-    public float Hp 
+    public float Hp
     {
         get => _hp;
         set
         {
             _hp = value;
             CheckHp();
-        } 
+        }
     }
 
+    private void ValidateDamage(float damage)
+    {
+        Hp -= damage;
+    }
+    public Action<float>? DamageAction { get; set; }
 
-    public MapLib.Map Map { get; set; }
+    public Action? DeathAction { get; set; }
+    public DeathAnimation? DeathAnimation { get; set; } = null;
+    private void AddToDeathManager()
+    {
+        SpriteObstacle.SpritesToRender.Remove(this);
+        Map?.DeleteObstacleAsync(this);
 
-    public Unit(MapLib.Map map, SpriteObstacle obstacle, int maxHp)
+        if (DeathAnimation is null)
+            return;
+
+        Animation = DeathAnimation.Animation;
+        DeathManager.AddDiedObject(new DeathData(this, DeathAnimation, false));
+    }
+    #endregion
+
+    public IMap? Map { get; set; } = null;
+
+    public Unit(IMap map, SpriteObstacle obstacle, int maxHp)
         : base(obstacle)
     {
         Map = map;
@@ -179,11 +151,9 @@ public class Unit : SpriteObstacle, IUnit
 
         DeathAction += AddToDeathManager;
         DamageAction += ValidateDamage;
-       // OnPositionChanged += map.UpdateCoordinatesObstacle;
 
         Fov = Math.PI / 3;
         HalfFov = (float)Fov / 2;
-        // Z.Axis = 50;
 
         Angle = 0;
         Angle -= 0.000001;
@@ -221,29 +191,9 @@ public class Unit : SpriteObstacle, IUnit
         ObserverSettingChangesFun();
         Screen.WidthChangesFun += ObserverSettingChangesFun;
     }
-    private void UpdateCoordinate()
-    {
-        OnPositionChanged?.Invoke(this);
-    }
-    private void AddToDeathManager()
-    {
-        SpriteObstacle.SpritesToRender.Remove(this);
-        Map.DeleteObstacleAsync(this);
-
-        Animation.SetFrames(DeathAnimation.Animation.GetFrames());
-        Animation.Index = 0;
-        Animation.IsAnimation = DeathAnimation.Animation.IsAnimation;
-        Animation.Speed = DeathAnimation.Animation.Speed;
-
-        DeathManager.AddDiedObject(new DiedData(this, DeathAnimation, false));
-    }
-    private void ValidateDamage(float damage)
-    {
-        Hp -= damage;
-    }
 
 
-
+    #region IUnit
     public void ObserverSettingChangesFun()
     {
         float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfFov));
@@ -262,9 +212,9 @@ public class Unit : SpriteObstacle, IUnit
 
         return observerInfo;
     }
-
-    public IUnit GetCopy()
+    public new IUnit GetCopy()
     {
         return new Unit(this);
     }
+    #endregion
 }

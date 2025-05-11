@@ -11,95 +11,77 @@ using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Render;
 using System.Diagnostics;
-using UIFramework.Weapon.Patron;
+using UIFramework.Text;
+using UIFramework.Weapon.Bullets;
 
 namespace UIFramework.Weapon.BulletMagazine;
-public class Magazine : IUIElement
+using TextureLib;
+public class Magazine
 {
-    public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
-    public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
-    private Vector2f _positionOnScreen;
-    public Vector2f PositionOnScreen
-    {
-        get => _positionOnScreen;
-        set
-        {
-            _positionOnScreen = AdjustTextSize(value);
-            AmmoText.Text.Position = value;
-        }
-    }
-    public List<Drawable> Drawables { get; init; } = new();
-
-
-    private uint _originCharacterSize;
-    private bool _isCharacterSizeSet = false;
-
-    private RenderText _textMagazine;
-    public RenderText AmmoText
-    {
-        get => _textMagazine;
-        set
-        {
-            _textMagazine = value;
-
-            if (_isCharacterSizeSet)
-            {
-                _positionOnScreen = new Vector2f(_positionOnScreen.X + _originCharacterSize,
-                    _positionOnScreen.Y + _originCharacterSize);
-
-                _isCharacterSizeSet = false;
-            }
-            _originCharacterSize = value.Text.CharacterSize;
-        }
-    }
-
     public ControlLib.BottomBinding ReloadBind { get; set; }
 
 
-    public BulletStack BulletStack { get; set; }
-    public BulletStack BulletStorage { get; set; }
+    public MagazineState ClipBullet { get; set; }
+    public MagazineState MagazineBullet { get; set; }
 
 
 
     public bool IsReload = false;
     public Stopwatch Stopwatch { get; init; } = new Stopwatch();
-    private float _timeToReloadMls = 2000;
-    public float TimeToReloadMls
+    private long _timeToReloadMls = 2000;
+    public long TimeToReloadMls
     {
         get => _timeToReloadMls;
         set
         {
             _timeToReloadMls = value < 0 ? -value : value;
-
+            ReloadBind.WaitingTimeMilliseconds = _timeToReloadMls;
         }
     }
 
 
-    public Magazine(ControlLib.Control control, ControlLib.BottomBinding reloadBind, RenderText textMagazine, IBullet bullet, int maxAmmoInMagazine, int maxTotalAmmo)
+    public UIText UIText { get; set; }
+
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, RenderText textMagazine, ControlLib.Control control)
     {
 
-        ReloadBind = new ControlLib.BottomBinding(reloadBind.Bottoms, Reload, reloadBind.WaitingTimeMilliseconds, reloadBind.FixedParameters);
+        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
         control.AddBottomBind(ReloadBind);
+        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
 
-        BulletStack = new BulletStack(maxAmmoInMagazine, bullet);
-        BulletStorage = new BulletStack(maxTotalAmmo, bullet);
+        ClipBullet = new MagazineState(maxAmmoInMagazine, bullet);
+        MagazineBullet = new MagazineState(maxTotalAmmo, bullet);
 
-        AmmoText = textMagazine;
-        PositionOnScreen = textMagazine.Text.Position;
+        UIText = new UIText(textMagazine);
+    }
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, RenderText textMagazine, ControlLib.Control control)
+    {
 
+        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
+        control.AddBottomBind(ReloadBind);
+        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
 
+        ClipBullet = new MagazineState(maxAmmoInMagazine);
+        MagazineBullet = new MagazineState(maxTotalAmmo);
 
+        UIText = new UIText(textMagazine);
+    }
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, UIText textMagazine, ControlLib.Control control)
+    {
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
+        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
+        control.AddBottomBind(ReloadBind);
+        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
 
-        Drawables.Add(AmmoText.Text);
-        UIRender.AddToPriority(RenderOrder.Indicators, this);
+        ClipBullet = new MagazineState(maxAmmoInMagazine);
+        MagazineBullet = new MagazineState(maxTotalAmmo);
+
+        UIText = new UIText(textMagazine);
     }
 
     private bool IsReloadMagazine()
     {
-        if (!Stopwatch.IsRunning && BulletStorage.Capacity != 0)
+        if (!Stopwatch.IsRunning && MagazineBullet.Capacity != 0)
         {
             IsReload = true;
             Stopwatch.Start();
@@ -121,117 +103,61 @@ public class Magazine : IUIElement
         if (IsReloadMagazine())
             return;
 
-        if (BulletStack.Capacity == 0)
+        if (ClipBullet.Capacity == 0)
         {
-            int ammoToReload = Math.Min(BulletStorage.Capacity, BulletStack.MaxCapacity);
+            int ammoToReload = Math.Min(MagazineBullet.Capacity, ClipBullet.MaxCapacity);
 
-            BulletStack.AddBullet(BulletStorage.GetBullet(ammoToReload));
+            ClipBullet.AddBullet(MagazineBullet.GetBullet(ammoToReload));
         }
         else
         {
-            int ammoNeeded = BulletStack.MaxCapacity - BulletStack.Capacity;
-            int ammoToReload = Math.Min(BulletStorage.Capacity, ammoNeeded);
+            int ammoNeeded = ClipBullet.MaxCapacity - ClipBullet.Capacity;
+            int ammoToReload = Math.Min(MagazineBullet.Capacity, ammoNeeded);
 
-            BulletStack.AddBullet(BulletStorage.GetBullet(ammoToReload));
+            ClipBullet.AddBullet(MagazineBullet.GetBullet(ammoToReload));
         }
     }
+
     public async Task<bool> UseAmmoAsync(ProtoRender.Object.IUnit owner)
     {
-        if (IsReload == true || (BulletStorage.Capacity == 0 && BulletStack.Capacity == 0))
+        if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
             return false;
 
-        if (BulletStack.Capacity > 0)
+        if (ClipBullet.Capacity > 0)
         {
-            var bullet = BulletStack.GetBullet();
+            var bullet = ClipBullet.GetBullet();
             if (bullet != null)
                 await bullet.FlightAsync(owner);
 
         }
-        if (BulletStack.Capacity == 0)
+        if (MagazineBullet.Capacity == 0)
             Reload();
 
         return true;
     }
     public bool UseAmmo(ProtoRender.Object.IUnit owner)
     {
-        if (IsReload == true || (BulletStorage.Capacity == 0 && BulletStack.Capacity == 0))
+        if(UIText.Owner != owner)
+            UIText.Owner = owner;
+
+        if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
             return false;
 
-        if (BulletStack.Capacity > 0)
+        if (ClipBullet.Capacity > 0)
         {
-            BulletStack.GetBullet()?.Flight(owner);
+            ClipBullet.GetBullet()?.Flight(owner);
         }
-        if (BulletStack.Capacity == 0)
+        if (ClipBullet.Capacity == 0)
             Reload();
 
         return true;
     }
-    public void Render()
-    {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
-    }
+
     public void UpdateInfo()
     {
         if (IsReload == true)
             Reload();
 
-        string lastText = AmmoText.Text.DisplayedString;
-        AmmoText.Text.DisplayedString = $"{BulletStorage.Capacity} : {BulletStack.Capacity}";
-        AmmoText.Text.Origin = new Vector2f(AmmoText.Text.GetLocalBounds().Width, 0);
-
-        AdjustTextPosition(lastText);
+        UIText.SetText($"{MagazineBullet.Capacity} : {ClipBullet.Capacity}");
     }
-
-    private Vector2f AdjustTextSize(Vector2f position)
-    {
-        uint previousCharacterSize = _isCharacterSizeSet ? AmmoText.Text.CharacterSize : 0;
-        _isCharacterSizeSet = true;
-
-        AmmoText.Text.CharacterSize = (uint)(_originCharacterSize / (Screen.ScreenRatio >= 1 ? Screen.ScreenRatio : 1 / Screen.ScreenRatio));
-
-        float x = position.X + previousCharacterSize - AmmoText.Text.CharacterSize;
-        float y = position.Y + previousCharacterSize - AmmoText.Text.CharacterSize;
-
-        return new Vector2f(x, y);
-    }
-    private void AdjustTextPosition(string previousText)
-    {
-        float mult = AmmoText.Text.CharacterSize;
-        float previousWidth = previousText.Length;
-        float newWidth = AmmoText.Text.DisplayedString.Length;
-
-        _positionOnScreen = new Vector2f(_positionOnScreen.X + previousWidth - newWidth, _positionOnScreen.Y);
-        AmmoText.Text.Position = _positionOnScreen;
-    }
-
-    public void UpdateScreenInfo()
-    {
-        UpdateWidth();
-        UpdateHeight();
-    }
-    public void UpdateWidth()
-    {
-        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
-
-        PreviousScreenWidth = Screen.ScreenWidth;
-    }
-    public void UpdateHeight()
-    {
-        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
-
-        PreviousScreenHeight = Screen.ScreenHeight;
-    }
-    public void Hide()
-    {
-        if (Drawables.Count > 0)
-            Drawables.Clear();
-        else
-            Drawables.Add(AmmoText.Text);
-    }
-
 }
-

@@ -44,10 +44,7 @@ public class AnimationHandler
 
     public AnimationHandler(params string[] paths)
     {
-        AnimationState = new AnimationState();
-        var frames = ImageLoader.TexturesLoad(paths);
-        if (frames is not null)
-            AnimationState.AddFrames(frames);
+        AnimationState = new AnimationState(paths);
     }
 
     public virtual void UpdateFrame(float angle = 0)

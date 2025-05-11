@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UIFramework.Weapon.Patron;
+using UIFramework.Weapon.Bullets;
 
 
 namespace UIFramework.Weapon.BulletMagazine;
-public class BulletStack
+public class MagazineState
 {
     private int _maxCapacity = 0;
     public int MaxCapacity 
@@ -24,16 +24,16 @@ public class BulletStack
     public int Capacity {  get; private set; }
     private List<IBullet> Bullets { get; set; } = new List<IBullet>();
 
-    public BulletStack(int maxCapacity)
+    public MagazineState(int maxCapacity)
     {
         MaxCapacity = maxCapacity;
     }
-    public BulletStack(int maxCapacity, IBullet bullet)
+    public MagazineState(int maxCapacity, IBullet bullet)
     {
         MaxCapacity = maxCapacity;
         AddBullet(bullet, maxCapacity);
     }
-    public BulletStack(int maxCapacity, List<IBullet> bullets)
+    public MagazineState(int maxCapacity, List<IBullet> bullets)
     {
         MaxCapacity = maxCapacity;
         AddBullet(bullets);

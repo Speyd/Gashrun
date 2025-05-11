@@ -14,7 +14,6 @@ using ScreenLib;
 using UIFramework.Animation;
 using ProtoRender.WindowInterface;
 using DrawLib;
-using UIFramework.Weapon.Patron;
 using UIFramework.Weapon.BulletMagazine;
 
 namespace UIFramework.Weapon;
@@ -33,6 +32,7 @@ public class Gun
         Animation.BottomBinding = bottomBinding;
 
         Magazine = magazine;
+        Magazine.UIText.Owner = owner;
     }
 
     public async Task ShotAsync()

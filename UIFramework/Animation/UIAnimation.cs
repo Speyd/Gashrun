@@ -8,6 +8,8 @@ using ScreenLib.Output;
 using TextureLib;
 using ControlLib;
 using UIFramework.Render;
+using ObjectFramework;
+using ProtoRender.Object;
 
 namespace UIFramework.Animation;
 public class UIAnimation : AnimationHandler, IUIElement
@@ -28,6 +30,29 @@ public class UIAnimation : AnimationHandler, IUIElement
 
     public Sprite RenderSprite { get; set; } = new Sprite();
     public List<Drawable> Drawables { get; init; } = new List<Drawable>();
+
+    private RenderOrder _renderOrder = RenderOrder.Hands;
+    public RenderOrder RenderOrder
+    {
+        get => _renderOrder;
+        set
+        {
+            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
+            _renderOrder = value;
+        }
+    }
+
+
+    private IUnit? _owner = null;
+    public IUnit? Owner 
+    {
+        get => _owner;
+        set
+        {
+            IUIElement.SetOwner(_owner, value, this);
+            _owner = value;
+        }
+    }
 
 
     public ControlLib.BottomBinding? BottomBinding { get; set; } = null;
@@ -98,8 +123,10 @@ public class UIAnimation : AnimationHandler, IUIElement
 
 
     #region Constructor 
-    public UIAnimation(Vector2f position, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(Vector2f position, IUnit? owner = null, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
     {
+        Owner = owner;
+
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
 
@@ -109,10 +136,10 @@ public class UIAnimation : AnimationHandler, IUIElement
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
 
-        UIRender.AddToPriority(RenderOrder.Hands, this);
+        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
-    public UIAnimation(ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
-        : this(new Vector2f(), bottomBinding, paths)
+    public UIAnimation(IUnit? owner = null, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
+        : this(new Vector2f(), owner, bottomBinding, paths)
     {
         SetPositionCenter();
     }

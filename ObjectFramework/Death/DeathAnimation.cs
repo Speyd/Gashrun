@@ -1,24 +1,26 @@
 ﻿using AnimationLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 
-namespace ObjectFramework;
+namespace ObjectFramework.Death;
 public class DeathAnimation
 {
-    public AnimationState Animation {  get; set; }
+    public AnimationState Animation { get; set; }
     public bool IsExistsAfterDeath = false;
-    public TimeSpan Lifetime = new TimeSpan(0);
-    public DateTime CreationTime;
 
-    public DeathAnimation(AnimationState animation, bool isExistsAfterDeath, TimeSpan lifetime)
+    public long LifetimeMilliseconds = 0;
+    public Stopwatch Stopwatch = new();
+
+    public DeathAnimation(AnimationState animation, bool isExistsAfterDeath, long lifetimeMilliseconds)
     {
         Animation = animation;
         IsExistsAfterDeath = isExistsAfterDeath;
-        Lifetime = lifetime;
+        LifetimeMilliseconds = lifetimeMilliseconds;
     }
     public DeathAnimation(AnimationState animation)
     {

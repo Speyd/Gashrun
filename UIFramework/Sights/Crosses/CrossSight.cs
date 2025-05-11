@@ -148,7 +148,8 @@ public class CrossSight : Sight
             Drawables.Add(Crosses[i].VertexArray);
         }
     }
-    public CrossSight(int amountCross, Vector2f positionOnScreen, Color color)
+    public CrossSight(int amountCross, Vector2f positionOnScreen, Color color, IUnit? owner = null)
+         : base(owner)
     {
         if (amountCross <= 0)
             throw new ArgumentException("Amount of crosses must be greater than zero.", nameof(amountCross));

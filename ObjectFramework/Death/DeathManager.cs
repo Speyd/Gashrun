@@ -8,11 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace ObjectFramework;
+namespace ObjectFramework.Death;
 public static class DeathManager
 {
-    static List<DiedData> DiedSprite = new();
-    static List<DiedData> AfterDiedSprite = new();
+    static List<DeathData> DiedSprite = new();
+    static List<DeathData> AfterDiedSprite = new();
 
     static readonly Result jammerResult = new Result();
 
@@ -32,7 +32,7 @@ public static class DeathManager
             diedObj.Sprite.Render(jammerResult, unit);
         });
     }
-    private static void UpdateDied(DiedData diedObj)
+    private static void UpdateDied(DeathData diedObj)
     {
         if (diedObj.Sprite.Animation.Index == diedObj.Sprite.Animation.AmountFrame - 1)
             diedObj.LastFrame = true;
@@ -44,14 +44,14 @@ public static class DeathManager
                 AfterDiedSprite.Add(diedObj);
         }
     }
-    private static void UpdateAfterDied(DiedData diedObj)
+    private static void UpdateAfterDied(DeathData diedObj)
     {
-        if (DateTime.UtcNow - diedObj.Animation.CreationTime >= diedObj.Animation.Lifetime)
-           AfterDiedSprite.Remove(diedObj);
+        if (diedObj.Animation.Stopwatch.ElapsedMilliseconds >= diedObj.Animation.LifetimeMilliseconds)
+            AfterDiedSprite.Remove(diedObj);
     }
-    public static void AddDiedObject(DiedData diedData)
+    public static void AddDiedObject(DeathData diedData)
     {
-        diedData.Animation.CreationTime = DateTime.UtcNow;
+        diedData.Animation.Stopwatch.Restart();
         DiedSprite.Add(diedData);
     }
 }

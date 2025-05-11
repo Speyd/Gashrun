@@ -11,7 +11,7 @@ using ScreenLib;
 using UIFramework.Render;
 using UIFramework.IndicatorsBar.Content;
 using UIFramework.IndicatorsBar.Filler;
-
+using ProtoRender.Object;
 
 namespace UIFramework.IndicatorsBar;
 public class FillBar : Bar
@@ -99,7 +99,8 @@ public class FillBar : Bar
     public FillSegment Backward { get; init; }
 
     public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent,
-    float forwardValue, float backwardValue)
+    float forwardValue, float backwardValue, IUnit? owner = null)
+        :base(owner)
     {
         FillColor = Color.Transparent;
 
@@ -113,8 +114,8 @@ public class FillBar : Bar
         Drawables.Add(Backward.Fill);
         UpdatePosition();
     }
-    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent)
-        : this(forwardFillContent, backwardFillContent, 100, 0)
+    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent, IUnit? owner = null)
+        : this(forwardFillContent, backwardFillContent, 100, 0, owner)
     { }
 
     private void UpdateMaxValues()

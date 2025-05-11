@@ -19,16 +19,41 @@ public abstract class Sight : IUIElement
     public virtual Vector2f PositionOnScreen { get; set; }
     public List<Drawable> Drawables { get; init; } = new List<Drawable>();
 
+    private RenderOrder _renderOrder = RenderOrder.Indicators;
+    public RenderOrder RenderOrder
+    {
+        get => _renderOrder;
+        set
+        {
+            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
+            _renderOrder = value;
+        }
+    }
+
+
+    private IUnit? _owner = null;
+    public IUnit? Owner
+    {
+        get => _owner;
+        set
+        {
+            IUIElement.SetOwner(_owner, value, this);
+            _owner = value;
+        }
+    }
     public virtual SFML.Graphics.Color FillColor{ get; set; }
 
-    public Sight(Drawable drawable)
+    public Sight(Drawable drawable, IUnit? owner = null)
     {
+        Owner = owner;
+
         Drawables.Add(drawable);
-        UIRender.AddToPriority(RenderOrder.Indicators, this);
+        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
-    public Sight()
+    public Sight(IUnit? owner = null)
     {
-        UIRender.AddToPriority(RenderOrder.Indicators, this);
+        Owner = owner;
+        UIRender.AddToPriority(owner, RenderOrder, this);
     }
 
     public abstract void Render();

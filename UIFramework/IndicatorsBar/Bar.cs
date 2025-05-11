@@ -32,6 +32,29 @@ public class Bar: IUIElement
     public virtual List<Drawable> Drawables { get; init; } = new List<Drawable>();
 
 
+    private RenderOrder _renderOrder = RenderOrder.Indicators;
+    public RenderOrder RenderOrder
+    {
+        get => _renderOrder;
+        set
+        {
+            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
+            _renderOrder = value;
+        }
+    }
+
+
+    private IUnit? _owner = null;
+    public IUnit? Owner
+    {
+        get => _owner;
+        set
+        {
+            IUIElement.SetOwner(_owner, value, this);
+            _owner = value;
+        }
+    }
+
 
     protected virtual void UpdateBorderSize()
     {
@@ -145,15 +168,16 @@ public class Bar: IUIElement
     public virtual RectangleShape Border { get; set; }
 
 
-    public Bar()
+    public Bar(IUnit? owner = null)
     {
+        Owner = owner;
         Border = new RectangleShape();
 
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
 
         Drawables.Add(Border);
-        UIRender.AddToPriority(RenderOrder.Indicators, this);
+        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
 
     public virtual void Render()
