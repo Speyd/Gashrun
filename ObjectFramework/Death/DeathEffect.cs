@@ -8,25 +8,26 @@ using System.Threading.Tasks;
 
 
 namespace ObjectFramework.Death;
-public class DeathAnimation
+public class DeathEffect
 {
     public AnimationState Animation { get; set; }
-    public bool IsExistsAfterDeath = false;
 
     public long LifetimeMilliseconds = 0;
     public Stopwatch Stopwatch = new();
+    public DeathPhase DeathPhase { get; set; } = DeathPhase.Animating;
+    public bool LastFrame { get; set; } = false;
 
-    public DeathAnimation(AnimationState animation, bool isExistsAfterDeath, long lifetimeMilliseconds)
+    public DeathEffect(AnimationState animation, DeathPhase deathPhas, long lifetimeMilliseconds)
     {
         Animation = animation;
-        IsExistsAfterDeath = isExistsAfterDeath;
+        DeathPhase = deathPhas;
         LifetimeMilliseconds = lifetimeMilliseconds;
     }
-    public DeathAnimation(AnimationState animation)
+    public DeathEffect(AnimationState animation)
     {
         Animation = animation;
     }
-    public DeathAnimation()
+    public DeathEffect()
     {
         Animation = new AnimationState();
     }

@@ -51,7 +51,7 @@ public class UIText : RenderText, IUIElement
             _owner = value;
         }
     }
-    public uint OriginCharacterSize{ get; private set; }
+    public uint OriginCharacterSize{ get; protected set; }
 
 
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
@@ -66,7 +66,6 @@ public class UIText : RenderText, IUIElement
         Screen.HeightChangesFun += UpdateScreenInfo;
 
         Drawables.Add(Text);
-        UIRender.AddToPriority(owner, RenderOrder, this);
     }
     public UIText(RenderText render, IUnit? owner = null)
         : base(render)
@@ -80,7 +79,6 @@ public class UIText : RenderText, IUIElement
         Screen.HeightChangesFun += UpdateScreenInfo;
 
         Drawables.Add(Text);
-        UIRender.AddToPriority(owner, RenderOrder, this);
     }
 
 
@@ -107,12 +105,13 @@ public class UIText : RenderText, IUIElement
     }
     public void SetText(string text)
     {
-        if (Text is null || Font is null)
+        if (Text is null || Font is null || Text.CPointer == IntPtr.Zero)
             return;
 
         string lastText = Text.DisplayedString;
         Text.DisplayedString = text;
-        Text.Origin = new Vector2f(Text.GetLocalBounds().Width, 0);
+        if(Text.DisplayedString != String.Empty)
+            Text.Origin = new Vector2f(Text.GetLocalBounds().Width, 0);
 
         AdjustTextPosition(lastText);
     }
@@ -145,9 +144,9 @@ public class UIText : RenderText, IUIElement
     {
         UpdateInfo();
         foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
     }
-    public void UpdateInfo()
+    public virtual void UpdateInfo()
     {
 
     }

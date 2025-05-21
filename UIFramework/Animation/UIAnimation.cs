@@ -28,7 +28,7 @@ public class UIAnimation : AnimationHandler, IUIElement
     }
 
 
-    public Sprite RenderSprite { get; set; } = new Sprite();
+    public SFML.Graphics.Sprite RenderSprite { get; set; } = new SFML.Graphics.Sprite();
     public List<Drawable> Drawables { get; init; } = new List<Drawable>();
 
     private RenderOrder _renderOrder = RenderOrder.Hands;
@@ -135,8 +135,6 @@ public class UIAnimation : AnimationHandler, IUIElement
         Drawables.Add(RenderSprite);
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
-
-        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
     public UIAnimation(IUnit? owner = null, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
         : this(new Vector2f(), owner, bottomBinding, paths)
@@ -173,7 +171,7 @@ public class UIAnimation : AnimationHandler, IUIElement
     {
         UpdateInfo();
         foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
     }
     public virtual void UpdateInfo()
     {

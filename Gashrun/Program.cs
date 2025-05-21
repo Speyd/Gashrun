@@ -59,6 +59,13 @@ using UIFramework.Text;
 using ProtoRender.Map;
 using BresenhamAlgorithm.Algorithm;
 using System.Collections.Immutable;
+using ObjectFramework.VisualImpact;
+using ObjectFramework.VisualImpact.Data;
+using ObjectFramework.HitAction;
+using ObjectFramework.HitAction.DrawableBatch;
+using ObjectFramework.Trigger;
+using UIFramework.Sprite;
+using UIFramework.Texture;
 
 Screen.Initialize(1000, 600);
 
@@ -70,6 +77,31 @@ string mainBold = Path.Combine("Resources", "FontText", "ArialBold.ttf");
 FPS fpsChecker = new FPS("FPS: ", 24, new Vector2f(10, 10), ResourceManager.GetMainPath(mainBold), Color.White);
 MoveLib.Move.Collision.RadiusCheckTouch = 2;
 string mainFillWall = Path.Combine("Resources", "Image", "WallTexture", "Wall1.png");
+string mainFillDevil = Path.Combine("Resources", "Image", "Sprite", "Devil");
+
+var dddd = new SpriteObstacle(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))));
+var ffffg = new SpriteObstacle(ImageLoader.TexturesLoadFromFolder(ResourceManager.GetPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), false));
+ffffg.Animation.Speed = 20;
+ffffg.IsPassability = true;
+ffffg.Scale = 64;
+ffffg.Animation.IsAnimation = true;
+
+//dddd.Animation.IsAnimation = true;
+dddd.Animation.Speed = 20;
+dddd.IsPassability = true;
+dddd.Scale = 64;
+CircleShape pp = new CircleShape(20)
+{
+    FillColor = Color.Red
+};
+var bath = new HitDrawableBatch(new List<Drawable>() { pp, new Sprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))).First().Texture) });
+bath.Mode = HitDrawSelectMode.Random;
+
+HitEffect hitEffectData = new HitEffect(new VisualImpactData(dddd, 1000), bath);
+HitEffect hitEffectData1 = new HitEffect(new VisualImpactData(ffffg, 1000), null);
+HitDataCache.Load(ResourceManager.GetMainPath(mainFillWall), hitEffectData);
+HitDataCache.Load(ResourceManager.GetMainPath(mainFillDevil), hitEffectData1);
+
 var ffff = new TexturedWall(ResourceManager.GetMainPath(mainFillWall));
 ffff.Z.Axis = 0;
 
@@ -83,9 +115,7 @@ SpriteObstacle sprite1 = new SpriteObstacle(ResourceManager.GetMainPath(mainFill
     ShiftCubedX = 50,
     ShiftCubedY = 50,
 };
-Console.WriteLine($"obstacleDown: {map.Obstacles[(0, 0)].First().HitBox.MainHitBox[CoordinatePlane.Z, SideSize.Smaller].Side}");
-Console.WriteLine($"obstacleUptyUp: {map.Obstacles[(0, 0)].First().HitBox.MainHitBox[CoordinatePlane.Z, SideSize.Larger].Side}");
-//Console.WriteLine(map.Obstacles[(0, 0)].First().HitBox.MainHitBox[CoordinatePlane.Z, SideSize.Larger].Side);
+
 sprite1.Z.Axis = 0;
 sprite1.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(0);
 sprite1.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(Screen.Setting.Tile);
@@ -102,7 +132,7 @@ box[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
 box[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
 box[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(0);
 box[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(50);
-sprite1.HitBox.AddSegmentHitBox(box.MainHitBox.Body, "Center");
+sprite1.HitBox.SegmentedHitbox.Add(box.MainHitBox);
 SpriteObstacle sprite2 = new SpriteObstacle(ResourceManager.GetMainPath(mainFillWall32), true)
 {
     Scale = 64,
@@ -127,11 +157,12 @@ unitBulletT.HitBox.MainHitBox.HeightRenderMode = RenderHeightMode.EdgeBased;
 unitBulletT.IsRenderable = false;
 unitBulletT.MinDistanceFromWall = 0;
 unitBulletT.MoveSpeed = 20;
-
+unitBulletT.Animation.IsAnimation = true;
+unitBulletT.Animation.Speed = 50;
 string mainFillWall322 = Path.Combine("Resources", "Image", "Sprite", "GifSprite", "pokemon-8939_256.gif");
 Console.WriteLine(ImageLoader.TextureLoad(ResourceManager.GetMainPath(mainFillWall322))?.Count);
 AnimationState deathAnim = new AnimationState(ImageLoader.TextureLoad(ResourceManager.GetMainPath(mainFillWall322)) ?? new());
-deathAnim.Speed = 300;
+deathAnim.Speed = 30000;
 deathAnim.IsAnimation = true;
 
 
@@ -146,7 +177,7 @@ deathAnim.IsAnimation = true;
 //unit.Animation.IsAnimation = false;
 //unit.DeathAnimation = new DeathAnimation(deathAnim, true, new TimeSpan(10));
 
-//map.AddObstacle(2, 2,sprite1);
+map.AddObstacle(5, 2,sprite1);
 //map.AddObstacle(2, 3, unit);
 
 MultiWall multiWall = new MultiWall();
@@ -201,13 +232,23 @@ player.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 player.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
 player.HitBox.MainHitBox.RenderColor = Color.Red;
 player.DeathAction += Screen.Window.Close;
+HitBox box2 = new HitBox();
+box2.MainHitBox.RenderColor = Color.Green;
+box2[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
+box2[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
+box2[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
+box2[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
+box2[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(50);
+box2[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(50);
+player.HitBox.AddSegmentHitBox(box2.MainHitBox.Body, "Center");
+
 Unit player2 = new Unit(map, spriteObstacle1, 100);
 map.AddObstacle(6, 6, player2);
 player2.Z.Axis = 0;
 player2.Scale = 80;
 player2.Animation.IsAnimation = true;
 player2.Animation.Speed = 15;
-
+player2.MinDistanceFromWall = 0;
 player2.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(100);
@@ -215,10 +256,20 @@ player2.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
 player2.HitBox.MainHitBox.RenderColor = Color.Red;
+HitBox box1 = new HitBox();
+box1.MainHitBox.RenderColor = Color.Green;
+box1[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
+box1[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
+box1[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
+box1[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
+box1[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(50);
+box1[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(50);
+player2.HitBox.AddSegmentHitBox(box1.MainHitBox);
+player2.IsPassability = true;
 AnimationState animationState = new AnimationState(player2.Animation);
 animationState.IsAnimation = true;
-animationState.Speed = 100;
-player2.DeathAnimation = new DeathAnimation(animationState, false, 3000);
+animationState.Speed = 10;
+player2.DeathAnimation = new DeathEffect(animationState, DeathPhase.FrozenFinalFrame, 3000);
 
 MiniMap miniMap = new MiniMap(5, PositionsMiniMap.UpperRightCorner, ResourceManager.GetPath(@"Resources\Image\BorderMiniMap\Border.png"));
 
@@ -260,10 +311,10 @@ crossSight.Owner = player;
 //RoundSight roundSight = new RoundSight(Color.Red, 3);
 
 ControlLib.BottomBinding keyBindingHideMap = new ControlLib.BottomBinding(controls, miniMap.Hide, 350);
-ControlLib.BottomBinding keyBindingForward = new ControlLib.BottomBinding(bottomW, MoveLib.Move.MovePositions.Move, new object[] { map, player, 1, 0 });
-ControlLib.BottomBinding keyBindingBackward = new ControlLib.BottomBinding(bottomS, MoveLib.Move.MovePositions.Move, new object[] { map, player, -1, 0 });
-ControlLib.BottomBinding keyBindingLeft = new ControlLib.BottomBinding(bottomA, MoveLib.Move.MovePositions.Move, new object[] { map, player, 0, -1 });
-ControlLib.BottomBinding keyBindingRight = new ControlLib.BottomBinding(bottomD, MoveLib.Move.MovePositions.Move, new object[] { map, player, 0, 1 });
+ControlLib.BottomBinding keyBindingForward = new ControlLib.BottomBinding(bottomW, MovePositions.Move, new object[] { map, player, 1, 0 });
+ControlLib.BottomBinding keyBindingBackward = new ControlLib.BottomBinding(bottomS, MovePositions.Move, new object[] { map, player, -1, 0 });
+ControlLib.BottomBinding keyBindingLeft = new ControlLib.BottomBinding(bottomA, MovePositions.Move, new object[] { map, player, 0, -1 });
+ControlLib.BottomBinding keyBindingRight = new ControlLib.BottomBinding(bottomD, MovePositions.Move, new object[] { map, player, 0, 1 });
 
 ControlLib.BottomBinding keyBindingForward1 = new ControlLib.BottomBinding(bottomUpArrow, MoveLib.Move.MovePositions.Move, new object[] { map, player2, 1, 0 });
 ControlLib.BottomBinding keyBindingBackward1 = new ControlLib.BottomBinding(bottomDownArrow, MoveLib.Move.MovePositions.Move, new object[] { map, player2, -1, 0 });
@@ -296,16 +347,18 @@ string mainTextureSky = Path.Combine("Resources", "Image", "PartsWorldTexture", 
 
 Sky sky = new Sky(ResourceManager.GetPath(mainTextureSky));
 Floor floor = new Floor();
+//TexturedFloor texturedFloor = new TexturedFloor(ResourceManager.GetPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.jpg")), ResourceManager.GetPath(Path.Combine("Resources", "Shader", "FloorSetting.glsl")));
 RenderPartsWorld renderPartsWorld = new RenderPartsWorld(sky, floor);
 //230 170
 Texture tex = new Texture(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")));
 
-ControlLib.BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, Drawing.DrawingPoint, 0, new object[] { map, Camera.CurrentUnit, 30, Color.Red });
+void fffffff() { }
+ControlLib.BottomBinding shoot = new ControlLib.BottomBinding(new Bottom(VirtualKey.None), fffffff);
 
 UIAnimation uIElement = new UIAnimation(player, shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
-    SpeedAnimation = 5,
+    SpeedAnimation = 50,
     PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
@@ -313,7 +366,7 @@ UIAnimation uIElement = new UIAnimation(player, shoot, ResourceManager.GetPath(P
 }; UIAnimation uIElement1 = new UIAnimation(player2, shoot, ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
-    SpeedAnimation = 5,
+    SpeedAnimation = 50,
     PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
@@ -323,17 +376,20 @@ ControlLib.BottomBinding shootGun = new ControlLib.BottomBinding(new Bottom(Virt
 RenderText textMa = new RenderText("", 24, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), ResourceManager.GetMainPath(mainBold), Color.Yellow);
 UIText textMa1 = new UIText(textMa, player);
 UIText textMa2 = new UIText(textMa, player2);
+FadingText fadingText = new FadingText(textMa, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
+fadingText.Text.DisplayedString = "FFFFFFFFFF";
+fadingText.PositionOnScreen = new Vector2f(250, 250);
 
-var fff = new SpriteObstacle(ImageLoader.TexturesLoadFromFolder(@"D:\C++ проекты\Gashrun\Resources\Image\Sprite\Flame", false));
+var fff = new SpriteObstacle(ImageLoader.TexturesLoadFromFolder(ResourceManager.GetPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), false));
+
 fff.Animation.IsAnimation = true;
 fff.Animation.Speed = 20;
 fff.IsPassability = true;
 fff.Scale = 64;
-HitEffect hitEffect = new HitEffect(fff, 1000);
-ControlLib.BottomBinding draw = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, Drawing.DrawingObjectPointAsync, 0, new object[] { 30, Color.Red });
+ControlLib.BottomBinding draw = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, Drawing.DrawingObject, 0);
 
-StandartBullet bull = new StandartBullet(50, draw, null, hitEffect);
-UnitBullet unitBullet = new UnitBullet(50, unitBulletT, draw, null, hitEffect);
+StandartBullet bull = new StandartBullet(50, null);
+UnitBullet unitBullet = new UnitBullet(50, unitBulletT, null);
 unitBullet.Unit.Scale = 20;
 Magazine magazine = new Magazine(100, 12, unitBullet, textMa1, control);
 Magazine magazine2 = new Magazine(100, 12, bull, textMa2, control);
@@ -341,7 +397,7 @@ Magazine magazine2 = new Magazine(100, 12, bull, textMa2, control);
 
 ControlLib.BottomBinding shoot3 = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.LeftButton) }, 150);
 ControlLib.BottomBinding shoot4 = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, 2000);
-Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
+//Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
 
 Gun gun = new Gun(player, uIElement, magazine, shoot3);
 List<Bottom> controls3 = new List<Bottom>() { new Bottom(VirtualKey.M), new Bottom(VirtualKey.LeftControl) };
@@ -350,8 +406,8 @@ control.AddBottomBind(bindGunHide);
 //control.AddBottomBind(shoot);
 control.AddBottomBind(shoot3);
 control.AddBottomBind(shoot4);
-control.AddBottomBind(new BottomBinding(new Bottom(VirtualKey.J), () => Camera.CurrentUnit = player2));
-control.AddBottomBind(new BottomBinding(new Bottom(VirtualKey.K), () => Camera.CurrentUnit = player));
+control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.J), () => Camera.CurrentUnit = player2));
+control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.K), () => Camera.CurrentUnit = player));
 
 
 //AnimationContent a = new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "small.gif")))
@@ -374,12 +430,45 @@ ControlLib.BottomBinding bindBurHide = new ControlLib.BottomBinding(controls4, b
 control.AddBottomBind(bindBurHide);
 //FillBar Bar = new FillBar(bb, new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif"))), new ColorContent(Color.Red));
 //Sight sight = new RoundSight(Color.Blue, 4);
-//Screen.ScreenHeight = 1000;
-//Screen.ScreenWidth = 1500;
+
+
 
 
 VisualizerHitBox.VisualizerType = RenderLib.HitBox.VisualizerHitBoxType.VisualizeSelfRenderable;
 
+var dd = new TriggerDistance(1,
+    (owner) => { fadingText.Controller.FadingType = FadingType.Appears; fadingText.Controller.FadingTextLife = FadingTextLife.OneShotFreeze; fadingText.Owner = owner; },
+    (owner) => { fadingText.SwapType(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; });
+var bd = new TriggerButton(player, new BottomBinding(new Bottom(VirtualKey.E), () => { }));
+TriggerAnd triggerAnd = new TriggerAnd(dd, bd);
+triggerAnd.OnTriggered = (unit) =>
+{
+    var npc = dd.GetTarget();
+    if (npc != null)
+        map.DeleteObstacle(npc);
+};
+FadingSprite fadingSprite = new FadingSprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))).First().Texture, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
+fadingSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
+fadingSprite.Sprite.Scale = new Vector2f(0.5f, 0.5f);
+
+//TriggerHitBoxTouch triggerHitBoxTouch = new TriggerHitBoxTouch(player, player2,
+//    (owner) => { fadingText.Text.DisplayedString = "WELCOM"; fadingText.Controller.FadingType = FadingType.Appears; fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingText.Owner = owner; },
+//    (owner) => { fadingText.Text.DisplayedString = "BYYEE"; fadingText.SwapType(); fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; fadingText.Owner = owner; });
+TriggerHitBoxTouch triggerHitBoxTouch1 = new TriggerHitBoxTouch(player, player2,
+    (owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; },
+    null);
+//(owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; }
+//triggerHitBoxTouch1.OnTriggered += (owner) =>
+//{
+//    TriggerManager.RemoveTriger(owner, triggerHitBoxTouch1);
+//};
+//TriggerManager.AddTriger(player, triggerAnd);
+TriggerManager.AddTriger(player, triggerAnd);
+
+TriggerManager.AddTriger(player, triggerHitBoxTouch1);
+_ = TriggerManager.CheckTriggersAsync();
+//Screen.ScreenHeight = 1000;
+//Screen.ScreenWidth = 1500;
 try
 {
     while (Screen.Window.IsOpen)
@@ -390,21 +479,23 @@ try
         Screen.Window.Clear();
         DrawingQueue.ExecuteAll();
         //unitBullet.CHECK();
-        bresenhamAlgorithm.CalculationAlgorithm(map, Camera.CurrentUnit);
+        //if (Camera.CurrentUnit?.Map is not null)
+            bresenhamAlgorithm.CalculationAlgorithm(Camera.CurrentUnit.Map, Camera.CurrentUnit);
 
         //bresenhamAlgorithm1.CalculationAlgorithm(true);
         //bresenhamAlgorithm2.CalculationAlgorithm(false);
 
         renderPartsWorld.Render(Camera.CurrentUnit);
-        miniMap.Render(map, Camera.CurrentUnit);
+        if (Camera.CurrentUnit?.Map is not null)
+            miniMap.Render(Camera.CurrentUnit.Map, Camera.CurrentUnit);
        // miniMap1.Render(map);
 
         control.MakePressedParallel(Camera.CurrentUnit);
         UIRender.DrawingByPriority();
-       VisualizerHitBox.Render(map, Camera.CurrentUnit);
+        if (Camera.CurrentUnit.Map is not null)
+            VisualizerHitBox.Render(Camera.CurrentUnit.Map, Camera.CurrentUnit);
         //VisualizerHitBox2.Render(map, player);
-        HitEffect.Render(Camera.CurrentUnit);
-        DeathManager.Render(Camera.CurrentUnit);
+        BeyondRenderManager.Render(Camera.CurrentUnit);
         fpsChecker.Track();
 
         //mapMini.Render(map);

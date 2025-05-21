@@ -25,7 +25,7 @@ public class AnimationContent : AnimationHandler, IBarContent
 
         UpdateTexture(bar, AnimationState.CurrentFrame.Texture);
     }
-    public void UpdateTexture(RectangleShape bar, Texture texture)
+    public void UpdateTexture(RectangleShape bar, SFML.Graphics.Texture texture)
     {
         bar.Texture = texture;
 

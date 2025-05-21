@@ -177,14 +177,13 @@ public class Bar: IUIElement
         Screen.HeightChangesFun += UpdateScreenInfo;
 
         Drawables.Add(Border);
-        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
 
     public virtual void Render()
     {
         UpdateInfo();
         foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
     }
     public virtual void UpdateInfo() 
     { }

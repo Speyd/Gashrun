@@ -256,7 +256,7 @@ public class CrossSight : Sight
     {
         UpdateInfo();
         foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(OutputPriorityType.Interface, draw);
+            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
     }
     public override void UpdateInfo() { }
     public override void UpdateScreenInfo()

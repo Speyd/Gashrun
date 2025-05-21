@@ -14,7 +14,8 @@ namespace UIFramework.Render;
 
 public static class UIRender
 {
-    public static ConcurrentDictionary<IUnit, SortedDictionary<RenderOrder, List<IUIElement>>> TreePriority { get; }
+    public static ConcurrentDictionary<IUnit, SortedDictionary<RenderOrder, ConcurrentDictionary<IUIElement, byte>>> TreePriority { get; }
+
     static UIRender()
     {
         TreePriority = new();
@@ -25,14 +26,35 @@ public static class UIRender
         if (owner is null)
             return;
 
-        var priorityTree = TreePriority.GetOrAdd(owner, _ => new SortedDictionary<RenderOrder, List<IUIElement>>());
-        if (!priorityTree.TryGetValue(objRender, out List<IUIElement>? value))
+        var priorityTree = TreePriority.GetOrAdd(owner, _ => new SortedDictionary<RenderOrder, ConcurrentDictionary<IUIElement, byte>>());
+
+        if (!priorityTree.TryGetValue(objRender, out var elementSet))
         {
-            value = new List<IUIElement>();
-            priorityTree[objRender] = value;
+            elementSet = new ConcurrentDictionary<IUIElement, byte>();
+            priorityTree[objRender] = elementSet;
         }
 
-        value.Add(uiElement);
+        elementSet.TryAdd(uiElement, 0);
+    }
+
+    public static void RemoveFromPriority(IUnit? owner, RenderOrder objRender, IUIElement uiElement)
+    {
+        if (owner is null)
+            return;
+
+        if (TreePriority.TryGetValue(owner, out var priorityTree))
+        {
+            if (priorityTree.TryGetValue(objRender, out var elementSet))
+            {
+                elementSet.TryRemove(uiElement, out _);
+
+                if (elementSet.IsEmpty)
+                    priorityTree.Remove(objRender);
+
+                if (priorityTree.Count == 0)
+                    TreePriority.TryRemove(owner, out _);
+            }
+        }
     }
 
     public static void DrawingByPriority()
@@ -42,11 +64,18 @@ public static class UIRender
 
         if (TreePriority.TryGetValue(Camera.CurrentUnit, out var priorityTree))
         {
-            foreach (KeyValuePair<RenderOrder, List<IUIElement>> item in priorityTree)
+            var renderOrders = priorityTree.Keys.ToList();
+            foreach (var renderOrder in renderOrders)
             {
-                foreach (var value in item.Value)
-                    value.Render();
+                if (priorityTree.TryGetValue(renderOrder, out var elements))
+                {
+                    foreach (var uiElement in elements.Keys)
+                    {
+                        uiElement.Render();
+                    }
+                }
             }
         }
     }
+
 }

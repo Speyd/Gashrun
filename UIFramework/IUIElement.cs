@@ -9,11 +9,14 @@ using SFML.Graphics;
 using SFML.System;
 using ProtoRender.Object;
 using UIFramework.Render;
+using System.Collections.Concurrent;
 
 
 namespace UIFramework;
 public interface IUIElement
 {
+    public static ScreenLib.Output.OutputPriorityType OutputPriorityType { get; } = OutputPriorityType.Interface;
+
     float PreviousScreenWidth { get; }
     float PreviousScreenHeight { get; }
 
@@ -28,40 +31,40 @@ public interface IUIElement
     void UpdateScreenInfo();
     void Hide();
 
-    public static void SetRenderOrder(IUnit? unit,
-    RenderOrder fromOrder, RenderOrder toOrder,
-    IUIElement element)
+    public static void SetRenderOrder(IUnit? unit, RenderOrder fromOrder, RenderOrder toOrder, IUIElement element)
     {
         if (unit is null || !UIRender.TreePriority.TryGetValue(unit, out var renderDict))
             return;
 
-        if (renderDict.TryGetValue(fromOrder, out var fromList))
+        if (renderDict.TryGetValue(fromOrder, out var fromSet))
         {
-            fromList.Remove(element);
-            if (fromList.Count == 0)
-            {
+            fromSet.TryRemove(element, out _);
+
+            if (fromSet.IsEmpty)
                 renderDict.Remove(fromOrder);
-            }
         }
 
-        if (!renderDict.TryGetValue(toOrder, out var toList))
+        if (!renderDict.TryGetValue(toOrder, out var toSet))
         {
-            toList = new List<IUIElement>();
-            renderDict[toOrder] = toList;
+            toSet = new ConcurrentDictionary<IUIElement, byte>();
+            renderDict[toOrder] = toSet;
         }
 
-        toList.Add(element);
+        toSet.TryAdd(element, 0);
     }
+
 
     public static void SetOwner(IUnit? fromUnit, IUnit? toUnit, IUIElement element)
     {
         if (fromUnit is not null)
         {
-            if (UIRender.TreePriority.TryRemove(fromUnit, out var sortedDict))
+            if(fromUnit == toUnit)
+                UIRender.AddToPriority(toUnit, element.RenderOrder, element);
+            else if (UIRender.TreePriority.TryRemove(fromUnit, out var sortedDict))
             {
                 if (toUnit is not null)
                 {
-                    UIRender.AddToPriority(toUnit, RenderOrder.Hands, element);
+                    UIRender.AddToPriority(toUnit, element.RenderOrder, element);
                 }
             }
         }

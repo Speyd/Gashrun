@@ -10,6 +10,9 @@ using ProtoRender.Map;
 using HitBoxLib.Data.Observer;
 using System.Collections.Concurrent;
 using ObjectFramework.Death;
+using ObjectFramework.VisualImpact.Data;
+using ObjectFramework.VisualImpact;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ObjectFramework;
 public class Unit : SpriteObstacle, IUnit, IDamageable
@@ -126,17 +129,16 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     public Action<float>? DamageAction { get; set; }
 
     public Action? DeathAction { get; set; }
-    public DeathAnimation? DeathAnimation { get; set; } = null;
-    private void AddToDeathManager()
+    public DeathEffect? DeathAnimation { get; set; } = null;
+    private void ClearingDataAfteDeath()
     {
-        SpriteObstacle.SpritesToRender.Remove(this);
-        Map?.DeleteObstacleAsync(this);
+        Map?.DeleteObstacle(this);
+        SpritesToRender.Remove(this);
 
-        if (DeathAnimation is null)
-            return;
+        Map = null;
 
-        Animation = DeathAnimation.Animation;
-        DeathManager.AddDiedObject(new DeathData(this, DeathAnimation, false));
+        if (DeathAnimation is not null)
+            BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
     }
     #endregion
 
@@ -149,7 +151,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
         MaxHp = maxHp;
         Hp = maxHp;
 
-        DeathAction += AddToDeathManager;
+        DeathAction += ClearingDataAfteDeath;
         DamageAction += ValidateDamage;
 
         Fov = Math.PI / 3;
@@ -186,7 +188,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
         MoveSpeedAngel = unit.MoveSpeedAngel;
         MinDistanceFromWall = unit.MinDistanceFromWall;
 
-        DeathAction += AddToDeathManager;
+        DeathAction += ClearingDataAfteDeath;
         DamageAction += ValidateDamage;
         ObserverSettingChangesFun();
         Screen.WidthChangesFun += ObserverSettingChangesFun;
@@ -218,3 +220,5 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     }
     #endregion
 }
+
+

@@ -12,11 +12,14 @@ using DataPipes;
 using HitBoxLib.Data.HitBoxObject;
 using HitBoxLib.Data.Observer;
 using System.Threading.Tasks.Dataflow;
+using System.Reflection;
+using ObjectFramework.VisualImpact;
+using ObjectFramework.VisualImpact.Data;
+using ObstacleLib.SpriteLib;
 
 namespace UIFramework.Weapon.Bullets;
 public class UnitBullet : Bullet
 {
-    public HitEffect? BulletEffect { get; set; } = null;
     public Unit Unit { get; set; }
     private float Speed { get; set; } = 20;
 
@@ -26,24 +29,21 @@ public class UnitBullet : Bullet
     private ConcurrentDictionary<IUnit, byte> ignoreCollisionList = new();
 
 
-    public UnitBullet(float damage, float speed, Unit unit, ControlLib.BottomBinding? hitDrawbleObject, ControlLib.BottomBinding? hitObject, HitEffect? hitEffect)
-        :base(damage, hitDrawbleObject, hitObject, hitEffect)
+    public UnitBullet(float damage, float speed, Unit unit, ControlLib.BottomBinding? hitObject)
+        :base(damage, hitObject)
     {
-        BulletEffect = new HitEffect(unit, -1);
         Unit = new Unit(unit);
-
         Speed = speed;
     }
-    public UnitBullet(float damage, Unit unit, ControlLib.BottomBinding? hitDrawbleObject, ControlLib.BottomBinding? hitObject, HitEffect? hitEffect)
-       : this(damage, baseSpeed, unit, hitDrawbleObject, hitObject, hitEffect)
+    public UnitBullet(float damage, Unit unit, ControlLib.BottomBinding? hitObject)
+       : this(damage, baseSpeed, unit, hitObject)
     {}
-    public UnitBullet(Unit unit, ControlLib.BottomBinding? hitDrawbleObject, ControlLib.BottomBinding? hitObject, HitEffect? hitEffect)
-        : this(baseDamage, baseSpeed, unit, hitDrawbleObject, hitObject, hitEffect)
+    public UnitBullet(Unit unit, ControlLib.BottomBinding? hitObject)
+        : this(baseDamage, baseSpeed, unit, hitObject)
     {}
     public UnitBullet(UnitBullet bullet)
         :base(bullet)
     {
-        BulletEffect = bullet.BulletEffect;
         Unit = bullet.Unit;
 
         Speed = bullet.Speed;
@@ -53,6 +53,9 @@ public class UnitBullet : Bullet
 
     private void MoveAngle(Unit newUnit, Vector3f? resultObject)
     {
+        if (resultObject is null)
+            return;
+
         var unitCoordinate = new Vector2f((float)newUnit.X.Axis, (float)newUnit.Y.Axis);
         var targetCoordinate = new Vector2f((float)resultObject.Value.X, (float)resultObject.Value.Y);
 
@@ -62,29 +65,34 @@ public class UnitBullet : Bullet
         float angleInDegrees = angleInRadians * (180f / (float)Math.PI);
         newUnit.Angle = angleInRadians;
     }
-    private bool ValidateMapAndCleanupIfNull(IUnit owner, Unit unit)
-    {
-        if (unit.Map is null)
-        {
-            ignoreCollisionList.TryRemove(unit, out _);
-            owner?.IgnoreCollisionObjects.TryRemove(unit, out _);
-            return false;
-        }
-        return true;
-    }
-
-
     private void UseEffect(IUnit owner, Unit newUnit, (IObject?, Vector3f?) collisionObject)
     {
-        if (!ValidateMapAndCleanupIfNull(owner, newUnit))
-            return;
+        try
+        {
+            if (newUnit.Map is null)
+                throw new Exception("newUnit map is null");
 
-        MoveAngle(newUnit, collisionObject.Item2);
-        var raycastResult = Raycast.RaycastFun(newUnit.Map, newUnit);
-        Console.WriteLine(raycastResult.Item2.ToString());
-        var result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1? collisionObject: raycastResult;
-        OnHit(owner, newUnit, result.Item1, result.Item2 ?? new Vector3f());
-        newUnit.Map.DeleteObstacle(newUnit);
+            MoveAngle(newUnit, collisionObject.Item2);
+            var raycastResult = Raycast.RaycastFun(newUnit.Map, newUnit);
+
+            var result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1 ?
+                collisionObject :
+                raycastResult;
+            OnHit(owner, newUnit, result.Item1, result.Item2 ?? new Vector3f());
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in UseEffect: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+
+        }
+        finally
+        {
+            newUnit.Map?.DeleteObstacle(newUnit);
+            ignoreCollisionList.TryRemove(newUnit, out _);
+            owner?.IgnoreCollisionObjects.TryRemove(newUnit, out _);
+        }
     }
     public async Task ProcessMovementAsync(IUnit owner, Unit newUnit)
     {
@@ -96,14 +104,13 @@ public class UnitBullet : Bullet
             double deltaX = newUnit.Direction.X * newUnit.MoveSpeed;
             double deltaY = newUnit.Direction.Y * newUnit.MoveSpeed;
 
-            int? idEffect = BulletEffect?.Create(owner, newUnit);
-
+            int? idEffect = BeyondRenderManager.Create(owner, new VisualImpactData(newUnit, -1, false));
             await Task.Run(() =>
             {
                 try
                 {
                     (IObject?, Vector3f?) collisionObject;
-                    while ((collisionObject = MoveLib.Move.Collision.GetCollisionDetails(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
+                    while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
                     {
                         double deltaZ = newUnit.MoveSpeed * -(newUnit.VerticalAngle < 0
                             ? newUnit.VerticalAngle * (2.25 * Screen.ScreenRatio)
@@ -114,15 +121,17 @@ public class UnitBullet : Bullet
                         Thread.Sleep(30);
                     }
 
-                    UseEffect(owner, newUnit, collisionObject);
-
-                    if (idEffect is not null)
-                        HitEffect.Remove(idEffect.Value);
+                    UseEffect(owner, newUnit, collisionObject);  
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error in task ProcessMovementAsync: " + ex.Message);
                     Console.WriteLine(ex.StackTrace);
+                }
+                finally
+                {
+                    if (idEffect is not null)
+                        BeyondRenderManager.Remove(idEffect.Value);
                 }
             });
         }
@@ -142,32 +151,42 @@ public class UnitBullet : Bullet
             double deltaX = newUnit.Direction.X * newUnit.MoveSpeed;
             double deltaY = newUnit.Direction.Y * newUnit.MoveSpeed;
 
-            int? idEffect = BulletEffect?.Create(owner, newUnit);
-
-            (IObject?, Vector3f?) collisionObject;
-            while ((collisionObject = MoveLib.Move.Collision.GetCollisionDetails(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
+            int? idEffect = BeyondRenderManager.Create(owner, new VisualImpactData(newUnit, -1, false));
+            try
             {
-                double deltaZ = newUnit.MoveSpeed * -(newUnit.VerticalAngle < 0
-                             ? newUnit.VerticalAngle * (2.25 * Screen.ScreenRatio)
-                             : newUnit.VerticalAngle * (1.8 * Screen.ScreenRatio));
+                (IObject?, Vector3f?) collisionObject;
+                while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
+                {
+                    double deltaZ = newUnit.MoveSpeed * -(newUnit.VerticalAngle < 0
+                                 ? newUnit.VerticalAngle * (2.25 * Screen.ScreenRatio)
+                                 : newUnit.VerticalAngle * (1.8 * Screen.ScreenRatio));
 
-                newUnit.Z.Axis += deltaZ;
+                    newUnit.Z.Axis += deltaZ;
 
-                if(isFreezeTask)
-                    Thread.Sleep(30);
+                    if (isFreezeTask)
+                        Thread.Sleep(30);
+                }
+
+                UseEffect(owner, newUnit, collisionObject);
             }
-
-            UseEffect(owner, newUnit, collisionObject);
-            if (idEffect is not null)
-                HitEffect.Remove(idEffect.Value);
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in cycle while ProcessMovement: " + ex.Message);
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine($"Inner stack ProcessMovement: {ex.InnerException?.StackTrace}");
+            }
+            finally
+            {
+                if (idEffect is not null)
+                    BeyondRenderManager.Remove(idEffect.Value);
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error in task ProcessMovement: " + ex.Message);
+            Console.WriteLine("Error in ProcessMovement: " + ex.Message);
             Console.WriteLine(ex.StackTrace);
         }
     }
-
     public override async Task FlightAsync(IUnit owner)
     {
         try
@@ -197,7 +216,8 @@ public class UnitBullet : Bullet
         catch (Exception ex)
         {
             Console.WriteLine("Error in FlightAsync: " + ex.Message);
-            Console.WriteLine(ex.StackTrace);
+            Console.WriteLine($"Inner stack: {ex.InnerException?.StackTrace}");
+            Console.WriteLine($"Inner stack FLIGHTASYNC: {ex.StackTrace}");
         }
     }
     public override void Flight(IUnit owner)

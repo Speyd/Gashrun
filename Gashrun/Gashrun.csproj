@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.Core" Version="1.8.2" />
+    <PackageReference Include="EnginePseudo3D.Core" Version="1.9.3" />
   </ItemGroup>
 
   <ItemGroup>

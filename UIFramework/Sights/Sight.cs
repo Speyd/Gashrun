@@ -48,12 +48,10 @@ public abstract class Sight : IUIElement
         Owner = owner;
 
         Drawables.Add(drawable);
-        UIRender.AddToPriority(Owner, RenderOrder, this);
     }
     public Sight(IUnit? owner = null)
     {
         Owner = owner;
-        UIRender.AddToPriority(owner, RenderOrder, this);
     }
 
     public abstract void Render();

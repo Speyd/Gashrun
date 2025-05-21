@@ -19,7 +19,7 @@ public class Map : IMap
     /// <summary>
     /// A concurrent dictionary storing obstacles grouped by their cell coordinates.
     /// </summary>
-    public ConcurrentDictionary<(int, int), List<IObject>> Obstacles { get; init; }
+    public ConcurrentDictionary<(int, int), ConcurrentDictionary<IObject, byte>> Obstacles { get; init; }
 
     /// <summary>
     /// Initializes a new map with a border filled with a specified object.
@@ -30,7 +30,7 @@ public class Map : IMap
     public Map(IObject fillingObject, int height, int width)
     {
         Setting = new Setting(height, width);
-        Obstacles = new ConcurrentDictionary<(int X, int Y), List<IObject>>();
+        Obstacles = new ConcurrentDictionary<(int X, int Y), ConcurrentDictionary<IObject, byte>>();
         RefillingObstacles(fillingObject);
     }
     /// <summary>
@@ -58,34 +58,31 @@ public class Map : IMap
         if (!CheckTrueCoordinates(x, y))
             throw new Exception("The coordinates for adding the object are not correct(CheckTrueAddObstacle)");
 
-        var list = Obstacles.GetOrAdd((x, y), _ => new List<IObject>());
-        lock (list)
+        var list = Obstacles.GetOrAdd((x, y), _ => new ConcurrentDictionary<IObject, byte>());
+        if (list.Count == 0)
         {
-            if (list.Count == 0)
-            {
-                list.Add(addObstacle);
-                addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
-                return;
-            }
-
-            if (list.Contains(addObstacle))
-                throw new Exception("The object is already added (CheckTrueAddObstacle)");
-
-            if (addObstacle.IsSingleAddable)
-                throw new Exception("This object cannot be added to a cell with other objects (CheckTrueAddObstacle)");
-
-            foreach (var obst in list)
-            {
-                if (obst.IsSingleAddable)
-                    throw new Exception("An object already in the cell does not allow more objects (CheckTrueAddObstacle)");
-
-                if (addObstacle.X == obst.X && addObstacle.Y == obst.Y)
-                    throw new Exception("An object at these coordinates already exists! (CheckTrueAddObstacle)");
-            }
-
-            list.Add(addObstacle);
+            list.TryAdd(addObstacle, 0);
             addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
+            return;
         }
+
+        if (list.ContainsKey(addObstacle))
+            throw new Exception("The object is already added (CheckTrueAddObstacle)");
+
+        if (addObstacle.IsSingleAddable)
+            throw new Exception("This object cannot be added to a cell with other objects (CheckTrueAddObstacle)");
+
+        foreach (var obst in list)
+        {
+            if (obst.Key.IsSingleAddable)
+                throw new Exception("An object already in the cell does not allow more objects (CheckTrueAddObstacle)");
+
+            if (addObstacle.X == obst.Key.X && addObstacle.Y == obst.Key.Y)
+                throw new Exception("An object at these coordinates already exists! (CheckTrueAddObstacle)");
+        }
+
+        list.TryAdd(addObstacle, 0);
+        addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
     }
     /// <summary>
     /// Adds an obstacle at a specific cell.
@@ -152,7 +149,7 @@ public class Map : IMap
         if (!Obstacles.ContainsKey((cellX, cellY)))
             throw new Exception("Coordinates to update not found(UpdateCoordinatesObstacle)");
 
-        if (!Obstacles[(cellX, cellY)].Contains(obstacle))
+        if (!Obstacles[(cellX, cellY)].ContainsKey(obstacle))
             throw new Exception("Object to update not found(UpdateCoordinatesObstacle)");
 
         if (mappX != cellX || mappY != cellY)
@@ -164,21 +161,16 @@ public class Map : IMap
 
             if (Obstacles.TryGetValue((cellX, cellY), out var list))
             {
-                lock (list)
-                {
-                    list.Remove(obstacle);
-                }
+                list.TryRemove(obstacle, out _);
             }
-            var newList = Obstacles.GetOrAdd((mappX, mappY), _ => new List<IObject>());
-            newList.Add(obstacle);
+            var newList = Obstacles.GetOrAdd((mappX, mappY), _ => new ConcurrentDictionary<IObject, byte>());
+            newList.TryAdd(obstacle, 0);
         }
     }
 
-
-
     private void RemoveObstacle(IObject obstacle)
     {
-        Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].Remove(obstacle);
+        Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].TryRemove(obstacle, out _);
 
         if (Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].Count == 0)
             Obstacles.Remove((Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY)), out _);
@@ -194,8 +186,7 @@ public class Map : IMap
         else if (!Obstacles.ContainsKey((x, y)))
             throw new Exception("There is nothing to delete in this cell(DeleteAllCellObstacle)");
 
-        List<IObject>? removedObstacles;
-        Obstacles.Remove((x, y), out removedObstacles);
+        Obstacles.TryRemove((x, y), out _);
     }
     /// <summary>
     /// Deletes an obstacle at specific coordinates.
@@ -211,7 +202,7 @@ public class Map : IMap
         else if (!Obstacles.ContainsKey((mX, mY)))
             throw new Exception("There is nothing to delete in this cell(DeleteAllCellObstacle)");
 
-        IObject? tempObst = Obstacles[(mX, mY)].FirstOrDefault(o => o.X.Axis == x && o.Y.Axis == y);
+        IObject? tempObst = Obstacles[(mX, mY)].FirstOrDefault(o => o.Key.X.Axis == x && o.Key.Y.Axis == y).Key;
         if (tempObst is null)
             throw new Exception("There is no such object in this cell(DeleteAllCellObstacle)");
 
@@ -225,13 +216,10 @@ public class Map : IMap
         var key = (obstacle.CellX, obstacle.CellY);
         if (Obstacles.TryGetValue(key, out var obstaclesList))
         {
-            lock (obstaclesList)
-            {
-                if (!obstaclesList.Contains(obstacle))
-                    throw new Exception("There is no such object in this cell(DeleteAllCellObstacle)");
+            if (!obstaclesList.ContainsKey(obstacle))
+                throw new Exception("There is no such object in this cell(DeleteAllCellObstacle)");
 
-                RemoveObstacle(obstacle);
-            }
+            RemoveObstacle(obstacle);
         }
     }
     /// <summary>
@@ -250,13 +238,10 @@ public class Map : IMap
 
             if (Obstacles.TryGetValue((obstacle.CellX, obstacle.CellY), out var obstaclesList))
             {
-                lock (obstaclesList)
-                {
-                    if (obstaclesList.Contains(obstacle))
-                        RemoveObstacle(obstacle);
-                    else
-                        throw new Exception("The specified object does not exist in this cell (DeleteObstacleAsync)");
-                }
+                if (obstaclesList.ContainsKey(obstacle))
+                    RemoveObstacle(obstacle);
+                else
+                    throw new Exception("The specified object does not exist in this cell (DeleteObstacleAsync)");
             }
             else
             {

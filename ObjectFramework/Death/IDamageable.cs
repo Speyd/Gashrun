@@ -16,5 +16,5 @@ public interface IDamageable
     public Action<float>? DamageAction { get; set; }
 
     public Action? DeathAction { get; set; }
-    public DeathAnimation? DeathAnimation { get; set; }
+    public DeathEffect? DeathAnimation { get; set; }
 }
