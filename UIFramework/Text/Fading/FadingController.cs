@@ -8,22 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Render;
 
-namespace UIFramework.Text;
+namespace UIFramework.Text.Fading;
 public class FadingController
 {
     public static readonly byte MaxAlphaValue = 255;
 
-    private long _fadingTimeMilliseconds;
-    public long FadingTimeMilliseconds
-    {
-        get => _fadingTimeMilliseconds;
-        set
-        {
-            _fadingTimeMilliseconds = value;
-            multTimeToByte = MaxAlphaValue / (float)value;
-        }
-    }
-    private float multTimeToByte = 0;
+    public long FadingTimeMilliseconds { get; set; }
 
     public readonly Stopwatch Stopwatch = new();
     private bool StartStopwatch = true;

@@ -42,7 +42,7 @@ public class Magazine
 
     public UIText UIText { get; set; }
 
-    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, RenderText textMagazine, ControlLib.Control control)
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, UIText textMagazine, ControlLib.Control control)
     {
 
         ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
@@ -51,18 +51,6 @@ public class Magazine
 
         ClipBullet = new MagazineState(maxAmmoInMagazine, bullet);
         MagazineBullet = new MagazineState(maxTotalAmmo, bullet);
-
-        UIText = new UIText(textMagazine);
-    }
-    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, RenderText textMagazine, ControlLib.Control control)
-    {
-
-        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
-        control.AddBottomBind(ReloadBind);
-        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
-
-        ClipBullet = new MagazineState(maxAmmoInMagazine);
-        MagazineBullet = new MagazineState(maxTotalAmmo);
 
         UIText = new UIText(textMagazine);
     }

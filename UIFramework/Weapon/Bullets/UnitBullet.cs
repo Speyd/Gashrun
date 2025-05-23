@@ -4,18 +4,9 @@ using ProtoRender.Object;
 using SFML.System;
 using ScreenLib;
 using RayTracingLib;
-using HitBoxLib.HitBoxSegment;
-using HitBoxLib.PositionObject;
-using HitBoxLib.Segment.SignsTypeSide;
-using ProtoRender.Map;
-using DataPipes;
-using HitBoxLib.Data.HitBoxObject;
-using HitBoxLib.Data.Observer;
-using System.Threading.Tasks.Dataflow;
-using System.Reflection;
-using ObjectFramework.VisualImpact;
-using ObjectFramework.VisualImpact.Data;
-using ObstacleLib.SpriteLib;
+using InteractionFramework.VisualImpact;
+using InteractionFramework.VisualImpact.Data;
+
 
 namespace UIFramework.Weapon.Bullets;
 public class UnitBullet : Bullet

@@ -6,7 +6,7 @@ uniform vec2 u_playerDir;       // Player direction
 uniform vec2 u_playerPlane;     // Camera plane
 uniform sampler2D u_texture;        // Floor texture
 uniform float u_verticalAngle;      // Player's angle
-uniform int u_Raising;     // Raises the wall to a certain height, multiplied by the player's position
+uniform float u_Raising;     // Raises the wall to a certain height, multiplied by the player's position
 uniform float u_textureScale;       //Increase texture size
 uniform float u_DivisionCoef;      //Basic screen size divider (initially half)
 uniform float u_normalAngleGreaterZero;     //Normalization of the divider when lowering the chamber    

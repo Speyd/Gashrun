@@ -68,8 +68,8 @@ public interface IUIElement
                 }
             }
         }
-        else
-            UIRender.AddToPriority(toUnit, RenderOrder.Hands, element);
+        else if(toUnit is not null)
+            UIRender.AddToPriority(toUnit, element.RenderOrder, element);
     }
 
 }

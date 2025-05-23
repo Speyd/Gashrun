@@ -8,10 +8,7 @@ public class TriggerDistance : ITrigger
 {
     public bool isTriggered { get; private set; } = false;
     public Action<IUnit>? OnTriggered { get; set; } = null;
-    private bool IsInvokeTriggered = false;
-
     public Action<IUnit>? OnUntriggered { get; set; } = null;
-    private bool IsInvokeUntriggered = true;
 
     public IObject? CurrentTargetObject { get; set; }
     public double MinTriggerDistance { get; set; } = 1;
@@ -36,22 +33,14 @@ public class TriggerDistance : ITrigger
             if (distance > 0 && distance <= MinTriggerDistance * ScreenLib.Screen.Setting.Tile)
             {
                 CurrentTargetObject = result.Item1;
-                if (!IsInvokeTriggered)
-                {
-                    OnTriggered?.Invoke(unit);
-                    IsInvokeTriggered = true;
-                    IsInvokeUntriggered = false;
-                }
+                OnTriggered?.Invoke(unit);
+
                 isTriggered = true;
             }
             else if (isTriggered)
             {
-                if (!IsInvokeUntriggered)
-                {
-                    OnUntriggered?.Invoke(unit);
-                    IsInvokeUntriggered = true;
-                    IsInvokeTriggered = false;
-                }
+                OnUntriggered?.Invoke(unit);
+               
                 isTriggered = false;
             }
         }

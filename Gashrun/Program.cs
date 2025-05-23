@@ -54,18 +54,21 @@ using ObstacleLib.SpriteLib.Add;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Diagnostics;
-using ObjectFramework.Death;
+using InteractionFramework.Death;
 using UIFramework.Text;
 using ProtoRender.Map;
 using BresenhamAlgorithm.Algorithm;
 using System.Collections.Immutable;
-using ObjectFramework.VisualImpact;
-using ObjectFramework.VisualImpact.Data;
-using ObjectFramework.HitAction;
-using ObjectFramework.HitAction.DrawableBatch;
-using ObjectFramework.Trigger;
+using InteractionFramework.VisualImpact;
+using InteractionFramework.VisualImpact.Data;
+using InteractionFramework.HitAction;
+using InteractionFramework.HitAction.DrawableBatch;
+using InteractionFramework.Trigger;
 using UIFramework.Sprite;
 using UIFramework.Texture;
+using ScreenLib.Output;
+using UIFramework.Overlay;
+using UIFramework.Text.Fading;
 
 Screen.Initialize(1000, 600);
 
@@ -94,7 +97,10 @@ CircleShape pp = new CircleShape(20)
 {
     FillColor = Color.Red
 };
-var bath = new HitDrawableBatch(new List<Drawable>() { pp, new Sprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))).First().Texture) });
+var newddd = new Sprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))).First().Texture);
+newddd.Scale = new Vector2f(newddd.Scale.X, 0.5f);
+
+var bath = new HitDrawableBatch(new List<Drawable>() { pp, newddd });
 bath.Mode = HitDrawSelectMode.Random;
 
 HitEffect hitEffectData = new HitEffect(new VisualImpactData(dddd, 1000), bath);
@@ -347,7 +353,7 @@ string mainTextureSky = Path.Combine("Resources", "Image", "PartsWorldTexture", 
 
 Sky sky = new Sky(ResourceManager.GetPath(mainTextureSky));
 Floor floor = new Floor();
-//TexturedFloor texturedFloor = new TexturedFloor(ResourceManager.GetPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.jpg")), ResourceManager.GetPath(Path.Combine("Resources", "Shader", "FloorSetting.glsl")));
+TexturedFloor texturedFloor = new TexturedFloor(ResourceManager.GetPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.jpg")), ResourceManager.GetPath(Path.Combine("Resources", "Shader", "FloorSetting.glsl")));
 RenderPartsWorld renderPartsWorld = new RenderPartsWorld(sky, floor);
 //230 170
 Texture tex = new Texture(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif")));
@@ -373,12 +379,17 @@ UIAnimation uIElement = new UIAnimation(player, shoot, ResourceManager.GetPath(P
     ScaleX = 1.25f
 };
 ControlLib.BottomBinding shootGun = new ControlLib.BottomBinding(new Bottom(VirtualKey.R), 350);
-RenderText textMa = new RenderText("", 24, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), ResourceManager.GetMainPath(mainBold), Color.Yellow);
+
+RenderText textMa = new RenderText("", 30, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), ResourceManager.GetMainPath(mainBold), Color.Yellow);
 UIText textMa1 = new UIText(textMa, player);
+textMa1.HorizontalAlignment = HorizontalAlign.Right;
+textMa1.VerticalAlignment = VerticalAlign.Top;
+
+
 UIText textMa2 = new UIText(textMa, player2);
 FadingText fadingText = new FadingText(textMa, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
 fadingText.Text.DisplayedString = "FFFFFFFFFF";
-fadingText.PositionOnScreen = new Vector2f(250, 250);
+fadingText.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(75), Screen.GetPercentHeight(75));
 
 var fff = new SpriteObstacle(ImageLoader.TexturesLoadFromFolder(ResourceManager.GetPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), false));
 
@@ -391,18 +402,18 @@ ControlLib.BottomBinding draw = new ControlLib.BottomBinding(new List<Bottom> { 
 StandartBullet bull = new StandartBullet(50, null);
 UnitBullet unitBullet = new UnitBullet(50, unitBulletT, null);
 unitBullet.Unit.Scale = 20;
-Magazine magazine = new Magazine(100, 12, unitBullet, textMa1, control);
+Magazine magazine = new Magazine(100, 12, bull, textMa1, control);
 Magazine magazine2 = new Magazine(100, 12, bull, textMa2, control);
 
 
 ControlLib.BottomBinding shoot3 = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.LeftButton) }, 150);
 ControlLib.BottomBinding shoot4 = new ControlLib.BottomBinding(new List<Bottom> { new Bottom(VirtualKey.None) }, 2000);
-//Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
+Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
 
 Gun gun = new Gun(player, uIElement, magazine, shoot3);
 List<Bottom> controls3 = new List<Bottom>() { new Bottom(VirtualKey.M), new Bottom(VirtualKey.LeftControl) };
-ControlLib.BottomBinding bindGunHide = new ControlLib.BottomBinding(controls3, gun.Animation.Hide, 350);
-control.AddBottomBind(bindGunHide);
+//ControlLib.BottomBinding bindGunHide = new ControlLib.BottomBinding(controls3, gun.Animation.Hide, 350);
+//control.AddBottomBind(bindGunHide);
 //control.AddBottomBind(shoot);
 control.AddBottomBind(shoot3);
 control.AddBottomBind(shoot4);
@@ -439,7 +450,7 @@ VisualizerHitBox.VisualizerType = RenderLib.HitBox.VisualizerHitBoxType.Visualiz
 var dd = new TriggerDistance(1,
     (owner) => { fadingText.Controller.FadingType = FadingType.Appears; fadingText.Controller.FadingTextLife = FadingTextLife.OneShotFreeze; fadingText.Owner = owner; },
     (owner) => { fadingText.SwapType(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; });
-var bd = new TriggerButton(player, new BottomBinding(new Bottom(VirtualKey.E), () => { }));
+var bd = new TriggerButton(new BottomBinding(new Bottom(VirtualKey.E), () => { }), null, null);
 TriggerAnd triggerAnd = new TriggerAnd(dd, bd);
 triggerAnd.OnTriggered = (unit) =>
 {
@@ -450,25 +461,68 @@ triggerAnd.OnTriggered = (unit) =>
 FadingSprite fadingSprite = new FadingSprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "nek.png"))).First().Texture, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
 fadingSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
 fadingSprite.Sprite.Scale = new Vector2f(0.5f, 0.5f);
-
+FadingSprite fadingSprite1 = new FadingSprite(ImageLoader.TexturesLoad(ResourceManager.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))).First().Texture, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
+fadingSprite1.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
+fadingSprite1.Sprite.Scale = new Vector2f(0.5f, 0.5f);
 //TriggerHitBoxTouch triggerHitBoxTouch = new TriggerHitBoxTouch(player, player2,
 //    (owner) => { fadingText.Text.DisplayedString = "WELCOM"; fadingText.Controller.FadingType = FadingType.Appears; fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingText.Owner = owner; },
 //    (owner) => { fadingText.Text.DisplayedString = "BYYEE"; fadingText.SwapType(); fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; fadingText.Owner = owner; });
-TriggerHitBoxTouch triggerHitBoxTouch1 = new TriggerHitBoxTouch(player, player2,
+TriggerCollision triggerHitBoxTouch1 = new TriggerCollision(player2, ObjectSide.Top,
     (owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; },
-    null);
+    (owner) => { fadingSprite1.Controller.FadingType = FadingType.Appears; fadingSprite1.Restart(); fadingSprite1.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite1.Owner = owner; });
 //(owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; }
 //triggerHitBoxTouch1.OnTriggered += (owner) =>
 //{
 //    TriggerManager.RemoveTriger(owner, triggerHitBoxTouch1);
 //};
 //TriggerManager.AddTriger(player, triggerAnd);
-TriggerManager.AddTriger(player, triggerAnd);
+//TriggerManager.AddTriger(player, triggerAnd);
 
 TriggerManager.AddTriger(player, triggerHitBoxTouch1);
+
+TriggerRay triggerRay = new TriggerRay(null, null);
+//TriggerAnd triggerAnd = new TriggerAnd(dd, bd);
+UIText textMa1aa = new UIText(textMa, null);
+textMa1aa.PositionOnScreen = new Vector2f(0, 0);
+TriggerAnd triggerAndAA = new TriggerAnd(triggerRay);
+
+//triggerAndAA.OnTriggered = (unit) =>
+//{
+//    var npc = triggerRay.GetTarget();
+//    if (npc is not null)
+//    {
+//        if (unit != textMa1aa.Owner)
+//            textMa1aa.Owner = unit;
+//        else
+//            textMa1aa.h = false;
+
+//        textMa1aa.SetText(DebugOverlay.GetInfoOverlay(npc));
+//    }
+//};
+//triggerAndAA.OnUntriggered = (unit) =>
+//{
+//    textMa1aa.h = true;
+//};
+//TriggerManager.AddTriger(player, triggerAndAA);
+
+
+
+UIText textMa1aad1 = new UIText(textMa, null);
+textMa1aad1.PositionOnScreen = new Vector2f(1000, 0);
+textMa1aad1.HorizontalAlignment = HorizontalAlign.Right;
+
+TriggerToggleButton trrr = new TriggerToggleButton(new BottomBinding(new Bottom(VirtualKey.F2), () => { }),
+    (unit) => { if (unit != textMa1aad1.Owner) textMa1aad1.Owner = unit;else textMa1aad1.IsHide = false; textMa1aad1.SetText(DebugOverlay.GetInfoOverlay(unit)); },
+    (unit) => { textMa1aad1.IsHide = true; }
+    );
+TriggerManager.AddTriger(player, trrr);
 _ = TriggerManager.CheckTriggersAsync();
 //Screen.ScreenHeight = 1000;
 //Screen.ScreenWidth = 1500;
+
+
+
+VisualEffectHelper.VisualEffect = new Darkness(ResourceManager.GetPath(Path.Combine("Resources", "Shader", "Effect", "DarknessEffect.glsl")));
 try
 {
     while (Screen.Window.IsOpen)
@@ -477,9 +531,12 @@ try
 
         Screen.Window.DispatchEvents();
         Screen.Window.Clear();
+
         DrawingQueue.ExecuteAll();
+        WriteQueue.ExecuteAll();
+
         //unitBullet.CHECK();
-        //if (Camera.CurrentUnit?.Map is not null)
+        if (Camera.CurrentUnit?.Map is not null)
             bresenhamAlgorithm.CalculationAlgorithm(Camera.CurrentUnit.Map, Camera.CurrentUnit);
 
         //bresenhamAlgorithm1.CalculationAlgorithm(true);

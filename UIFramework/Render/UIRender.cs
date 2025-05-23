@@ -47,7 +47,6 @@ public static class UIRender
             if (priorityTree.TryGetValue(objRender, out var elementSet))
             {
                 elementSet.TryRemove(uiElement, out _);
-
                 if (elementSet.IsEmpty)
                     priorityTree.Remove(objRender);
 

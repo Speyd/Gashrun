@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace UIFramework.Text;
+namespace UIFramework.Text.Fading;
 public enum FadingType
 {
     Disappears,

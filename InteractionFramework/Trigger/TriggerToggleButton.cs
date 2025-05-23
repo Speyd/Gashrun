@@ -1,9 +1,13 @@
 ﻿using ControlLib;
 using ProtoRender.Object;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace InteractionFramework.Trigger;
-public class TriggerButton : ITrigger
+public class TriggerToggleButton : ITrigger
 {
     public bool isTriggered { get; private set; } = false;
 
@@ -11,12 +15,11 @@ public class TriggerButton : ITrigger
     public Action<IUnit>? OnUntriggered { get; set; }
 
     private readonly BottomBinding binding;
+    private bool wasPressedLastCheck = false;
 
-
-    public TriggerButton(BottomBinding key, Action<IUnit>? onTriggered, Action<IUnit>? onUntriggered)
+    public TriggerToggleButton(BottomBinding key, Action<IUnit>? onTriggered, Action<IUnit>? onUntriggered)
     {
         binding = key;
-
         OnTriggered = onTriggered;
         OnUntriggered = onUntriggered;
     }
@@ -24,12 +27,20 @@ public class TriggerButton : ITrigger
     public void CheckTrigger(IUnit unit)
     {
         binding.Listen();
-        isTriggered = binding.IsPress;
+
+        bool isPressedNow = binding.IsPress;
+
+        if (isPressedNow && !wasPressedLastCheck)
+            isTriggered = !isTriggered;
 
 
-        if(isTriggered)
+        if (isTriggered)
             OnTriggered?.Invoke(unit);
         else
             OnUntriggered?.Invoke(unit);
+
+
+        wasPressedLastCheck = isPressedNow;
     }
 }
+

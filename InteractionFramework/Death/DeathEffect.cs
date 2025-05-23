@@ -10,7 +10,7 @@ public class DeathEffect
     public long LifetimeMilliseconds = 0;
     public Stopwatch Stopwatch = new();
     public DeathPhase DeathPhase { get; set; } = DeathPhase.Animating;
-    public bool LastFrame { get; internal set; } = false;
+    public bool LastFrame { get; set; } = false;
 
     public DeathEffect(AnimationState animation, DeathPhase deathPhas, long lifetimeMilliseconds)
     {

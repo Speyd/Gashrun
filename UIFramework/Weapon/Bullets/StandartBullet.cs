@@ -1,6 +1,5 @@
 ﻿using RayTracingLib;
-using ProtoRender.Object;
-using ObjectFramework.Death;
+
 
 namespace UIFramework.Weapon.Bullets;
 public class StandartBullet : Bullet

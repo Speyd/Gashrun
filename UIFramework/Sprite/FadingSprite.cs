@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Sprite;
-using UIFramework.Text;
 using UIFramework.Render;
 using SFML.Graphics;
+using UIFramework.Text.Fading;
 
 
 namespace UIFramework.Texture;

@@ -8,10 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.Core" Version="1.9.3" />
+    <PackageReference Include="EnginePseudo3D.Core" Version="1.9.6" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\InteractionFramework\InteractionFramework.csproj" />
     <ProjectReference Include="..\UIFramework\UIFramework.csproj" />
   </ItemGroup>
 

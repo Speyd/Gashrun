@@ -5,24 +5,38 @@ using ProtoRender.Object;
 namespace InteractionFramework.Trigger;
 public static class TriggerManager
 {
-    private static readonly ConcurrentDictionary<IUnit, ConcurrentDictionary<ITrigger, byte>> triggers = new();
+    public static readonly ConcurrentDictionary<IUnit, ConcurrentDictionary<ITrigger, byte>> triggers = new();
+
+    private static CancellationTokenSource tokenSource = new();
     public static CancellationToken cancellationToken = new CancellationToken();
 
+    public static void Start()
+    {
+        _ = CheckTriggersAsync();
+    }
+
+    public static void Stop()
+    {
+        tokenSource.Cancel();
+    }
     public static async Task CheckTriggersAsync()
     {
         await Task.Run(async () =>
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                Parallel.ForEach(triggers.Keys, ScreenLib.Screen.Setting.ParallelOptions, triggerObj =>
+                Parallel.ForEach(triggers, ScreenLib.Screen.Setting.ParallelOptions, pair =>
                 {
-                    Parallel.ForEach(triggers[triggerObj].Keys, ScreenLib.Screen.Setting.ParallelOptions, trigger =>
+                    var unit = pair.Key;
+                    var triggerDict = pair.Value;
+
+                    Parallel.ForEach(triggerDict.Keys, ScreenLib.Screen.Setting.ParallelOptions, trigger =>
                     {
-                        trigger.CheckTrigger(triggerObj);
+                        trigger.CheckTrigger(unit);
                     });
                 });
 
-                await Task.Delay(30, cancellationToken);
+                await Task.Delay(100, cancellationToken);
             }
         }, cancellationToken);
     }

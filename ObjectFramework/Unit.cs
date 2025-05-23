@@ -9,10 +9,17 @@ using ProtoRender.Object;
 using ProtoRender.Map;
 using HitBoxLib.Data.Observer;
 using System.Collections.Concurrent;
-using ObjectFramework.Death;
-using ObjectFramework.VisualImpact.Data;
-using ObjectFramework.VisualImpact;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using InteractionFramework.Death;
+using InteractionFramework.VisualImpact.Data;
+using InteractionFramework.VisualImpact;
+using DataPipes;
+using ObstacleLib.SpriteLib.Add;
+using ProtoRender.RenderAlgorithm;
+using ProtoRender.RenderInterface;
+using SFML.Graphics;
+using TextureLib;
+using EffectLib;
+
 
 namespace ObjectFramework;
 public class Unit : SpriteObstacle, IUnit, IDamageable
@@ -137,8 +144,8 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
 
         Map = null;
 
-        if (DeathAnimation is not null)
-            BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
+        //if (DeathAnimation is not null)
+        //    BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
     }
     #endregion
 
@@ -220,5 +227,3 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     }
     #endregion
 }
-
-

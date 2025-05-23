@@ -1,7 +1,9 @@
-﻿using ProtoRender.Object;
+﻿using HitBoxLib.Operations;
+using ProtoRender.Object;
 using ProtoRender.WindowInterface;
 using ScreenLib;
 using ScreenLib.Output;
+using SFML.Audio;
 using SFML.Graphics;
 using SFML.System;
 using System;
@@ -10,14 +12,32 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Render;
+using UIFramework.Sights;
 using UIFramework.Weapon.BulletMagazine;
 
 
 namespace UIFramework.Text;
+public enum VerticalAlign { None, Top, Center, Bottom }
+public enum HorizontalAlign { None, Left, Center, Right }
+
 public class UIText : RenderText, IUIElement
 {
     public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
     public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
+    public bool _isHide = false;
+    public bool IsHide
+    {  get => _isHide;
+       set
+        {
+            if (_isHide != value)
+            {
+                _isHide = value;
+                Hide();
+            }
+
+        }
+    }
+
     private Vector2f _positionOnScreen;
     public Vector2f PositionOnScreen
     {
@@ -53,6 +73,10 @@ public class UIText : RenderText, IUIElement
     }
     public uint OriginCharacterSize{ get; protected set; }
 
+    public VerticalAlign VerticalAlignment { get; set; } = VerticalAlign.None;
+    public HorizontalAlign HorizontalAlignment { get; set; } = HorizontalAlign.None;
+
+    object lockObj = new();
 
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
         :base(text, size, position, pathToFont, color)
@@ -80,40 +104,93 @@ public class UIText : RenderText, IUIElement
 
         Drawables.Add(Text);
     }
+    public UIText(UIText uIText)
+        : base(uIText)
+    {
+        Owner = uIText.Owner;
+
+        OriginCharacterSize = uIText.OriginCharacterSize;
+        _positionOnScreen = uIText._positionOnScreen;
+
+        VerticalAlignment = uIText.VerticalAlignment;
+        HorizontalAlignment = uIText.HorizontalAlignment;
+
+        Screen.WidthChangesFun += UpdateScreenInfo;
+        Screen.HeightChangesFun += UpdateScreenInfo;
+
+        Drawables.Add(Text);
+    }
 
 
 
-    private Vector2f AdjustTextSize(Vector2f position)
+    public virtual Vector2f AdjustTextSize(Vector2f position)
     {
         uint previousCharacterSize = OriginCharacterSize == Text.CharacterSize? 0: Text.CharacterSize;
 
-        Text.CharacterSize = (uint)(OriginCharacterSize / (Screen.ScreenRatio >= 1 ? Screen.ScreenRatio : 1 / Screen.ScreenRatio));
+        Text.CharacterSize = (uint)(OriginCharacterSize / Screen.MultHeight);
 
-        float x = position.X + previousCharacterSize - Text.CharacterSize;
-        float y = position.Y + previousCharacterSize - Text.CharacterSize;
+        float x = position.X + previousCharacterSize - (uint)(OriginCharacterSize / Screen.MultHeight);
+        float y = position.Y + previousCharacterSize - (uint)(OriginCharacterSize / Screen.MultHeight);
 
         return new Vector2f(x, y);
     }
-    private void AdjustTextPosition(string previousText)
+    public float GetHorizontalBounds()
     {
-        float mult = Text.CharacterSize;
-        float previousWidth = previousText.Length;
-        float newWidth = Text.DisplayedString.Length;
+        FloatRect bounds = Text.GetLocalBounds();
+        float width = bounds.Width;
+        float offsetX = bounds.Left;
 
-        _positionOnScreen = new Vector2f(_positionOnScreen.X + previousWidth - newWidth, _positionOnScreen.Y);
+        float boundsX = 0;
+        switch (HorizontalAlignment)
+        {
+            case HorizontalAlign.Center:
+                boundsX = width / 2f + offsetX;
+                break;
+            case HorizontalAlign.Right:
+                boundsX = width + offsetX;
+                break;
+            case HorizontalAlign.Left:
+                boundsX = offsetX;
+                break;
+        }
+
+        return boundsX;
+    }
+    public float GetVerticalBounds()
+    {
+        FloatRect bounds = Text.GetLocalBounds();
+        float height = bounds.Height;
+        float offsetY = bounds.Top;
+
+        float boundsY = 0;
+        switch (VerticalAlignment)
+        {
+            case VerticalAlign.Center:
+                boundsY = height / 2f + offsetY;
+                break;
+            case VerticalAlign.Top:
+                boundsY = offsetY;
+                break;
+            case VerticalAlign.Bottom:
+                boundsY = height + offsetY;
+                break;
+        }
+
+        return boundsY;
+    }
+    internal virtual void SetTextAsync(string text)
+    {
+        Text.DisplayedString = text;
+
+        Text.Origin = new Vector2f(GetHorizontalBounds(), GetVerticalBounds());
         Text.Position = _positionOnScreen;
     }
-    public void SetText(string text)
+    public virtual void SetText(string text)
     {
-        if (Text is null || Font is null || Text.CPointer == IntPtr.Zero)
+        if (Text.DisplayedString == text)
             return;
 
-        string lastText = Text.DisplayedString;
-        Text.DisplayedString = text;
-        if(Text.DisplayedString != String.Empty)
-            Text.Origin = new Vector2f(Text.GetLocalBounds().Width, 0);
-
-        AdjustTextPosition(lastText);
+        WriteQueue.EnqueueDraw(this, text);
     }
 
 
@@ -157,10 +234,13 @@ public class UIText : RenderText, IUIElement
     }
     public void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
-            Drawables.Add(Text);
+        {
+            if(!Drawables.Contains(Text))
+                Drawables.Add(Text);
+        }
     }
     #endregion
 }

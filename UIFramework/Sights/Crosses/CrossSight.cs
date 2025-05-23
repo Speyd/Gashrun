@@ -66,9 +66,7 @@ public class CrossSight : Sight
         set
         {
             _originWidthCross = value;
-            _widthCross = Screen.ScreenRatio >= 1 ?
-                value / Screen.ScreenRatio :
-                value * Screen.ScreenRatio;
+            _widthCross = value / ScreenLib.Screen.MultWidth;
             UpdateVertexArray();
         }
     }
@@ -82,9 +80,7 @@ public class CrossSight : Sight
         set
         {
             _originHeightCross = value;
-            _heightCross = Screen.ScreenRatio >= 1 ?
-                value / Screen.ScreenRatio :
-                value * Screen.ScreenRatio;
+            _heightCross = value / ScreenLib.Screen.MultHeight;
             UpdateVertexArray();
         }
     }
@@ -98,9 +94,7 @@ public class CrossSight : Sight
         set
         {
             _originIndentFromCenter = value;
-            _indentFromCenter = Screen.ScreenRatio >= 1? 
-                value / Screen.ScreenRatio:
-                value * Screen.ScreenRatio;
+            _indentFromCenter = value / (ScreenLib.Screen.MultHeight < ScreenLib.Screen.MultWidth ? ScreenLib.Screen.MultHeight : ScreenLib.Screen.MultWidth);
             UpdateVertexArray();
         }
     }
