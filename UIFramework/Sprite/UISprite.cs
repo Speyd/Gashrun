@@ -37,7 +37,20 @@ public class UISprite: IUIElement
             _renderOrder = value;
         }
     }
+    public bool _isHide = false;
+    public bool IsHide
+    {
+        get => _isHide;
+        set
+        {
+            if (_isHide != value)
+            {
+                _isHide = value;
+                Hide();
+            }
 
+        }
+    }
 
     private IUnit? _owner = null;
     public IUnit? Owner
@@ -106,9 +119,6 @@ public class UISprite: IUIElement
         float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
 
         Sprite.Scale = new Vector2f(Sprite.Scale.X, Sprite.Scale.Y * heightScale);
-        //FloatRect bounds = Sprite.GetLocalBounds();
-        //Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
-
         PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
 
         PreviousScreenHeight = Screen.ScreenHeight;
@@ -133,10 +143,13 @@ public class UISprite: IUIElement
     }
     public void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
-            Drawables.Add(Sprite);
+        {
+            if (!Drawables.Contains(Sprite))
+                Drawables.Add(Sprite);
+        }
     }
     #endregion
 }

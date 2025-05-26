@@ -1,13 +1,6 @@
 ﻿using ScreenLib;
 using SFML.Graphics;
 using SFML.System;
-using SixLabors.ImageSharp.Processing;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace UIFramework.Sights.Crosses;

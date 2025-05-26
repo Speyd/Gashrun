@@ -20,16 +20,16 @@ public class UnitBullet : Bullet
     private ConcurrentDictionary<IUnit, byte> ignoreCollisionList = new();
 
 
-    public UnitBullet(float damage, float speed, Unit unit, ControlLib.BottomBinding? hitObject)
+    public UnitBullet(float damage, float speed, Unit unit, ControlLib.ButtonBinding? hitObject)
         :base(damage, hitObject)
     {
         Unit = new Unit(unit);
         Speed = speed;
     }
-    public UnitBullet(float damage, Unit unit, ControlLib.BottomBinding? hitObject)
+    public UnitBullet(float damage, Unit unit, ControlLib.ButtonBinding? hitObject)
        : this(damage, baseSpeed, unit, hitObject)
     {}
-    public UnitBullet(Unit unit, ControlLib.BottomBinding? hitObject)
+    public UnitBullet(Unit unit, ControlLib.ButtonBinding? hitObject)
         : this(baseDamage, baseSpeed, unit, hitObject)
     {}
     public UnitBullet(UnitBullet bullet)
@@ -64,7 +64,7 @@ public class UnitBullet : Bullet
                 throw new Exception("newUnit map is null");
 
             MoveAngle(newUnit, collisionObject.Item2);
-            var raycastResult = Raycast.RaycastFun(newUnit.Map, newUnit);
+            var raycastResult = Raycast.RaycastFun(newUnit);
 
             var result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1 ?
                 collisionObject :
@@ -101,7 +101,7 @@ public class UnitBullet : Bullet
                 try
                 {
                     (IObject?, Vector3f?) collisionObject;
-                    while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
+                    while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
                     {
                         double deltaZ = newUnit.MoveSpeed * -(newUnit.VerticalAngle < 0
                             ? newUnit.VerticalAngle * (2.25 * Screen.ScreenRatio)
@@ -146,7 +146,7 @@ public class UnitBullet : Bullet
             try
             {
                 (IObject?, Vector3f?) collisionObject;
-                while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit.Map, newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
+                while ((collisionObject = MoveLib.Move.Collision.GetCollisionObject(newUnit, deltaX, deltaY, ignoreCollisionList.Keys.ToList())).Item1 is null)
                 {
                     double deltaZ = newUnit.MoveSpeed * -(newUnit.VerticalAngle < 0
                                  ? newUnit.VerticalAngle * (2.25 * Screen.ScreenRatio)

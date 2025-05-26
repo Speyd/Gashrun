@@ -1,24 +1,13 @@
 ﻿using ControlLib;
-using ProtoRender.WindowInterface;
-using ScreenLib.Output;
-using ScreenLib;
-using SFML.Graphics;
-using SFML.System;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UIFramework.Render;
 using System.Diagnostics;
 using UIFramework.Text;
 using UIFramework.Weapon.Bullets;
 
+
 namespace UIFramework.Weapon.BulletMagazine;
-using TextureLib;
 public class Magazine
 {
-    public ControlLib.BottomBinding ReloadBind { get; set; }
+    public ControlLib.ButtonBinding ReloadBind { get; set; }
 
 
     public MagazineState ClipBullet { get; set; }
@@ -45,9 +34,9 @@ public class Magazine
     public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, UIText textMagazine, ControlLib.Control control)
     {
 
-        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
+        ReloadBind = new(new Button(VirtualKey.R), Reload, _timeToReloadMls);
         control.AddBottomBind(ReloadBind);
-        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
+        control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), UpdateInfo));
 
         ClipBullet = new MagazineState(maxAmmoInMagazine, bullet);
         MagazineBullet = new MagazineState(maxTotalAmmo, bullet);
@@ -57,9 +46,9 @@ public class Magazine
     public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, UIText textMagazine, ControlLib.Control control)
     {
 
-        ReloadBind = new(new Bottom(VirtualKey.R), Reload, _timeToReloadMls);
+        ReloadBind = new(new Button(VirtualKey.R), Reload, _timeToReloadMls);
         control.AddBottomBind(ReloadBind);
-        control.AddBottomBind(new ControlLib.BottomBinding(new Bottom(VirtualKey.None), UpdateInfo));
+        control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), UpdateInfo));
 
         ClipBullet = new MagazineState(maxAmmoInMagazine);
         MagazineBullet = new MagazineState(maxTotalAmmo);
@@ -118,10 +107,10 @@ public class Magazine
                 await bullet.FlightAsync(owner);
 
         }
-        if (MagazineBullet.Capacity == 0)
+        if (ClipBullet.Capacity == 0)
             Reload();
 
-        return true;
+        return !IsReload;
     }
     public bool UseAmmo(ProtoRender.Object.IUnit owner)
     {

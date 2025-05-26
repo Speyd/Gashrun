@@ -25,11 +25,12 @@ public interface IUIElement
     RenderOrder RenderOrder { get; set; }
     IUnit? Owner { get; set; }
 
+    bool IsHide {  get; set; }
 
     void Render();
     void UpdateInfo();
     void UpdateScreenInfo();
-    void Hide();
+    internal void Hide();
 
     public static void SetRenderOrder(IUnit? unit, RenderOrder fromOrder, RenderOrder toOrder, IUIElement element)
     {

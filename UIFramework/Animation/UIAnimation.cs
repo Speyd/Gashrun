@@ -1,15 +1,11 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using System.Numerics;
 using AnimationLib;
-using ProtoRender.RenderAlgorithm;
 using ScreenLib;
-using ScreenLib.Output;
-using TextureLib;
-using ControlLib;
+using TextureLib.Loader;
 using UIFramework.Render;
-using ObjectFramework;
 using ProtoRender.Object;
+
 
 namespace UIFramework.Animation;
 public class UIAnimation : AnimationHandler, IUIElement
@@ -41,7 +37,20 @@ public class UIAnimation : AnimationHandler, IUIElement
             _renderOrder = value;
         }
     }
+    public bool _isHide = false;
+    public bool IsHide
+    {
+        get => _isHide;
+        set
+        {
+            if (_isHide != value)
+            {
+                _isHide = value;
+                Hide();
+            }
 
+        }
+    }
 
     private IUnit? _owner = null;
     public IUnit? Owner 
@@ -55,7 +64,7 @@ public class UIAnimation : AnimationHandler, IUIElement
     }
 
 
-    public ControlLib.BottomBinding? BottomBinding { get; set; } = null;
+    public ControlLib.ButtonBinding? BottomBinding { get; set; } = null;
 
     public float _scaleX = 1.0f;
     private float _originScaleX = 0;
@@ -123,20 +132,20 @@ public class UIAnimation : AnimationHandler, IUIElement
 
 
     #region Constructor 
-    public UIAnimation(Vector2f position, IUnit? owner = null, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(Vector2f position, IUnit? owner = null, ControlLib.ButtonBinding? bottomBinding = null, params string[] paths)
     {
         Owner = owner;
 
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
 
-        AnimationState.AddFrames(ImageLoader.TexturesLoad(paths));
+        AnimationState.AddFrames(ImageLoader.Load(paths));
 
         Drawables.Add(RenderSprite);
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
     }
-    public UIAnimation(IUnit? owner = null, ControlLib.BottomBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(IUnit? owner = null, ControlLib.ButtonBinding? bottomBinding = null, params string[] paths)
         : this(new Vector2f(), owner, bottomBinding, paths)
     {
         SetPositionCenter();
@@ -213,10 +222,13 @@ public class UIAnimation : AnimationHandler, IUIElement
     }
     public virtual void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
-            Drawables.Add(RenderSprite);
+        {
+            if (!Drawables.Contains(RenderSprite))
+                Drawables.Add(RenderSprite);
+        }
     }
 
 

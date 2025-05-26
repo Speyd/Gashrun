@@ -9,6 +9,7 @@ using UIFramework.Sprite;
 using UIFramework.Render;
 using SFML.Graphics;
 using UIFramework.Text.Fading;
+using UIFramework.Text.Fading.FadingEnums;
 
 
 namespace UIFramework.Texture;

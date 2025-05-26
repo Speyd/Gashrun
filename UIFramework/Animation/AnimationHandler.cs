@@ -1,11 +1,5 @@
 ﻿using AnimationLib;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TextureLib;
+using TextureLib.Loader;
 
 
 namespace UIFramework.Animation;
@@ -53,7 +47,7 @@ public class AnimationHandler
     }
     public virtual void AddFrame(params string[] paths)
     {
-        AnimationState.AddFrames(ImageLoader.TexturesLoad(paths));
+        AnimationState.AddFrames(ImageLoader.Load(paths));
     }
     public virtual void RemoveFrame(int index)
     {

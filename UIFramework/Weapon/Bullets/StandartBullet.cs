@@ -1,13 +1,20 @@
-﻿using RayTracingLib;
+﻿using HitBoxLib.PositionObject;
+using HitBoxLib.Segment.SignsTypeSide;
+using ProtoRender.Map;
+using ProtoRender.Object;
+using RayTracingLib;
+using ScreenLib;
+using SFML.System;
+using System.Collections.Concurrent;
 
 
 namespace UIFramework.Weapon.Bullets;
 public class StandartBullet : Bullet
 {
-    public StandartBullet(float damage, ControlLib.BottomBinding? hitObject)
+    public StandartBullet(float damage, ControlLib.ButtonBinding? hitObject)
         :base(damage, hitObject)
     {}
-    public StandartBullet(ControlLib.BottomBinding? hitObject)
+    public StandartBullet(ControlLib.ButtonBinding? hitObject)
        : this(baseDamage, hitObject)
     {}
     public StandartBullet(StandartBullet standartBullet)
@@ -19,7 +26,7 @@ public class StandartBullet : Bullet
         if (owner.Map is null)
             return;
 
-        var result = Raycast.RaycastFun(owner.Map, owner);
+        var result = Raycast.RaycastFun(owner);
 
 
         if (result.Item1 is null)
@@ -36,7 +43,7 @@ public class StandartBullet : Bullet
 
         await Task.Run(() =>
         {
-            var result = Raycast.RaycastFun(owner.Map, owner);
+            var result = Raycast.RaycastFun(owner);
             if (result.Item1 is null)
                 return;
 

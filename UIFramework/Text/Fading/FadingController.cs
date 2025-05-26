@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Render;
+using UIFramework.Text.Fading.FadingEnums;
 
 namespace UIFramework.Text.Fading;
 public class FadingController

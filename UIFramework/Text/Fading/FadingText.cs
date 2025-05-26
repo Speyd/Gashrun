@@ -1,6 +1,7 @@
 ﻿using ProtoRender.Object;
 using ProtoRender.WindowInterface;
 using UIFramework.Render;
+using UIFramework.Text.Fading.FadingEnums;
 
 
 namespace UIFramework.Text.Fading;

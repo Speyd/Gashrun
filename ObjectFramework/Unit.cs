@@ -1,8 +1,4 @@
-﻿using AnimationLib;
-using HitBoxLib.HitBoxSegment;
-using HitBoxLib.PositionObject;
-using ObstacleLib;
-using ObstacleLib.SpriteLib;
+﻿using ObstacleLib.SpriteLib;
 using ScreenLib;
 using SFML.System;
 using ProtoRender.Object;
@@ -10,15 +6,8 @@ using ProtoRender.Map;
 using HitBoxLib.Data.Observer;
 using System.Collections.Concurrent;
 using InteractionFramework.Death;
-using InteractionFramework.VisualImpact.Data;
 using InteractionFramework.VisualImpact;
-using DataPipes;
-using ObstacleLib.SpriteLib.Add;
-using ProtoRender.RenderAlgorithm;
-using ProtoRender.RenderInterface;
-using SFML.Graphics;
-using TextureLib;
-using EffectLib;
+using InteractionFramework.VisualImpact.Data;
 
 
 namespace ObjectFramework;
@@ -144,17 +133,34 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
 
         Map = null;
 
-        //if (DeathAnimation is not null)
-        //    BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
+        if (DeathAnimation is not null)
+            BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
     }
     #endregion
-
-    public IMap? Map { get; set; } = null;
 
     public Unit(IMap map, SpriteObstacle obstacle, int maxHp)
         : base(obstacle)
     {
         Map = map;
+        MaxHp = maxHp;
+        Hp = maxHp;
+
+        DeathAction += ClearingDataAfteDeath;
+        DamageAction += ValidateDamage;
+
+        Fov = Math.PI / 3;
+        HalfFov = (float)Fov / 2;
+
+        Angle = 0;
+        Angle -= 0.000001;
+        VerticalAngle -= 0.000001;
+        MaxRenderTile = 1200;
+        ObserverSettingChangesFun();
+        Screen.WidthChangesFun += ObserverSettingChangesFun;
+    }
+    public Unit(SpriteObstacle obstacle, int maxHp)
+       : base(obstacle)
+    {
         MaxHp = maxHp;
         Hp = maxHp;
 
@@ -203,6 +209,18 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
 
 
     #region IUnit
+    public override double GetDisplayAngle(double spriteAngle)
+    {
+        double angle = this.Angle - spriteAngle;
+
+        if (angle > Math.PI)
+            angle -= 2 * Math.PI;
+        else if (angle < -Math.PI)
+            angle += 2 * Math.PI;
+
+        return angle;
+    }
+
     public void ObserverSettingChangesFun()
     {
         float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfFov));

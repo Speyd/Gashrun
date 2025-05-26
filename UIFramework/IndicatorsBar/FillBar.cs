@@ -146,13 +146,16 @@ public class FillBar : Bar
     }
     public override void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
         {
-            Drawables.Add(Border);
-            Drawables.Add(Forward.Fill);
-            Drawables.Add(Backward.Fill);
+            if (!Drawables.Contains(Border))
+                Drawables.Add(Border);
+            if (!Drawables.Contains(Forward.Fill))
+                Drawables.Add(Forward.Fill);
+            if (!Drawables.Contains(Backward.Fill))
+                Drawables.Add(Backward.Fill);
 
         }
     }

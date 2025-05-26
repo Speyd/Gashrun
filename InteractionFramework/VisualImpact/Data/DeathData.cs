@@ -2,6 +2,7 @@
 using ProtoRender.Object;
 using System.Collections.Concurrent;
 using InteractionFramework.Death;
+using InteractionFramework.Audio;
 
 
 namespace InteractionFramework.VisualImpact.Data;
@@ -9,14 +10,16 @@ public class DeathData : IBeyoundData
 {
     public SpriteObstacle Sprite;
     public DeathEffect DeathEffect;
+    public SoundEmitter? SoundEmitter;
 
     public int Id {  get; set; } 
     public IUnit? Owner { get; set; }
 
-    public DeathData(SpriteObstacle sprite, DeathEffect deathEffect)
+    public DeathData(SpriteObstacle sprite, DeathEffect deathEffect, SoundEmitter? soundEmitter = null)
     {
         Sprite = sprite;
         DeathEffect = deathEffect;
+        SoundEmitter = soundEmitter;
 
         Sprite.Animation = DeathEffect.Animation;
         Sprite.Animation.Index = 0;
@@ -37,10 +40,12 @@ public class DeathData : IBeyoundData
     }
     public void UpdateBeforeAdd(double x, double y, double z)
     {
+        SoundEmitter?.Play(new SFML.System.Vector3f((float)x, (float)y, (float)z));
         DeathEffect.Stopwatch.Restart();
     }
     public void UpdateBeforeAdd()
     {
+        SoundEmitter?.Play(new SFML.System.Vector3f((float)Sprite.X.Axis, (float)Sprite.Y.Axis, (float)Sprite.Z.Axis));
         DeathEffect.Stopwatch.Restart();
     }
 

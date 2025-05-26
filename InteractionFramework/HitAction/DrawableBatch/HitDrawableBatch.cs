@@ -1,11 +1,13 @@
 ﻿using NGenerics.Extensions;
 using ObstacleLib.SpriteLib.Add;
+using ObstacleLib.TexturedWallLib;
 using SFML.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TextureLib.Textures;
 
 
 namespace InteractionFramework.HitAction.DrawableBatch;
@@ -23,7 +25,11 @@ public class HitDrawableBatch
     {
         DrawList.AddRange(drawList);
     }
-
+    public HitDrawableBatch(List<TextureObstacle> drawList)
+    {
+        foreach(var texture in drawList)
+            DrawList.Add(new Sprite(texture.Texture));
+    }
     public Drawable? Get(int index = 0)
     {
         if (DrawList.Count == 0)

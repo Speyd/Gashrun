@@ -42,7 +42,20 @@ public class Bar: IUIElement
             _renderOrder = value;
         }
     }
+    public bool _isHide = false;
+    public bool IsHide
+    {
+        get => _isHide;
+        set
+        {
+            if (_isHide != value)
+            {
+                _isHide = value;
+                Hide();
+            }
 
+        }
+    }
 
     private IUnit? _owner = null;
     public IUnit? Owner
@@ -212,10 +225,13 @@ public class Bar: IUIElement
     }
     public virtual void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
-            Drawables.Add(Border);
+        {
+            if (!Drawables.Contains(Border))
+                Drawables.Add(Border);
+        }
     }
 
 }

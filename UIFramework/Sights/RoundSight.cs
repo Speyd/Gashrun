@@ -104,10 +104,13 @@ public class RoundSight : Sight
     }
     public override void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
-            Drawables.Add(Circle);
+        {
+            if (!Drawables.Contains(Circle))
+                Drawables.Add(Circle);
+        }
     }
 
 

@@ -1,29 +1,18 @@
-﻿using HitBoxLib.Operations;
-using ProtoRender.Object;
+﻿using ProtoRender.Object;
 using ProtoRender.WindowInterface;
 using ScreenLib;
-using ScreenLib.Output;
-using SFML.Audio;
 using SFML.Graphics;
 using SFML.System;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UIFramework.Render;
-using UIFramework.Sights;
-using UIFramework.Weapon.BulletMagazine;
+using UIFramework.Text.AlignEnums;
 
 
 namespace UIFramework.Text;
-public enum VerticalAlign { None, Top, Center, Bottom }
-public enum HorizontalAlign { None, Left, Center, Right }
-
 public class UIText : RenderText, IUIElement
 {
     public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
     public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
+
     public bool _isHide = false;
     public bool IsHide
     {  get => _isHide;
@@ -44,11 +33,15 @@ public class UIText : RenderText, IUIElement
         get => _positionOnScreen;
         set
         {
-            _positionOnScreen = AdjustTextSize(value);
+            _positionOnScreen = value;
+
+            AdjustTextSize();
             Text.Position = value;
+
         }
     }
     public List<Drawable> Drawables { get; init; } = new();
+
     private RenderOrder _renderOrder = RenderOrder.Indicators;
     public RenderOrder RenderOrder
     {
@@ -76,7 +69,6 @@ public class UIText : RenderText, IUIElement
     public VerticalAlign VerticalAlignment { get; set; } = VerticalAlign.None;
     public HorizontalAlign HorizontalAlignment { get; set; } = HorizontalAlign.None;
 
-    object lockObj = new();
 
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
         :base(text, size, position, pathToFont, color)
@@ -122,17 +114,10 @@ public class UIText : RenderText, IUIElement
     }
 
 
-
-    public virtual Vector2f AdjustTextSize(Vector2f position)
+    public virtual void AdjustTextSize()
     {
         uint previousCharacterSize = OriginCharacterSize == Text.CharacterSize? 0: Text.CharacterSize;
-
         Text.CharacterSize = (uint)(OriginCharacterSize / Screen.MultHeight);
-
-        float x = position.X + previousCharacterSize - (uint)(OriginCharacterSize / Screen.MultHeight);
-        float y = position.Y + previousCharacterSize - (uint)(OriginCharacterSize / Screen.MultHeight);
-
-        return new Vector2f(x, y);
     }
     public float GetHorizontalBounds()
     {

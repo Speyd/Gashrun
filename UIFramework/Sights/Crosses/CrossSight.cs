@@ -262,12 +262,15 @@ public class CrossSight : Sight
     }
     public override void Hide()
     {
-        if (Drawables.Count > 0)
+        if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
         {
             foreach (var cross in Crosses)
-                Drawables.Add(cross.VertexArray);
+            {
+                if (!Drawables.Contains(cross.VertexArray))
+                    Drawables.Add(cross.VertexArray);
+            }
         }
     }
 }

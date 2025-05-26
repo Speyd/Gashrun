@@ -62,6 +62,7 @@ public class Map : IMap
         if (list.Count == 0)
         {
             list.TryAdd(addObstacle, 0);
+            //addObstacle.Map = this;
             addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
             return;
         }
@@ -81,6 +82,7 @@ public class Map : IMap
                 throw new Exception("An object at these coordinates already exists! (CheckTrueAddObstacle)");
         }
 
+       // addObstacle.Map = this;
         list.TryAdd(addObstacle, 0);
         addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
     }
