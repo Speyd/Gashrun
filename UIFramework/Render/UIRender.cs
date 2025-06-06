@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using ScreenLib;
 using ProtoRender.Object;
 using System.Collections.Concurrent;
-using ObjectFramework;
+using InteractionFramework;
 
 namespace UIFramework.Render;
 

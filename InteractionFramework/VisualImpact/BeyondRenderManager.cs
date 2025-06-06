@@ -1,6 +1,7 @@
 ﻿using ProtoRender.Object;
 using System.Collections.Concurrent;
 using InteractionFramework.VisualImpact.Data;
+using ProtoRender.Map;
 
 
 namespace InteractionFramework.VisualImpact;
@@ -17,7 +18,9 @@ public static class BeyondRenderManager
         Parallel.ForEach(ListUpdateEffect, effect =>
         {
             effect.Value.UpdateCheckRemove(toRemove);
-            effect.Value.Render(observer);
+
+            if(effect.Value.Map == Camera.CurrentUnit?.Map)
+                effect.Value.Render(observer);
         });
 
         foreach (var item in toRemove.Keys)
@@ -40,6 +43,7 @@ public static class BeyondRenderManager
     public static void Create(IUnit owner, IBeyoundData visualImpact, double x, double y, double z)
     {
         var newVisualImpact = visualImpact;
+        newVisualImpact.Map = Camera.CurrentUnit?.Map;
         newVisualImpact.Owner = owner;
         newVisualImpact.Id = GetNextId();
         newVisualImpact.UpdateBeforeAdd(x, y, z);
@@ -49,6 +53,7 @@ public static class BeyondRenderManager
     public static int Create(IUnit owner, IBeyoundData visualImpact)
     {
         var newVisualImpact = visualImpact;
+        newVisualImpact.Map = Camera.CurrentUnit?.Map;
         newVisualImpact.Owner = owner;
         newVisualImpact.Id = GetNextId();
         newVisualImpact.UpdateBeforeAdd();

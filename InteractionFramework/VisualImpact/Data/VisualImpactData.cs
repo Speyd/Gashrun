@@ -1,4 +1,5 @@
 ﻿using ObstacleLib.SpriteLib;
+using ProtoRender.Map;
 using ProtoRender.Object;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -14,9 +15,12 @@ public class VisualImpactData : IBeyoundData
 
     public int Id { get; set; }
     public IUnit? Owner { get; set; }
+    public IMap? Map { get; set; }
 
     public VisualImpactData(SpriteObstacle visualImpact, long lifetimeMilliseconds, bool isCreate = true)
     {
+        Map = null;
+
         if (isCreate)
             VisualImpact = new SpriteObstacle(visualImpact);
         else
@@ -26,6 +30,8 @@ public class VisualImpactData : IBeyoundData
     }
     public VisualImpactData(VisualImpactData visualImpactData, bool isCreate = true)
     {
+        Map = visualImpactData.Map;
+
         if (isCreate)
             VisualImpact = new SpriteObstacle(visualImpactData.VisualImpact);
         else

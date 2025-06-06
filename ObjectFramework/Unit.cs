@@ -44,6 +44,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
             if (_angle != value)
             {
                 _angle = value;
+
                 float cos = (float)Math.Cos(_angle);
                 float sin = (float)Math.Sin(_angle);
                 Direction = new Vector2f(cos, sin);

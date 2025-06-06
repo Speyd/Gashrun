@@ -54,6 +54,7 @@ public abstract class Bullet : IBullet
 
         if (hitEffect?.VisualImpact is not null)
         {
+
             BeyondRenderManager.Create(owner, hitEffect.VisualImpact.GetCopy(), hitPosition.X, hitPosition.Y, hitPosition.Z);
         }
         if (target is IDrawable drawable && hitEffect?.DrawableBatch is not null)
@@ -67,9 +68,9 @@ public abstract class Bullet : IBullet
             damageable.DamageAction?.Invoke(Damage);
             HitObject?.Listen();
         }
-        if (hitEffect?.SoundHit is not null)
+        if (hitEffect?.SoundHit is not null && bullet.Map is not null)
         {
-            hitEffect.SoundHit.Play(new Vector3f(
+            hitEffect.SoundHit.Play(bullet.Map, new Vector3f(
                  hitPosition.X,
                  hitPosition.Y,
                  hitPosition.Z

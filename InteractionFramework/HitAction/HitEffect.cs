@@ -3,7 +3,7 @@ using InteractionFramework.HitAction.DrawableBatch;
 using SFML.Audio;
 using SFML.System;
 using TextureLib.Loader;
-using InteractionFramework.Audio;
+using InteractionFramework.Audio.SoundType;
 
 
 namespace InteractionFramework.HitAction;

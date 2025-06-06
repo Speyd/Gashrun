@@ -51,9 +51,9 @@ using InteractionFramework.Trigger.Button;
 using UIFramework.Text.AlignEnums;
 using TextureLib.Textures.Pair;
 using SFML.Audio;
-using InteractionFramework.Audio;
-using TextureLib.Textures;
-using ImageMagick;
+using InteractionFramework;
+using ProtoRender.Object;
+using InteractionFramework.Audio.SoundType;
 
 
 Screen.Initialize(1000, 600);
@@ -89,14 +89,6 @@ CircleShape pp = new CircleShape(20)
 var bath = new HitDrawableBatch(ImageLoader.Load(PathResolver.GetPath(Path.Combine("Resources", "Image", "BulletHole", "UniversalHole"))));
 bath.Mode = HitDrawSelectMode.Random;
 
-SoundEmitter soundHit = new SoundEmitter(PathResolver.GetPath(Path.Combine("Resources", "080884bullet-hit-39872.mp3")));
-soundHit.Sound.MinDistance = 300f;
-soundHit.Sound.Attenuation = 1f;
-soundHit.Sound.RelativeToListener = false;
-HitEffect hitEffectData = new HitEffect(new VisualImpactData(dddd, 1000), bath, soundHit);
-HitEffect hitEffectData1 = new HitEffect(new VisualImpactData(ffffg, 1000), null, null);
-HitDataCache.Load(PathResolver.GetMainPath(mainFillWall), hitEffectData);
-HitDataCache.Load(PathResolver.GetMainPath(mainFillDevil), hitEffectData1);
 
 var ffff = new TexturedWall(PathResolver.GetMainPath(mainFillWall));
 ffff.Z.Axis = 0;
@@ -218,7 +210,7 @@ Camera.CurrentUnit = player;
 player.Scale = 64;
 map.AddObstacle(3, 3, player);
 
-player.Z.Axis = 0;
+player.Z.Axis = 200;
 player.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
 player.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
 player.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
@@ -236,6 +228,18 @@ box2[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
 box2[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(50);
 box2[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(50);
 player.HitBox.AddSegmentHitBox(box2.MainHitBox.Body, "Center");
+
+SoundDynamic soundHit = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "080884bullet-hit-39872.mp3")));
+soundHit.Sound.MinDistance = 300f;
+soundHit.Sound.Attenuation = 1f;
+soundHit.Sound.RelativeToListener = false;
+
+HitEffect hitEffectData = new HitEffect(new VisualImpactData(dddd, 1000), bath, soundHit);
+HitEffect hitEffectData1 = new HitEffect(new VisualImpactData(ffffg, 1000), null, null);
+HitDataCache.Load(PathResolver.GetMainPath(mainFillWall), hitEffectData);
+HitDataCache.Load(PathResolver.GetMainPath(mainFillDevil), hitEffectData1);
+
+
 
 Unit player2 = new Unit(map, new SpriteObstacle(PathResolver.GetMainPath(mainFillWall32)), 100);
 map.AddObstacle(6, 6, player2);
@@ -304,6 +308,9 @@ CrossSight crossSight = new CrossSight(4, SFML.Graphics.Color.Red)
 };
 crossSight.Owner = player;
 //RoundSight roundSight = new RoundSight(Color.Red, 3);
+
+
+
 
 ControlLib.ButtonBinding keyBindingHideMap = new ControlLib.ButtonBinding(controls, miniMap.Hide, 350);
 ControlLib.ButtonBinding keyBindingForward = new ControlLib.ButtonBinding(bottomW, MovePositions.Move, new object[] { player, 1, 0 });
@@ -398,7 +405,7 @@ Magazine magazine2 = new Magazine(100, 12, bull, textMa2, control);
 ControlLib.ButtonBinding shoot3 = new ControlLib.ButtonBinding(new List<Button> { new Button(VirtualKey.LeftButton) }, 150);
 ControlLib.ButtonBinding shoot4 = new ControlLib.ButtonBinding(new List<Button> { new Button(VirtualKey.None) }, 2000);
 Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
-SoundEmitter SoundEmitter = new SoundEmitter(PathResolver.GetPath(Path.Combine("Resources", "mixkit-game-gun-shot-1662.mp3")));
+SoundDynamic SoundEmitter = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "mixkit-game-gun-shot-1662.mp3")));
 SoundEmitter.Sound.MinDistance = 300f;
 SoundEmitter.Sound.Attenuation = 1f;
 SoundEmitter.Sound.RelativeToListener = false;
@@ -513,6 +520,26 @@ TriggerHandler.AddTriger(player, trrr);
 //_ = TriggerHandler.CheckTriggersAsync();
 
 
+SoundStatic soundMove = new SoundStatic(PathResolver.GetPath(Path.Combine("Resources", "move.wav")));
+soundMove.Sound.MinDistance = 300f;
+soundMove.Sound.Attenuation = 1f;
+soundMove.Sound.RelativeToListener = true;
+soundMove.Sound.Position = new Vector3f(0,0,0);
+
+
+TriggerButton moveBB = new TriggerButton(new ButtonBinding(new Button(VirtualKey.W), () => { }),
+    (unit) => { if (soundMove.Sound.Status == SoundStatus.Stopped) soundMove.Sound.Play();  },
+    (unit) => { soundMove.Sound.Stop(); }
+    );
+TriggerHandler.AddTriger(player, moveBB);
+float NormalizeAngle(float angle)
+{
+    while (angle > Math.PI)
+        angle -= 2 * (float)Math.PI;
+    while (angle < -Math.PI)
+        angle += 2 * (float)Math.PI;
+    return angle;
+}
 void UpdateListener()
 {
     if (Camera.CurrentUnit is null)
@@ -520,15 +547,18 @@ void UpdateListener()
 
     Listener.Position = new SFML.System.Vector3f(
         (float)Camera.CurrentUnit.X.Axis,
-        (float)Camera.CurrentUnit.Y.Axis,
-        (float)Camera.CurrentUnit.Z.Axis
+        (float)Camera.CurrentUnit.Z.Axis,
+        0
     );
 
-    Listener.Direction = new Vector3f(
-        Camera.CurrentUnit.Direction.X,
-        Camera.CurrentUnit.Direction.Y,
-        0 // SFML работает в 2.5D звуке, Z = 0 обычно
-    );
+
+    float yaw = (float)Camera.CurrentUnit.Angle; // например, угол поворота камеры
+    float pitch = (float)Camera.CurrentUnit.VerticalAngle;
+
+    float dirX = (float)(Math.Cos(yaw));
+    float dirY = (float)(Math.Sin(pitch));
+    float dirZ = (float)(Math.Sin(yaw));
+    Listener.Direction = new SFML.System.Vector3f(dirX, dirY, dirZ);
 }
 
 VisualEffectHelper.VisualEffect = new Darkness(PathResolver.GetPath(Path.Combine("Resources", "Shader", "Effect", "DarknessEffect.glsl")));

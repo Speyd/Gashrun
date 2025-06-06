@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.8.2" />
     <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.0.7" />
+    <PackageReference Include="OpenTK.OpenAL" Version="4.7.6" />
   </ItemGroup>
 
 </Project>

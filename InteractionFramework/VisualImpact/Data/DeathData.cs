@@ -2,7 +2,8 @@
 using ProtoRender.Object;
 using System.Collections.Concurrent;
 using InteractionFramework.Death;
-using InteractionFramework.Audio;
+using InteractionFramework.Audio.SoundType;
+using ProtoRender.Map;
 
 
 namespace InteractionFramework.VisualImpact.Data;
@@ -14,9 +15,11 @@ public class DeathData : IBeyoundData
 
     public int Id {  get; set; } 
     public IUnit? Owner { get; set; }
+    public IMap? Map { get; set; }
 
     public DeathData(SpriteObstacle sprite, DeathEffect deathEffect, SoundEmitter? soundEmitter = null)
     {
+        Map = null;
         Sprite = sprite;
         DeathEffect = deathEffect;
         SoundEmitter = soundEmitter;
@@ -26,6 +29,7 @@ public class DeathData : IBeyoundData
     }
     public DeathData(DeathData deathData)
     {
+        Map = deathData.Map;
         Sprite = deathData.Sprite;
         DeathEffect = deathData.DeathEffect;
 
@@ -40,12 +44,18 @@ public class DeathData : IBeyoundData
     }
     public void UpdateBeforeAdd(double x, double y, double z)
     {
-        SoundEmitter?.Play(new SFML.System.Vector3f((float)x, (float)y, (float)z));
+        if (Map is null)
+            return;
+
+        SoundEmitter?.Play(Map, new SFML.System.Vector3f((float)x, (float)y, (float)z));
         DeathEffect.Stopwatch.Restart();
     }
     public void UpdateBeforeAdd()
     {
-        SoundEmitter?.Play(new SFML.System.Vector3f((float)Sprite.X.Axis, (float)Sprite.Y.Axis, (float)Sprite.Z.Axis));
+        if (Map is null)
+            return;
+
+        SoundEmitter?.Play(Map, new SFML.System.Vector3f((float)Sprite.X.Axis, (float)Sprite.Y.Axis, (float)Sprite.Z.Axis));
         DeathEffect.Stopwatch.Restart();
     }
 

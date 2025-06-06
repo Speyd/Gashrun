@@ -1,9 +1,9 @@
 ﻿using UIFramework.Animation;
 using UIFramework.Weapon.BulletMagazine;
-using InteractionFramework.Audio;
 using SFML.Audio;
 using ObjectFramework;
 using SFML.System;
+using InteractionFramework.Audio.SoundType;
 
 
 namespace UIFramework.Weapon;
@@ -30,18 +30,18 @@ public class Gun
     {
         bool hasAmmo = await Magazine.UseAmmoAsync(Owner);
 
-        if (hasAmmo && Sound is not null)
+        if (hasAmmo && Sound is not null && Owner.Map is not null)
         {
-            Sound.Play(new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
+            Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
         Animation.IsAnimation = hasAmmo;
     }
     public void Shot()
     {
         bool hasAmmo = Magazine.UseAmmo(Owner);
-        if (hasAmmo && Sound is not null)
+        if (hasAmmo && Sound is not null && Owner.Map is not null)
         {
-            Sound.Play(new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
+            Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
         Animation.IsAnimation = hasAmmo;
     }
