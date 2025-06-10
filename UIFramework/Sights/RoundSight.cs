@@ -14,7 +14,6 @@ using ProtoRender.Object;
 namespace UIFramework.Sights;
 public class RoundSight : Sight
 {
-    private Vector2f _positionOnScreen;
     public override Vector2f PositionOnScreen 
     {
         get => _positionOnScreen;
@@ -63,9 +62,6 @@ public class RoundSight : Sight
         };
         PositionOnScreen = positionOnScreen;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
         Drawables.Add(Circle);
     }
     public RoundSight(SFML.Graphics.Color color, float radius)
@@ -76,33 +72,7 @@ public class RoundSight : Sight
     { }
 
 
-    public override void Render()
-    {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
-    }
-    public override void UpdateInfo() { }
-    public override void UpdateScreenInfo()
-    {
-        UpdateWidth();
-        UpdateHeight();
-    }
-    public void UpdateWidth()
-    {
-        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
-
-        PreviousScreenWidth = Screen.ScreenWidth;
-    }
-    public void UpdateHeight()
-    {
-        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
-
-        PreviousScreenHeight = Screen.ScreenHeight;
-    }
-    public override void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
@@ -112,8 +82,6 @@ public class RoundSight : Sight
                 Drawables.Add(Circle);
         }
     }
-
-
     public void SetCircleShape(float radius, Color color)
     {
         Circle = new CircleShape(radius)

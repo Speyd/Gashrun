@@ -1,20 +1,14 @@
-﻿using HitBoxLib.PositionObject;
-using HitBoxLib.Segment.SignsTypeSide;
-using ProtoRender.Map;
-using ProtoRender.Object;
-using RayTracingLib;
-using ScreenLib;
-using SFML.System;
-using System.Collections.Concurrent;
+﻿using RayTracingLib;
+using ControlLib.Buttons;
 
 
 namespace UIFramework.Weapon.Bullets;
 public class StandartBullet : Bullet
 {
-    public StandartBullet(float damage, ControlLib.ButtonBinding? hitObject)
+    public StandartBullet(float damage, ButtonBinding? hitObject)
         :base(damage, hitObject)
     {}
-    public StandartBullet(ControlLib.ButtonBinding? hitObject)
+    public StandartBullet(ButtonBinding? hitObject)
        : this(baseDamage, hitObject)
     {}
     public StandartBullet(StandartBullet standartBullet)

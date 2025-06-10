@@ -29,8 +29,8 @@ public class FadingText : UIText
     private void SetAlpha(float normalizedAlpha)
     {
         byte alpha = (byte)Math.Clamp(normalizedAlpha * 255f, 0, 255);
-        var fill = Text.FillColor;
-        Text.FillColor = new SFML.Graphics.Color(fill.R, fill.G, fill.B, alpha);
+        var fill = RenderText.Text.FillColor;
+        RenderText.Text.FillColor = new SFML.Graphics.Color(fill.R, fill.G, fill.B, alpha);
     }
 
     public override void UpdateInfo()

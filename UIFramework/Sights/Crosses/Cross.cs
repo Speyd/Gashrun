@@ -6,7 +6,6 @@ using SFML.System;
 namespace UIFramework.Sights.Crosses;
 public class Cross
 {
-    public SFML.Graphics.Color FillColor { get; set; } = Color.Red;
 
     private float _degreePosition = 0;
     public float DegreePosition
@@ -85,7 +84,7 @@ public class Cross
         : this(0, 0)
     { }
 
-    private void ResetVertexArray()
+    private void ResetVertexArray(Color FillColor)
     {
         VertexArray[0] = new Vertex(PointPositions[PointType.LeftBottom], FillColor);
         VertexArray[1] = new Vertex(PointPositions[PointType.LeftTop], FillColor);
@@ -109,7 +108,7 @@ public class Cross
 
         SetVertex(indentPosition, finalWidth, finalHeight);
     }
-    public void UpdatePosition(Vector2f PositionCenterSight, float indentFromCenter, float widthCross, float heightCross)
+    public void UpdatePosition(Vector2f PositionCenterSight, Color FillColor, float indentFromCenter, float widthCross, float heightCross)
     {
         float xOffset = DirectionPosition.X * indentFromCenter;
         float yOffset = DirectionPosition.Y * indentFromCenter;
@@ -120,7 +119,7 @@ public class Cross
         );
 
         UpdateVertexArray(indentPosition, widthCross, heightCross);
-        ResetVertexArray();
+        ResetVertexArray(FillColor);
     }
 
     public static Vector2f Rotate(Vector2f point, Vector2f pivot, Vector2f direction)
@@ -135,14 +134,14 @@ public class Cross
         float centerY = (points[PointType.LeftTop].Y + points[PointType.LeftBottom].Y + points[PointType.RightTop].Y + points[PointType.RightBottom].Y) / 4;
         return new Vector2f(centerX, centerY);
     }
-    public void UpdateRotationObject(Vector2f position)
+    public void UpdateRotationObject(Vector2f position, Color FillColor)
     {
         PointPositions[PointType.LeftTop] = Rotate(PointPositions[PointType.LeftTop], position, DirectionObject);
         PointPositions[PointType.LeftBottom] = Rotate(PointPositions[PointType.LeftBottom], position, DirectionObject);
         PointPositions[PointType.RightTop] = Rotate(PointPositions[PointType.RightTop], position, DirectionObject);
         PointPositions[PointType.RightBottom] = Rotate(PointPositions[PointType.RightBottom], position, DirectionObject);
 
-        ResetVertexArray();
+        ResetVertexArray(FillColor);
     }
 
 }

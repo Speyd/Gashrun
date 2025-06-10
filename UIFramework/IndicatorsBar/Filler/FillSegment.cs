@@ -48,8 +48,8 @@ public class FillSegment
 
     public void SetValue(FillBar mainFilBar, float value, float addWidth = 0)
     {
-        ValueProgress.SetValue(value, mainFilBar.MaxValue, mainFilBar.MinValue);
-        SetPositionBar(mainFilBar);
+        ValueProgress.SetValue(value, mainFilBar.Stat.Max);
+        SetPositionBar(mainFilBar, addWidth);
     }
 }
 

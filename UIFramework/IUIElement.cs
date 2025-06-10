@@ -30,7 +30,9 @@ public interface IUIElement
     void Render();
     void UpdateInfo();
     void UpdateScreenInfo();
-    internal void Hide();
+    public void ToggleVisibility();
+    internal void ToggleVisibilityObject();
+
 
     public static void SetRenderOrder(IUnit? unit, RenderOrder fromOrder, RenderOrder toOrder, IUIElement element)
     {
@@ -61,12 +63,12 @@ public interface IUIElement
         {
             if(fromUnit == toUnit)
                 UIRender.AddToPriority(toUnit, element.RenderOrder, element);
-            else if (UIRender.TreePriority.TryRemove(fromUnit, out var sortedDict))
+            else if (UIRender.TreePriority.TryGetValue(fromUnit, out var sortedDict))
             {
+                if (sortedDict.TryGetValue(element.RenderOrder, out var concDic))
+                    concDic.TryRemove(element, out _);
                 if (toUnit is not null)
-                {
                     UIRender.AddToPriority(toUnit, element.RenderOrder, element);
-                }
             }
         }
         else if(toUnit is not null)

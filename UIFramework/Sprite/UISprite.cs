@@ -12,12 +12,9 @@ using ProtoRender.Object;
 
 
 namespace UIFramework.Sprite;
-public class UISprite: IUIElement
+public class UISprite: UIElement
 {
-    public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
-    public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
-    private Vector2f _positionOnScreen;
-    public Vector2f PositionOnScreen
+    public override Vector2f PositionOnScreen
     {
         get => _positionOnScreen;
         set
@@ -26,122 +23,90 @@ public class UISprite: IUIElement
             Sprite.Position = value;
         }
     }
-    public List<Drawable> Drawables { get; init; } = new();
-    private RenderOrder _renderOrder = RenderOrder.Indicators;
-    public RenderOrder RenderOrder
+    public Vector2f _scale = new Vector2f(1f, 1f);
+    public Vector2f Scale 
     {
-        get => _renderOrder;
+        get => _scale;
         set
         {
-            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
-            _renderOrder = value;
-        }
-    }
-    public bool _isHide = false;
-    public bool IsHide
-    {
-        get => _isHide;
-        set
-        {
-            if (_isHide != value)
-            {
-                _isHide = value;
-                Hide();
-            }
+            _scale = new Vector2f(
+                value.X / (Screen.BaseScreenWidth / PreviousScreenWidth),
+                value.Y / (Screen.BaseScreenHeight / PreviousScreenHeight)
+                );
 
-        }
-    }
-
-    private IUnit? _owner = null;
-    public IUnit? Owner
-    {
-        get => _owner;
-        set
-        {
-            IUIElement.SetOwner(_owner, value, this);
-            _owner = value;
+            Sprite.Scale = _scale;
         }
     }
 
     public SFML.Graphics.Sprite Sprite { get; set; }
 
-
-    public UISprite(SFML.Graphics.Sprite sprite, IUnit? owner = null)   
+    public UISprite(UISprite uiSprite, IUnit? owner = null)
+       : base(owner)
     {
-        Owner = owner;
-        Sprite = new SFML.Graphics.Sprite(sprite);
+        Sprite = new SFML.Graphics.Sprite(uiSprite.Sprite);
+        _scale = uiSprite.Scale;
+
         FloatRect bounds = Sprite.GetLocalBounds();
         Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
 
+        PositionOnScreen = uiSprite.PositionOnScreen;
+        PreviousScreenHeight = uiSprite.PreviousScreenHeight;
+        PreviousScreenWidth = uiSprite.PreviousScreenWidth;
+
+        Drawables.Add(Sprite);
+    }
+    public UISprite(SFML.Graphics.Sprite sprite, IUnit? owner = null)   
+        :base(owner)
+    {
+        Sprite = new SFML.Graphics.Sprite(sprite);
+        Scale = sprite.Scale;
+
+        FloatRect bounds = Sprite.GetLocalBounds();
+        Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
         PositionOnScreen = sprite.Position;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
         Drawables.Add(Sprite);
     }
-    public UISprite(SFML.Graphics.Texture texture, IUnit? owner = null)
+    public UISprite(SFML.Graphics.Texture? texture, IUnit? owner = null)
+        :base(owner)
     {
-        Owner = owner;
-        Sprite = new SFML.Graphics.Sprite(texture);
+        if(texture is not null)
+            Sprite = new SFML.Graphics.Sprite(texture);
+        else
+            Sprite = new SFML.Graphics.Sprite();
+        Scale = new Vector2f(1f,1f);
+
         FloatRect bounds = Sprite.GetLocalBounds();
         Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
-
         PositionOnScreen = Sprite.Position;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
         Drawables.Add(Sprite);
-    }
-
-
-
-    public void UpdateWidth()
-    {
-        if (Screen.ScreenWidth == PreviousScreenWidth)
-            return;
-
-        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-
-        Sprite.Scale = new Vector2f(Sprite.Scale.X * widthScale, Sprite.Scale.Y);
-        //FloatRect bounds = Sprite.GetLocalBounds();
-        //Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
-
-        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
-        PreviousScreenWidth = Screen.ScreenWidth;
-    }
-    public void UpdateHeight()
-    {
-        if (Screen.ScreenHeight == PreviousScreenHeight)
-            return;
-
-        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-
-        Sprite.Scale = new Vector2f(Sprite.Scale.X, Sprite.Scale.Y * heightScale);
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
-
-        PreviousScreenHeight = Screen.ScreenHeight;
     }
 
 
     #region IUIElement
-    public void Render()
+    public override void UpdateWidth()
     {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
-    }
-    public virtual void UpdateInfo()
-    {
+        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
+        float widthBaseScale = PreviousScreenWidth / Screen.BaseScreenWidth;
 
+
+        Sprite.Scale = new Vector2f(Sprite.Scale.X * widthBaseScale, Sprite.Scale.Y);
+        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
+
+        PreviousScreenWidth = Screen.ScreenWidth;
     }
-    public void UpdateScreenInfo()
+    public override void UpdateHeight()
     {
-        UpdateWidth();
-        UpdateHeight();
+        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
+        float heightBaseScale = PreviousScreenHeight / Screen.BaseScreenHeight;
+
+        Sprite.Scale = new Vector2f(Sprite.Scale.X, Sprite.Scale.Y * heightBaseScale);
+        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
+
+        PreviousScreenHeight = Screen.ScreenHeight;
     }
-    public void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();

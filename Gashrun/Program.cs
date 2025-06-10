@@ -54,6 +54,13 @@ using SFML.Audio;
 using InteractionFramework;
 using ProtoRender.Object;
 using InteractionFramework.Audio.SoundType;
+using InteractionFramework.Dialog;
+using UIFramework.Dialog;
+using UIFramework.Windows;
+using UIFramework;
+using UIFramework.Sprite;
+using ControlLib.Buttons;
+
 
 
 Screen.Initialize(1000, 600);
@@ -179,7 +186,8 @@ Console.WriteLine($"ZZZZ: {multiWall.Walls[1].Z.Axis}");
 
 
 map.AddObstacle(7, 7, multiWall);
-map.AddObstacle(7, 4, (new TexturedWall(PathResolver.GetMainPath(mainFillWall))));
+var walll = new TexturedWall(PathResolver.GetMainPath(mainFillWall), PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall4.png")));
+map.AddObstacle(7, 4, walll);
 
 //map.AddObstacle(4, 4, new TexturedWall(ResourceManager.GetMainPath(mainFillWall)));
 
@@ -210,7 +218,7 @@ Camera.CurrentUnit = player;
 player.Scale = 64;
 map.AddObstacle(3, 3, player);
 
-player.Z.Axis = 200;
+player.Z.Axis = 0;
 player.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
 player.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
 player.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
@@ -218,7 +226,7 @@ player.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
 player.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 player.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
 player.HitBox.MainHitBox.RenderColor = SFML.Graphics.Color.Red;
-player.DeathAction += Screen.Window.Close;
+player.Hp.OnDepleted += Screen.Window.Close;
 HitBox box2 = new HitBox();
 box2.MainHitBox.RenderColor = SFML.Graphics.Color.Green;
 box2[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
@@ -240,7 +248,7 @@ HitDataCache.Load(PathResolver.GetMainPath(mainFillWall), hitEffectData);
 HitDataCache.Load(PathResolver.GetMainPath(mainFillDevil), hitEffectData1);
 
 
-
+RenderText textMa = new RenderText("", 30, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), PathResolver.GetMainPath(mainBold), SFML.Graphics.Color.Yellow);
 Unit player2 = new Unit(map, new SpriteObstacle(PathResolver.GetMainPath(mainFillWall32)), 100);
 map.AddObstacle(6, 6, player2);
 player2.Z.Axis = 0;
@@ -255,6 +263,21 @@ player2.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 player2.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
 player2.HitBox.MainHitBox.RenderColor = SFML.Graphics.Color.Red;
+player2.DialogSprite = new UISprite(player2.Animation.GetFrame(4)?.Texture);
+player2.DialogSprite.Scale = new Vector2f(0.5f, 0.5f);
+player2.DialogSprite.PositionOnScreen = new Vector2f(100, Screen.Setting.HalfHeight);
+player2.DialogSprite.VerticalAlignment = VerticalAlign.Center;
+player2.DialogSprite.HorizontalAlignment = HorizontalAlign.Center;
+player2.DialogSprite.RenderOrder = RenderOrder.Dialog;
+player2.DisplayName = new UIText(textMa);
+player2.DisplayName.PositionOnScreen = new Vector2f(100, Screen.Setting.HalfHeight + player2.DialogSprite.Sprite.GetGlobalBounds().Height / 2);
+player2.DisplayName.SetText("Monster");
+player2.DisplayName.VerticalAlignment = VerticalAlign.Center;
+player2.DisplayName.HorizontalAlignment = HorizontalAlign.Center;
+player2.DisplayName.RenderOrder = RenderOrder.Dialog;
+
+//player2.DialogSprite = new UISprite(player2.Animation.GetFrame(0)?.Texture);
+
 HitBox box1 = new HitBox();
 box1.MainHitBox.RenderColor = SFML.Graphics.Color.Green;
 box1[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
@@ -276,24 +299,22 @@ RenderAlgorithm bresenhamAlgorithm = new();
 bresenhamAlgorithm.UseVerticalPerspective = false;
 bresenhamAlgorithm.UseHeightPerspective = false;
 
-Control control = new Control();
+ControlLib.Buttons.Button bottomW = new ControlLib.Buttons.Button(VirtualKey.W);
+ControlLib.Buttons.Button bottomS = new ControlLib.Buttons.Button(VirtualKey.S);
+ControlLib.Buttons.Button bottomA = new ControlLib.Buttons.Button(VirtualKey.A);
+ControlLib.Buttons.Button bottomD = new ControlLib.Buttons.Button(VirtualKey.D);
 
-Button bottomW = new Button(VirtualKey.W);
-Button bottomS = new Button(VirtualKey.S);
-Button bottomA = new Button(VirtualKey.A);
-Button bottomD = new Button(VirtualKey.D);
+ControlLib.Buttons.Button bottomUpArrow = new ControlLib.Buttons.Button(VirtualKey.UpArrow);
+ControlLib.Buttons.Button bottomDownArrow = new ControlLib.Buttons.Button(VirtualKey.DownArrow);
+ControlLib.Buttons.Button bottomLeftArrow = new ControlLib.Buttons.Button(VirtualKey.LeftArrow);
+ControlLib.Buttons.Button bottomRightArrow = new ControlLib.Buttons.Button(VirtualKey.RightArrow);
 
-Button bottomUpArrow = new Button(VirtualKey.UpArrow);
-Button bottomDownArrow = new Button(VirtualKey.DownArrow);
-Button bottomLeftArrow = new Button(VirtualKey.LeftArrow);
-Button bottomRightArrow = new Button(VirtualKey.RightArrow);
-
-Button bottomN = new Button(VirtualKey.N);
-Button bottomLeftMouse = new Button(VirtualKey.LeftButton);
-Button bottomC = new Button(VirtualKey.C);
-Button bottomCtrl = new Button(VirtualKey.LeftControl);
-List<Button> controls = new List<Button>() { bottomC, bottomCtrl };
-List<Button> controlsHide = new List<Button>() { bottomN, bottomCtrl };
+ControlLib.Buttons.Button bottomN = new ControlLib.Buttons.Button(VirtualKey.N);
+ControlLib.Buttons.Button bottomLeftMouse = new ControlLib.Buttons.Button(VirtualKey.LeftButton);
+ControlLib.Buttons.Button bottomC = new ControlLib.Buttons.Button(VirtualKey.C);
+ControlLib.Buttons.Button bottomCtrl = new ControlLib.Buttons.Button(VirtualKey.LeftControl);
+List<ControlLib.Buttons.Button> controls = new List<ControlLib.Buttons.Button>() { bottomC, bottomCtrl };
+List<ControlLib.Buttons.Button> controlsHide = new List<ControlLib.Buttons.Button>() { bottomN, bottomCtrl };
 
 CrossSight crossSight = new CrossSight(4, SFML.Graphics.Color.Red)
 {
@@ -312,33 +333,33 @@ crossSight.Owner = player;
 
 
 
-ControlLib.ButtonBinding keyBindingHideMap = new ControlLib.ButtonBinding(controls, miniMap.Hide, 350);
-ControlLib.ButtonBinding keyBindingForward = new ControlLib.ButtonBinding(bottomW, MovePositions.Move, new object[] { player, 1, 0 });
-ControlLib.ButtonBinding keyBindingBackward = new ControlLib.ButtonBinding(bottomS, MovePositions.Move, new object[] { player, -1, 0 });
-ControlLib.ButtonBinding keyBindingLeft = new ControlLib.ButtonBinding(bottomA, MovePositions.Move, new object[] {  player, 0, -1 });
-ControlLib.ButtonBinding keyBindingRight = new ControlLib.ButtonBinding(bottomD, MovePositions.Move, new object[] { player, 0, 1 });
+ControlLib.Buttons.ButtonBinding keyBindingHideMap = new ControlLib.Buttons.ButtonBinding(controls, miniMap.Hide, 350);
+ControlLib.Buttons.ButtonBinding keyBindingForward = new ControlLib.Buttons.ButtonBinding(bottomW, MovePositions.Move, new object[] { player, 1, 0 });
+ControlLib.Buttons.ButtonBinding keyBindingBackward = new ControlLib.Buttons.ButtonBinding(bottomS, MovePositions.Move, new object[] { player, -1, 0 });
+ControlLib.Buttons.ButtonBinding keyBindingLeft = new ControlLib.Buttons.ButtonBinding(bottomA, MovePositions.Move, new object[] {  player, 0, -1 });
+ControlLib.Buttons.ButtonBinding keyBindingRight = new ControlLib.Buttons.ButtonBinding(bottomD, MovePositions.Move, new object[] { player, 0, 1 });
 
-ControlLib.ButtonBinding keyBindingForward1 = new ControlLib.ButtonBinding(bottomUpArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 1, 0 });
-ControlLib.ButtonBinding keyBindingBackward1 = new ControlLib.ButtonBinding(bottomDownArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, -1, 0 });
-ControlLib.ButtonBinding keyBindingLeft1 = new ControlLib.ButtonBinding(bottomLeftArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 0, -1 });
-ControlLib.ButtonBinding keyBindingRight1 = new ControlLib.ButtonBinding(bottomRightArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 0, 1 });
+ControlLib.Buttons.ButtonBinding keyBindingForward1 = new ControlLib.Buttons.ButtonBinding(bottomUpArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 1, 0 });
+ControlLib.Buttons.ButtonBinding keyBindingBackward1 = new ControlLib.Buttons.ButtonBinding(bottomDownArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, -1, 0 });
+ControlLib.Buttons.ButtonBinding keyBindingLeft1 = new ControlLib.Buttons.ButtonBinding(bottomLeftArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 0, -1 });
+ControlLib.Buttons.ButtonBinding keyBindingRight1 = new ControlLib.Buttons.ButtonBinding(bottomRightArrow, MoveLib.Move.MovePositions.Move, new object[] { player2, 0, 1 });
 
-ControlLib.ButtonBinding keyBindingHideCross = new ControlLib.ButtonBinding(controlsHide, crossSight.Hide, 350);
-control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.Q), Screen.Window.Close));
-control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), MoveAngle.ResetAngle, new object[] { player }));
-control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), MoveAngle.ResetAngle, new object[] { player2 }));
+ControlLib.Buttons.ButtonBinding keyBindingHideCross = new ControlLib.Buttons.ButtonBinding(controlsHide, crossSight.ToggleVisibility, 350);
+player.Control.AddBottomBind(new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.Q), Screen.Window.Close));
+player.Control.AddBottomBind(new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.None), MoveAngle.ResetAngle, new object[] { player }));
+player.Control.AddBottomBind(new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.None), MoveAngle.ResetAngle, new object[] { player2 }));
 
 
-control.AddBottomBind(keyBindingForward);
-control.AddBottomBind(keyBindingBackward);
-control.AddBottomBind(keyBindingLeft);
-control.AddBottomBind(keyBindingRight);
-control.AddBottomBind(keyBindingHideMap);
-control.AddBottomBind(keyBindingHideCross);
-control.AddBottomBind(keyBindingForward1);
-control.AddBottomBind(keyBindingBackward1);
-control.AddBottomBind(keyBindingLeft1);
-control.AddBottomBind(keyBindingRight1);
+player.Control.AddBottomBind(keyBindingForward);
+player.Control.AddBottomBind(keyBindingBackward);
+player.Control.AddBottomBind(keyBindingLeft);
+player.Control.AddBottomBind(keyBindingRight);
+player.Control.AddBottomBind(keyBindingHideMap);
+player.Control.AddBottomBind(keyBindingHideCross);
+player.Control.AddBottomBind(keyBindingForward1);
+player.Control.AddBottomBind(keyBindingBackward1);
+player.Control.AddBottomBind(keyBindingLeft1);
+player.Control.AddBottomBind(keyBindingRight1);
 
 //BottomBinding shoot = new ControlLib.BottomBinding(new List<Bottom>(){ bottomLeftMouse }, Drawing.DrawingPoint, 350, new object[] { map, player, 30, Color.Red });
 //control.AddBottomBind(shoot);
@@ -355,12 +376,12 @@ RenderPartsWorld renderPartsWorld = new RenderPartsWorld(sky, floor);
 Texture tex = new Texture(PathResolver.GetPath(Path.Combine("Resources", "UI", "pistol.gif")));
 
 void fffffff() { }
-ControlLib.ButtonBinding shoot = new ControlLib.ButtonBinding(new Button(VirtualKey.None), fffffff);
+ControlLib.Buttons.ButtonBinding shoot = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.None), fffffff);
 
 UIAnimation uIElement = new UIAnimation(player, shoot, PathResolver.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
-    SpeedAnimation = 50,
+    Speed = 50,
     PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
@@ -368,15 +389,13 @@ UIAnimation uIElement = new UIAnimation(player, shoot, PathResolver.GetPath(Path
 }; UIAnimation uIElement1 = new UIAnimation(player2, shoot, PathResolver.GetPath(Path.Combine("Resources", "UI", "pistol.gif")))
 {
     IsAnimation = true,
-    SpeedAnimation = 50,
+    Speed = 50,
     PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
     ScaleX = 1.25f
 };
-ControlLib.ButtonBinding shootGun = new ControlLib.ButtonBinding(new Button(VirtualKey.R), 350);
-
-RenderText textMa = new RenderText("", 30, new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight), PathResolver.GetMainPath(mainBold), SFML.Graphics.Color.Yellow);
+ControlLib.Buttons.ButtonBinding shootGun = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.R), 350);
 UIText textMa1 = new UIText(textMa, player);
 textMa1.HorizontalAlignment = HorizontalAlign.Right;
 textMa1.VerticalAlignment = VerticalAlign.Bottom;
@@ -384,7 +403,7 @@ textMa1.VerticalAlignment = VerticalAlign.Bottom;
 
 UIText textMa2 = new UIText(textMa, player2);
 FadingText fadingText = new FadingText(textMa, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
-fadingText.Text.DisplayedString = "FFFFFFFFFF";
+fadingText.RenderText.Text.DisplayedString = "FFFFFFFFFF";
 fadingText.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(75), Screen.GetPercentHeight(75));
 
 var fff = new SpriteObstacle(ImageLoader.Load(PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Flame"))));
@@ -393,32 +412,33 @@ fff.Animation.IsAnimation = true;
 fff.Animation.Speed = 20;
 fff.IsPassability = true;
 fff.Scale = 64;
-ControlLib.ButtonBinding draw = new ControlLib.ButtonBinding(new List<Button> { new Button(VirtualKey.None) }, Drawing.DrawingObject, 0);
+ControlLib.Buttons.ButtonBinding draw = new ControlLib.Buttons.ButtonBinding(new List<ControlLib.Buttons.Button> { new ControlLib.Buttons.Button(VirtualKey.None) }, Drawing.DrawingObject, 0);
 
 StandartBullet bull = new StandartBullet(50, null);
 UnitBullet unitBullet = new UnitBullet(50, unitBulletT, null);
 unitBullet.Unit.Scale = 20;
-Magazine magazine = new Magazine(100, 12, bull, textMa1, control);
-Magazine magazine2 = new Magazine(100, 12, bull, textMa2, control);
+Magazine magazine = new Magazine(100, 12, bull, VirtualKey.R, textMa1);
+Magazine magazine2 = new Magazine(100, 12, bull, VirtualKey.R, textMa2);
 
 
-ControlLib.ButtonBinding shoot3 = new ControlLib.ButtonBinding(new List<Button> { new Button(VirtualKey.LeftButton) }, 150);
-ControlLib.ButtonBinding shoot4 = new ControlLib.ButtonBinding(new List<Button> { new Button(VirtualKey.None) }, 2000);
+ControlLib.Buttons.ButtonBinding shoot3 = new ControlLib.Buttons.ButtonBinding(new List<ControlLib.Buttons.Button> { new ControlLib.Buttons.Button(VirtualKey.LeftButton) }, 150);
+ControlLib.Buttons.ButtonBinding shoot4 = new ControlLib.Buttons.ButtonBinding(new List<ControlLib.Buttons.Button> { new ControlLib.Buttons.Button(VirtualKey.None) }, 2000);
 Gun gun1 = new Gun(player2, uIElement1, magazine2, shoot4);
 SoundDynamic SoundEmitter = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "mixkit-game-gun-shot-1662.mp3")));
 SoundEmitter.Sound.MinDistance = 300f;
 SoundEmitter.Sound.Attenuation = 1f;
-SoundEmitter.Sound.RelativeToListener = false;
+SoundEmitter.SubscribeMonoListener(player);
+
 Gun gun = new Gun(player, uIElement, magazine, shoot3);
 gun.Sound = SoundEmitter;
-List<Button> controls3 = new List<Button>() { new Button(VirtualKey.M), new Button(VirtualKey.LeftControl) };
-//ControlLib.BottomBinding bindGunHide = new ControlLib.BottomBinding(controls3, gun.Animation.Hide, 350);
-//control.AddBottomBind(bindGunHide);
+List<ControlLib.Buttons.Button> controls3 = new List<ControlLib.Buttons.Button>() { new ControlLib.Buttons.Button(VirtualKey.M), new ControlLib.Buttons.Button(VirtualKey.LeftControl) };
+ControlLib.Buttons.ButtonBinding bindGunHide = new ControlLib.Buttons.ButtonBinding(controls3, () => { gun.Animation.IsHide = !gun.Animation.IsHide; }, 350);
+player.Control.AddBottomBind(bindGunHide);
 //control.AddBottomBind(shoot);
-control.AddBottomBind(shoot3);
-control.AddBottomBind(shoot4);
-control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.J), () => Camera.CurrentUnit = player2));
-control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.K), () => Camera.CurrentUnit = player));
+player.Control.AddBottomBind(shoot3);
+player.Control.AddBottomBind(shoot4);
+player.Control.AddBottomBind(new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.J), () => Camera.CurrentUnit = player2));
+player.Control.AddBottomBind(new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.K), () => Camera.CurrentUnit = player));
 
 
 //AnimationContent a = new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "small.gif")))
@@ -427,7 +447,7 @@ control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.K), () 
 //    SpeedAnimation = 8
 //};
 //new ColorContent(Color.Green)
-FillBar bb = new FillBar(new ColorContent(SFML.Graphics.Color.Red), new ColorContent(SFML.Graphics.Color.Red), 80, 20, player)
+FillBar bb = new FillBar(new ColorContent(SFML.Graphics.Color.Green), new ColorContent(SFML.Graphics.Color.Red), player.Hp, player)
 {
     BorderThickness = 10,
     Width = 400,
@@ -436,39 +456,66 @@ FillBar bb = new FillBar(new ColorContent(SFML.Graphics.Color.Red), new ColorCon
     BorderFillColor = SFML.Graphics.Color.Black,
     
 };
-List<Button> controls4 = new List<Button>() { new Button(VirtualKey.L), new Button(VirtualKey.LeftControl) };
-ControlLib.ButtonBinding bindBurHide = new ControlLib.ButtonBinding(controls4, bb.Hide, 350);
-control.AddBottomBind(bindBurHide);
+
+List<ControlLib.Buttons.Button> controls4 = new List<ControlLib.Buttons.Button>() { new ControlLib.Buttons.Button(VirtualKey.L), new ControlLib.Buttons.Button(VirtualKey.LeftControl) };
+ControlLib.Buttons.ButtonBinding bindBurHide = new ControlLib.Buttons.ButtonBinding(controls4, bb.ToggleVisibility, 350);
+Camera.CurrentUnit.Control.AddBottomBind(bindBurHide);
 //FillBar Bar = new FillBar(bb, new AnimationContent(ResourceManager.GetPath(Path.Combine("Resources", "UI", "pistol.gif"))), new ColorContent(Color.Red));
 //Sight sight = new RoundSight(Color.Blue, 4);
 
 
+UIFramework.Windows.Button button = new UIFramework.Windows.Button(new Vector2f(300, 300), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIFramework.Windows.Button button1 = new UIFramework.Windows.Button(new Vector2f(400, 400), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+
+UIFramework.Windows.Button button2 = new UIFramework.Windows.Button(new Vector2f(200, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIFramework.Windows.Button button3 = new UIFramework.Windows.Button(new Vector2f(400, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+DialogManager dialogManager = new DialogManager(player2, player);
+
+var size = new SFML.System.Vector2f(Screen.ScreenWidth, Screen.ScreenHeight);
+RectangleShape ShapeBackround1 = new RectangleShape(size)
+{
+    Position = new SFML.System.Vector2f(Screen.ScreenWidth / 2, Screen.ScreenHeight / 2),
+    Origin = new SFML.System.Vector2f(size.X / 2f, size.Y / 2f),
+    FillColor = new SFML.Graphics.Color(0, 0, 0, 100),
+};
 
 
+dialogManager.AddLevelDialog(0, new Dictionary<int, DialogLvl>()
+{
+    { 0, new DialogLvl(textMa,new Dictionary<int, UIFramework.Windows.Button>() { { 1, button }, { 2, button1 } }, ShapeBackround1) }
+});
+dialogManager.AddLevelDialog(1, new Dictionary<int, DialogLvl>()
+{
+    { 1, new DialogLvl(textMa, new Dictionary<int, UIFramework.Windows.Button>() { { 2, button2 }, { 4, button3 } }, ShapeBackround1) },
+    { 2, new DialogLvl(textMa,new Dictionary<int, UIFramework.Windows.Button>() { { 2, button2 }, { 4, button3 } }, ShapeBackround1) }
+});
 VisualizerHitBox.VisualizerType = RenderLib.HitBox.VisualizerHitBoxType.VisualizeSelfRenderable;
 
 var dd = new TriggerDistance(1,
     (owner) => { fadingText.Controller.FadingType = FadingType.Appears; fadingText.Controller.FadingTextLife = FadingTextLife.OneShotFreeze; fadingText.Owner = owner; },
-    (owner) => { fadingText.SwapType(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; });
-var bd = new TriggerButton(new ButtonBinding(new Button(VirtualKey.E), () => { }), null, null);
+    (owner) => { fadingText.SwapType(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; }, typeof(IDialogObject));
+var bd = new TriggerButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.E), () => { }), null, null);
 TriggerAnd triggerAnd = new TriggerAnd(dd, bd);
+
 triggerAnd.OnTriggered = (unit) =>
 {
     var npc = dd.GetTarget();
-    if (npc != null)
+    if (npc != null && !(typeof(IDialogObject).IsAssignableFrom(npc?.GetType())))
         map.DeleteObstacle(npc);
+    else if (npc != null && (typeof(IDialogObject).IsAssignableFrom(npc?.GetType())))
+        _ = dialogManager.StartAsyncDialog();
 };
 TriggerHandler.AddTriger(player, triggerAnd);
 FadingSprite fadingSprite = new FadingSprite(ImageLoader.Load(PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall3.png"))).First().Texture, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
 fadingSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
-fadingSprite.Sprite.Scale = new Vector2f(0.5f, 0.5f);
+fadingSprite.Sprite.Scale = new Vector2f(0.2f, 0.2f);
 FadingSprite fadingSprite1 = new FadingSprite(ImageLoader.Load(PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))).First().Texture, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
 fadingSprite1.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
-fadingSprite1.Sprite.Scale = new Vector2f(0.5f, 0.5f);
+fadingSprite1.Sprite.Scale = new Vector2f(0.2f, 0.2f);
 //TriggerHitBoxTouch triggerHitBoxTouch = new TriggerHitBoxTouch(player, player2,
 //    (owner) => { fadingText.Text.DisplayedString = "WELCOM"; fadingText.Controller.FadingType = FadingType.Appears; fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingText.Owner = owner; },
 //    (owner) => { fadingText.Text.DisplayedString = "BYYEE"; fadingText.SwapType(); fadingText.Restart(); fadingText.Controller.FadingTextLife = FadingTextLife.OneShotDispose; fadingText.Owner = owner; });
-TriggerCollision triggerHitBoxTouch1 = new TriggerCollision(player2, ObjectSide.Top,
+TriggerCollision triggerHitBoxTouch1 = new TriggerCollision(player2, ObjectSide.Bottom, ObjectSide.Top,
     (owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; },
     (owner) => { fadingSprite1.Controller.FadingType = FadingType.Appears; fadingSprite1.Restart(); fadingSprite1.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite1.Owner = owner; });
 //(owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; }
@@ -480,6 +527,11 @@ TriggerCollision triggerHitBoxTouch1 = new TriggerCollision(player2, ObjectSide.
 //TriggerManager.AddTriger(player, triggerAnd);
 
 TriggerHandler.AddTriger(player, triggerHitBoxTouch1);
+
+
+
+
+
 
 TriggerRay triggerRay = new TriggerRay(null, null);
 //TriggerAnd triggerAnd = new TriggerAnd(dd, bd);
@@ -512,7 +564,7 @@ UIText textMa1aad1 = new UIText(textMa, null);
 textMa1aad1.PositionOnScreen = new Vector2f(1000, 0);
 textMa1aad1.HorizontalAlignment = HorizontalAlign.Right;
 
-TriggerToggleButton trrr = new TriggerToggleButton(new ButtonBinding(new Button(VirtualKey.F2), () => { }),
+TriggerToggleButton trrr = new TriggerToggleButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.F2), () => { }),
     (unit) => { if (unit != textMa1aad1.Owner) textMa1aad1.Owner = unit;else textMa1aad1.IsHide = false; textMa1aad1.SetText(DebugOverlay.GetInfoOverlay(unit)); },
     (unit) => { textMa1aad1.IsHide = true; }
     );
@@ -527,7 +579,7 @@ soundMove.Sound.RelativeToListener = true;
 soundMove.Sound.Position = new Vector3f(0,0,0);
 
 
-TriggerButton moveBB = new TriggerButton(new ButtonBinding(new Button(VirtualKey.W), () => { }),
+TriggerButton moveBB = new TriggerButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.W), () => { }),
     (unit) => { if (soundMove.Sound.Status == SoundStatus.Stopped) soundMove.Sound.Play();  },
     (unit) => { soundMove.Sound.Stop(); }
     );
@@ -548,7 +600,7 @@ void UpdateListener()
     Listener.Position = new SFML.System.Vector3f(
         (float)Camera.CurrentUnit.X.Axis,
         (float)Camera.CurrentUnit.Z.Axis,
-        0
+        (float)Camera.CurrentUnit.Y.Axis
     );
 
 
@@ -560,8 +612,11 @@ void UpdateListener()
     float dirZ = (float)(Math.Sin(yaw));
     Listener.Direction = new SFML.System.Vector3f(dirX, dirY, dirZ);
 }
-
 VisualEffectHelper.VisualEffect = new Darkness(PathResolver.GetPath(Path.Combine("Resources", "Shader", "Effect", "DarknessEffect.glsl")));
+VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeSelfRenderable;
+
+//Screen.ScreenHeight = 1000;
+//Screen.ScreenWidth = 1500;
 try
 {
     while (Screen.Window.IsOpen)
@@ -569,22 +624,22 @@ try
         UpdateListener();
         Screen.Window.DispatchEvents();
         Screen.Window.Clear();
-
+       // Screen.OutputPriority?.AddToPriority(ScreenLib.Output.OutputPriorityType.Interface, dialogManager.ShapeBackround);
         DrawingQueue.ExecuteAll();
         WriteQueue.ExecuteAll();
 
         //unitBullet.CHECK();
         bresenhamAlgorithm.CalculationAlgorithm(Camera.CurrentUnit);
 
-        //bresenhamAlgorithm1.CalculationAlgorithm(true);
-        //bresenhamAlgorithm2.CalculationAlgorithm(false);
+       // //bresenhamAlgorithm1.CalculationAlgorithm(true);
+       // //bresenhamAlgorithm2.CalculationAlgorithm(false);
 
         renderPartsWorld.Render(Camera.CurrentUnit);
         if (Camera.CurrentUnit?.Map is not null)
             miniMap.Render(Camera.CurrentUnit.Map, Camera.CurrentUnit);
-       // miniMap1.Render(map);
+        //// miniMap1.Render(map);
 
-        control.MakePressedParallel(Camera.CurrentUnit);
+        Camera.CurrentUnit?.Control.MakePressedParallel(Camera.CurrentUnit);
         UIRender.DrawingByPriority();
         VisualizerHitBox.Render(Camera.CurrentUnit);
         //VisualizerHitBox2.Render(map, player);

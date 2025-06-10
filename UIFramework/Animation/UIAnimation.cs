@@ -2,13 +2,14 @@
 using SFML.System;
 using AnimationLib;
 using ScreenLib;
+using ControlLib.Buttons;
 using TextureLib.Loader;
 using UIFramework.Render;
 using ProtoRender.Object;
 
 
 namespace UIFramework.Animation;
-public class UIAnimation : AnimationHandler, IUIElement
+public class UIAnimation : AnimationState, IUIElement
 {
     public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
     public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
@@ -46,7 +47,7 @@ public class UIAnimation : AnimationHandler, IUIElement
             if (_isHide != value)
             {
                 _isHide = value;
-                Hide();
+                ToggleVisibilityObject();
             }
 
         }
@@ -64,7 +65,7 @@ public class UIAnimation : AnimationHandler, IUIElement
     }
 
 
-    public ControlLib.ButtonBinding? BottomBinding { get; set; } = null;
+    public ButtonBinding? BottomBinding { get; set; } = null;
 
     public float _scaleX = 1.0f;
     private float _originScaleX = 0;
@@ -132,20 +133,20 @@ public class UIAnimation : AnimationHandler, IUIElement
 
 
     #region Constructor 
-    public UIAnimation(Vector2f position, IUnit? owner = null, ControlLib.ButtonBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(Vector2f position, IUnit? owner = null, ButtonBinding? bottomBinding = null, params string[] paths)
     {
         Owner = owner;
 
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
 
-        AnimationState.AddFrames(ImageLoader.Load(paths));
+        AddFrames(ImageLoader.Load(paths));
 
         Drawables.Add(RenderSprite);
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
     }
-    public UIAnimation(IUnit? owner = null, ControlLib.ButtonBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(IUnit? owner = null, ButtonBinding? bottomBinding = null, params string[] paths)
         : this(new Vector2f(), owner, bottomBinding, paths)
     {
         SetPositionCenter();
@@ -153,24 +154,27 @@ public class UIAnimation : AnimationHandler, IUIElement
     #endregion
 
 
-
+    public virtual void UpdateFrame(float angle = 0)
+    {
+        AnimationManager.DefiningDesiredSprite(this, angle);
+    }
     protected virtual void AnimationPress()
     {
-        if (AnimationState.Index == AnimationState.AmountFrame - 1)
+        if (Index == AmountFrame - 1)
         {
             UpdateFrame();
             IsAnimatingOnPress = false;
         }
-        if (AnimationState.IsAnimation && BottomBinding?.IsPress == true || IsAnimatingOnPress == true)
+        if (IsAnimation && BottomBinding?.IsPress == true || IsAnimatingOnPress == true)
         {
             IsAnimatingOnPress = true;
             UpdateFrame();
         }
-        else if (AnimationState.IsAnimation && BottomBinding?.IsPress == false)
+        else if (IsAnimation && BottomBinding?.IsPress == false)
         {
-            AnimationState.IsAnimation = false;
+            IsAnimation = false;
             UpdateFrame();
-            AnimationState.IsAnimation = true;
+            IsAnimation = true;
         }
     }
 
@@ -189,8 +193,8 @@ public class UIAnimation : AnimationHandler, IUIElement
         else
             AnimationPress();
 
-        if (AnimationState.CurrentFrame is not null)
-            RenderSprite.Texture = AnimationState.CurrentFrame.Texture;
+        if (CurrentFrame is not null)
+            RenderSprite.Texture = CurrentFrame.Texture;
     }
     public virtual void UpdateScreenInfo()
     {
@@ -220,11 +224,15 @@ public class UIAnimation : AnimationHandler, IUIElement
 
         PreviousScreenHeight = Screen.ScreenHeight;
     }
-    public virtual void Hide()
+    public virtual void ToggleVisibility()
     {
-        if (IsHide && Drawables.Count > 0)
+        IsHide = !IsHide;
+    }
+    public virtual void ToggleVisibilityObject()
+    {
+        if (_isHide && Drawables.Count > 0)
             Drawables.Clear();
-        else
+        else if(!_isHide)
         {
             if (!Drawables.Contains(RenderSprite))
                 Drawables.Add(RenderSprite);
@@ -254,7 +262,7 @@ public class UIAnimation : AnimationHandler, IUIElement
 
     private Vector2f GetFirstSizeFrame()
     {
-        Vector2u? textureSize = AnimationState.GetFrame(0)?.Texture.Size;
+        Vector2u? textureSize = GetFrame(0)?.Texture.Size;
         if (textureSize is null)
             throw new NullReferenceException("Frame UIAnimation is null(GetFirstSizeFrame)");
 

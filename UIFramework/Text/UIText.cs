@@ -8,27 +8,9 @@ using UIFramework.Text.AlignEnums;
 
 
 namespace UIFramework.Text;
-public class UIText : RenderText, IUIElement
-{
-    public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
-    public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
-
-    public bool _isHide = false;
-    public bool IsHide
-    {  get => _isHide;
-       set
-        {
-            if (_isHide != value)
-            {
-                _isHide = value;
-                Hide();
-            }
-
-        }
-    }
-
-    private Vector2f _positionOnScreen;
-    public Vector2f PositionOnScreen
+public class UIText : UIElement
+{  
+    public override Vector2f PositionOnScreen
     {
         get => _positionOnScreen;
         set
@@ -36,195 +18,98 @@ public class UIText : RenderText, IUIElement
             _positionOnScreen = value;
 
             AdjustTextSize();
-            Text.Position = value;
+            RenderText.Text.Position = value;
 
         }
     }
-    public List<Drawable> Drawables { get; init; } = new();
 
-    private RenderOrder _renderOrder = RenderOrder.Indicators;
-    public RenderOrder RenderOrder
+    public override HorizontalAlign HorizontalAlignment
     {
-        get => _renderOrder;
+        get => _horizontalAlignment;
         set
         {
-            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
-            _renderOrder = value;
+            _horizontalAlignment = value;
+            RenderText.Text.Origin = new Vector2f(GetHorizontalBounds(RenderText.Text.GetLocalBounds()), RenderText.Text.Origin.Y);
         }
     }
-
-
-    private IUnit? _owner = null;
-    public IUnit? Owner
+    public override VerticalAlign VerticalAlignment
     {
-        get => _owner;
+        get => _verticalAlignment;
         set
         {
-            IUIElement.SetOwner(_owner, value, this);
-            _owner = value;
+            _verticalAlignment = value;
+            RenderText.Text.Origin = new Vector2f(RenderText.Text.Origin.X, GetVerticalBounds(RenderText.Text.GetLocalBounds()));
         }
     }
+
     public uint OriginCharacterSize{ get; protected set; }
-
-    public VerticalAlign VerticalAlignment { get; set; } = VerticalAlign.None;
-    public HorizontalAlign HorizontalAlignment { get; set; } = HorizontalAlign.None;
+    public RenderText RenderText { get; set; }
 
 
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
-        :base(text, size, position, pathToFont, color)
+        :base(owner)
     {
-        Owner = owner;
 
-        OriginCharacterSize = Text.CharacterSize;
+        RenderText = new RenderText(text, size, position, pathToFont, color);
+        OriginCharacterSize = RenderText.Text.CharacterSize;
         PositionOnScreen = position;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
-        Drawables.Add(Text);
+        Drawables.Add(RenderText.Text);
     }
     public UIText(RenderText render, IUnit? owner = null)
-        : base(render)
+        : base(owner)
     {
-        Owner = owner;
-
-        OriginCharacterSize = Text.CharacterSize;
+        RenderText = new RenderText(render);
+        OriginCharacterSize = RenderText.Text.CharacterSize;
         PositionOnScreen = render.Text.Position;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
-        Drawables.Add(Text);
+        Drawables.Add(RenderText.Text);
     }
     public UIText(UIText uIText)
-        : base(uIText)
+        :base(uIText.Owner)
     {
-        Owner = uIText.Owner;
-
+        RenderText = new RenderText(uIText.RenderText);
         OriginCharacterSize = uIText.OriginCharacterSize;
         _positionOnScreen = uIText._positionOnScreen;
 
         VerticalAlignment = uIText.VerticalAlignment;
         HorizontalAlignment = uIText.HorizontalAlignment;
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
-
-        Drawables.Add(Text);
+        Drawables.Add(RenderText.Text);
     }
 
 
     public virtual void AdjustTextSize()
     {
-        uint previousCharacterSize = OriginCharacterSize == Text.CharacterSize? 0: Text.CharacterSize;
-        Text.CharacterSize = (uint)(OriginCharacterSize / Screen.MultHeight);
-    }
-    public float GetHorizontalBounds()
-    {
-        FloatRect bounds = Text.GetLocalBounds();
-        float width = bounds.Width;
-        float offsetX = bounds.Left;
-
-        float boundsX = 0;
-        switch (HorizontalAlignment)
-        {
-            case HorizontalAlign.Center:
-                boundsX = width / 2f + offsetX;
-                break;
-            case HorizontalAlign.Right:
-                boundsX = width + offsetX;
-                break;
-            case HorizontalAlign.Left:
-                boundsX = offsetX;
-                break;
-        }
-
-        return boundsX;
-    }
-    public float GetVerticalBounds()
-    {
-        FloatRect bounds = Text.GetLocalBounds();
-        float height = bounds.Height;
-        float offsetY = bounds.Top;
-
-        float boundsY = 0;
-        switch (VerticalAlignment)
-        {
-            case VerticalAlign.Center:
-                boundsY = height / 2f + offsetY;
-                break;
-            case VerticalAlign.Top:
-                boundsY = offsetY;
-                break;
-            case VerticalAlign.Bottom:
-                boundsY = height + offsetY;
-                break;
-        }
-
-        return boundsY;
+        uint previousCharacterSize = OriginCharacterSize == RenderText.Text.CharacterSize? 0: RenderText.Text.CharacterSize;
+        RenderText.Text.CharacterSize = (uint)(OriginCharacterSize / Screen.MultHeight);
     }
     internal virtual void SetTextAsync(string text)
     {
-        Text.DisplayedString = text;
+        RenderText.Text.DisplayedString = text;
 
-        Text.Origin = new Vector2f(GetHorizontalBounds(), GetVerticalBounds());
-        Text.Position = _positionOnScreen;
+        var bounds = RenderText.Text.GetLocalBounds();
+        RenderText.Text.Origin = new Vector2f(GetHorizontalBounds(bounds), GetVerticalBounds(bounds));
+        RenderText.Text.Position = _positionOnScreen;
     }
     public virtual void SetText(string text)
     {
-        if (Text.DisplayedString == text)
+        if (RenderText.Text.DisplayedString == text)
             return;
 
         WriteQueue.EnqueueDraw(this, text);
     }
 
 
-    public void UpdateWidth()
-    {
-        if (Screen.ScreenWidth == PreviousScreenWidth)
-            return;
-
-        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
-
-        PreviousScreenWidth = Screen.ScreenWidth;
-    }
-    public void UpdateHeight()
-    {
-        if (Screen.ScreenHeight == PreviousScreenHeight)
-            return;
-
-        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
-
-        PreviousScreenHeight = Screen.ScreenHeight;
-    }
-
-
     #region IUIElement
-    public void Render()
-    {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
-    }
-    public virtual void UpdateInfo()
-    {
-
-    }
-    public void UpdateScreenInfo()
-    {
-        UpdateWidth();
-        UpdateHeight();
-    }
-    public void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
         else
         {
-            if(!Drawables.Contains(Text))
-                Drawables.Add(Text);
+            if(!Drawables.Contains(RenderText.Text))
+                Drawables.Add(RenderText.Text);
         }
     }
     #endregion

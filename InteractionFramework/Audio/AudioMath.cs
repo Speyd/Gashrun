@@ -17,39 +17,6 @@ public static class AudioMath
         if (side < -0.01f) return SoundHorizontalSide.Left;
         return SoundHorizontalSide.Center;
     }
-    public static float AdjustZBySoundSide(float z, SoundHorizontalSide soundSide)
-    {
-        switch (soundSide)
-        {
-            case SoundHorizontalSide.Left:
-                return -MathF.Abs(z);
-            case SoundHorizontalSide.Right:
-                return MathF.Abs(z);
-            case SoundHorizontalSide.Center:
-                return 0f;
-            default:
-                return 0f;
-        }
-    }
-    public static float AdjustZBySoundSide(float z, Vector3 listenerPos, Vector3 sourcePos, Vector3? up = null)
-    {
-        Vector3 vector = up ?? Vector3.UnitY;
-
-        switch (GetRelativeSoundHorizontalSide(listenerPos, sourcePos, vector))
-        {
-            case SoundHorizontalSide.Left:
-                return -MathF.Abs(z);
-            case SoundHorizontalSide.Right:
-                return MathF.Abs(z);
-            case SoundHorizontalSide.Center:
-                return 0f;
-            default:
-                return 0f;
-        }
-    }
-
-
-
     public static SoundVerticalSide GetRelativeSoundVerticalSide(Vector3 listenerPos, Vector3 sourcePos)
     {
         float heightDiff = sourcePos.Z - listenerPos.Z;

@@ -29,7 +29,7 @@ public abstract class SoundEmitter : ISound
         }
     }
     public Sound Sound { get; private set; }
-
+    public float HeightAttenuation { get; set; } = 1;
 
     public ConcurrentDictionary<IObject, byte> AllowedListeners { protected get; init; } = new();
     public ConcurrentDictionary<IObject, byte> MonoListeners { protected get; init; } = new();
@@ -66,14 +66,7 @@ public abstract class SoundEmitter : ISound
         {
             sound.RelativeToListener = false;
         }
-
-        Vector3 listenerPos = new Vector3((float)Camera.CurrentUnit.X.Axis, (float)Camera.CurrentUnit.Y.Axis, (float)Camera.CurrentUnit.Z.Axis);
-        Vector3 sourcePos = new Vector3(positionSound.X, positionSound.Y, positionSound.Z);
-
-        float z = AudioMath.AdjustZBySoundSide(Screen.Setting.Tile, listenerPos, sourcePos);
-        float y = positionSound.Z - (float)Camera.CurrentUnit.Z.Axis;
-
-        sound.Position = new Vector3f(positionSound.X, y, z);
+        sound.Position = new Vector3f(positionSound.X, positionSound.Z, positionSound.Y);
         sound.Play();
     }
     public virtual void SubscribeListener(IObject listener)

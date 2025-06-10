@@ -8,10 +8,16 @@ using System.Collections.Concurrent;
 using InteractionFramework.Death;
 using InteractionFramework.VisualImpact;
 using InteractionFramework.VisualImpact.Data;
+using GameStatsFramework;
+using InteractionFramework.Dialog;
+using UIFramework.Dialog;
+using UIFramework.Sprite;
+using UIFramework.Text;
+using ObjectFramework;
 
 
-namespace ObjectFramework;
-public class Unit : SpriteObstacle, IUnit, IDamageable
+namespace UIFramework;
+public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlHandler
 {
     #region IMoveble
     public float MoveSpeed { get; set; } = 200f;
@@ -87,45 +93,14 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     #endregion
 
     #region IDamageable
-    private void SetHp(float maxHp)
-    {
-        if (maxHp < _hp)
-            Hp = maxHp;
-    }
-    private float _maxHp = 0;
-    public float MaxHp
-    {
-        get => _maxHp;
-        private set
-        {
-            _maxHp = value > 0 ? value : _maxHp;
-            SetHp(_maxHp);
-        }
-    }
-
-    private void CheckHp()
-    {
-        if (_hp <= 0)
-            DeathAction?.Invoke();
-    }
-    private float _hp = 0;
-    public float Hp
-    {
-        get => _hp;
-        set
-        {
-            _hp = value;
-            CheckHp();
-        }
-    }
-
     private void ValidateDamage(float damage)
     {
-        Hp -= damage;
+        if (damage > 0)
+            Hp.Decrease(damage);
+        else
+            Hp.Increase(Math.Abs(damage));
     }
-    public Action<float>? DamageAction { get; set; }
-
-    public Action? DeathAction { get; set; }
+    public Stat Hp { get; set; }
     public DeathEffect? DeathAnimation { get; set; } = null;
     private void ClearingDataAfteDeath()
     {
@@ -139,15 +114,22 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     }
     #endregion
 
+    #region IDialogObject
+    public UISprite? DialogSprite { get; set; } = null;
+    public UIText? DisplayName { get; set; } = null;
+    #endregion
+
+    #region IControlHandler
+    public ControlLib.Control Control { get; init; } = new ControlLib.Control();
+    #endregion
+
     public Unit(IMap map, SpriteObstacle obstacle, int maxHp)
         : base(obstacle)
     {
         Map = map;
-        MaxHp = maxHp;
-        Hp = maxHp;
+        Hp = new Stat(maxHp);
 
-        DeathAction += ClearingDataAfteDeath;
-        DamageAction += ValidateDamage;
+        Hp.OnDepleted += ClearingDataAfteDeath;
 
         Fov = Math.PI / 3;
         HalfFov = (float)Fov / 2;
@@ -162,11 +144,9 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
     public Unit(SpriteObstacle obstacle, int maxHp)
        : base(obstacle)
     {
-        MaxHp = maxHp;
-        Hp = maxHp;
+        Hp = new Stat(maxHp);
 
-        DeathAction += ClearingDataAfteDeath;
-        DamageAction += ValidateDamage;
+        Hp.OnDepleted += ClearingDataAfteDeath;
 
         Fov = Math.PI / 3;
         HalfFov = (float)Fov / 2;
@@ -182,8 +162,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
        : base(unit, updateTexture)
     {
         Map = unit.Map;
-        MaxHp = unit.MaxHp;
-        Hp = unit.MaxHp;
+        Hp = unit.Hp;
 
         Fov = unit.Fov;
         HalfFov = unit.HalfFov;
@@ -202,14 +181,14 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
         MoveSpeedAngel = unit.MoveSpeedAngel;
         MinDistanceFromWall = unit.MinDistanceFromWall;
 
-        DeathAction += ClearingDataAfteDeath;
-        DamageAction += ValidateDamage;
+        Hp.OnDepleted += ClearingDataAfteDeath;
         ObserverSettingChangesFun();
         Screen.WidthChangesFun += ObserverSettingChangesFun;
     }
 
 
     #region IUnit
+
     public override double GetDisplayAngle(double spriteAngle)
     {
         double angle = this.Angle - spriteAngle;
@@ -221,7 +200,6 @@ public class Unit : SpriteObstacle, IUnit, IDamageable
 
         return angle;
     }
-
     public void ObserverSettingChangesFun()
     {
         float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfFov));

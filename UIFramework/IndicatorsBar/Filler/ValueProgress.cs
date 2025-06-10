@@ -8,13 +8,12 @@ using System.Threading.Tasks;
 namespace UIFramework.IndicatorsBar.Filler;
 public class ValueProgress
 {
-
     public float Value { get; private set; }
     public float Percent { get; private set; }
 
-    public ValueProgress(float value, float maxValue, float minValue)
+    public ValueProgress(float value, float maxValue)
     {
-        SetValue(value, maxValue, minValue);
+        SetValue(value, maxValue);
     }
     public ValueProgress()
     {
@@ -22,10 +21,10 @@ public class ValueProgress
         Percent = 0;
     }
 
-    internal void SetValue(float value, float maxValue, float minValue)
+    internal void SetValue(float value, float maxValue)
     {
-        if (value < minValue)
-            value = minValue;
+        if (value < 0)
+            value = 0;
 
         Value = value;
         Percent = value * 100 / maxValue;

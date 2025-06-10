@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UIFramework.Render
+namespace UIFramework.Render;
+public enum RenderOrder
 {
-    public enum RenderOrder
-    {
-        Hands,
-        Indicators,
-    }
+    Hands,
+    Indicators,
+    Dialog,
 }

@@ -156,15 +156,11 @@ public class CrossSight : Sight
         CreateCrosses();
 
         UpdateVertexArray();
-
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
     }
     public CrossSight(int amountCross, Color color)
        : this(amountCross, new Vector2f(Screen.Setting.HalfWidth, Screen.Setting.HalfHeight), color)
     { }
     #endregion
-
 
 
     private Vector2f SetCenterRotate(Cross cross) => RotationObjectType switch
@@ -181,10 +177,11 @@ public class CrossSight : Sight
         return Crosses[index];
     }
 
+
     private void UpdateCross(Cross cross)
     {
-        cross.UpdatePosition(PositionOnScreen, IndentFromCenter, WidthCross, HeightCross);
-        cross.UpdateRotationObject(SetCenterRotate(cross));
+        cross.UpdatePosition(PositionOnScreen, FillColor, IndentFromCenter, WidthCross, HeightCross);
+        cross.UpdateRotationObject(SetCenterRotate(cross), FillColor);
     }
     private void UpdateVertexArray()
     {
@@ -246,13 +243,8 @@ public class CrossSight : Sight
         }
     }
 
-    public override void Render()
-    {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
-    }
-    public override void UpdateInfo() { }
+
+    #region IUIElement
     public override void UpdateScreenInfo()
     {
         IndentFromCenter = _originIndentFromCenter;
@@ -260,7 +252,7 @@ public class CrossSight : Sight
         WidthCross = _originWidthCross;
         HeightCross = _originHeightCross;
     }
-    public override void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
@@ -273,4 +265,5 @@ public class CrossSight : Sight
             }
         }
     }
+    #endregion
 }

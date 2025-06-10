@@ -1,4 +1,6 @@
 ﻿using ControlLib;
+using ControlLib.Buttons;
+using ProtoRender.Object;
 using System.Diagnostics;
 using UIFramework.Text;
 using UIFramework.Weapon.Bullets;
@@ -7,7 +9,8 @@ using UIFramework.Weapon.Bullets;
 namespace UIFramework.Weapon.BulletMagazine;
 public class Magazine
 {
-    public ControlLib.ButtonBinding ReloadBind { get; set; }
+    public ButtonBinding ReloadBind { get; set; }
+    public ButtonBinding UpdateInfoBinding { get; init; }
 
 
     public MagazineState ClipBullet { get; set; }
@@ -30,25 +33,46 @@ public class Magazine
 
 
     public UIText UIText { get; set; }
+    private IUnit? _owner = null;
+    public IUnit? Owner
+    {
+        get => _owner;
+        set
+        {
+            if (UIText.Owner != value)
+                UIText.Owner = value;
 
-    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, UIText textMagazine, ControlLib.Control control)
+            if (_owner is not null)
+            {
+                _owner?.Control.DeleteReferenceBottomBind(ReloadBind);
+                _owner?.Control.DeleteReferenceBottomBind(UpdateInfoBinding);
+            }
+            if (_owner != value)
+            {
+                _owner = value;
+
+                _owner?.Control.AddBottomBind(ReloadBind);
+                _owner?.Control.AddBottomBind(UpdateInfoBinding);
+
+            }
+        }
+    }
+
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, IBullet bullet, VirtualKey reloadKey, UIText textMagazine)
     {
 
-        ReloadBind = new(new Button(VirtualKey.R), Reload, _timeToReloadMls);
-        control.AddBottomBind(ReloadBind);
-        control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), UpdateInfo));
+        ReloadBind = new(new Button(reloadKey), Reload, _timeToReloadMls);
+        UpdateInfoBinding = new ButtonBinding(new Button(VirtualKey.None), UpdateInfo);
 
         ClipBullet = new MagazineState(maxAmmoInMagazine, bullet);
         MagazineBullet = new MagazineState(maxTotalAmmo, bullet);
 
         UIText = new UIText(textMagazine);
     }
-    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, UIText textMagazine, ControlLib.Control control)
+    public Magazine(int maxAmmoInMagazine, int maxTotalAmmo, VirtualKey reloadKey, UIText textMagazine)
     {
-
-        ReloadBind = new(new Button(VirtualKey.R), Reload, _timeToReloadMls);
-        control.AddBottomBind(ReloadBind);
-        control.AddBottomBind(new ControlLib.ButtonBinding(new Button(VirtualKey.None), UpdateInfo));
+        ReloadBind = new(new Button(reloadKey), Reload, _timeToReloadMls);
+        UpdateInfoBinding = new ButtonBinding(new Button(VirtualKey.None), UpdateInfo);
 
         ClipBullet = new MagazineState(maxAmmoInMagazine);
         MagazineBullet = new MagazineState(maxTotalAmmo);
@@ -95,7 +119,7 @@ public class Magazine
         }
     }
 
-    public async Task<bool> UseAmmoAsync(ProtoRender.Object.IUnit owner)
+    public async Task<bool> UseAmmoAsync()
     {
         if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
             return false;
@@ -104,7 +128,7 @@ public class Magazine
         {
             var bullet = ClipBullet.GetBullet();
             if (bullet != null)
-                await bullet.FlightAsync(owner);
+                await bullet.FlightAsync(Owner);
 
         }
         if (ClipBullet.Capacity == 0)
@@ -112,17 +136,14 @@ public class Magazine
 
         return !IsReload;
     }
-    public bool UseAmmo(ProtoRender.Object.IUnit owner)
+    public bool UseAmmo()
     {
-        if(UIText.Owner != owner)
-            UIText.Owner = owner;
-
         if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
             return false;
 
         if (ClipBullet.Capacity > 0)
         {
-            ClipBullet.GetBullet()?.Flight(owner);
+            ClipBullet.GetBullet()?.Flight(Owner);
         }
         if (ClipBullet.Capacity == 0)
             Reload();

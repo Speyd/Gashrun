@@ -1,10 +1,6 @@
-﻿using ControlLib;
+﻿using ControlLib.Buttons;
 using ProtoRender.Object;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace InteractionFramework.Trigger.Button;
 public class TriggerToggleButton : ITrigger

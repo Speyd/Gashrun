@@ -1,17 +1,12 @@
 ﻿using SFML.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SFML.System;
-using AnimationLib;
-using NGenerics.DataStructures.General;
 using ScreenLib;
-using UIFramework.Render;
+using GameStatsFramework;
 using UIFramework.IndicatorsBar.Content;
 using UIFramework.IndicatorsBar.Filler;
 using ProtoRender.Object;
+using UIFramework.Text.AlignEnums;
+
 
 namespace UIFramework.IndicatorsBar;
 public class FillBar : Bar
@@ -73,66 +68,77 @@ public class FillBar : Bar
     }
 
 
-    public float _maxValue = 100;
-    public float MaxValue
-    {
-        get => _maxValue;
-        set
-        {
-            _maxValue = value;
-            UpdateMaxValues();
-        }
-    }
-    public float _minValue = 0;
-    public float MinValue
-    {
-        get => _minValue;
-        set
-        {
-            _minValue = value;
-            UpdateMaxValues();
-        }
-    }
-
+    public Stat Stat { get; set; }
 
     public FillSegment Forward { get; init; }
     public FillSegment Backward { get; init; }
 
-    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent,
-    float forwardValue, float backwardValue, IUnit? owner = null)
-        :base(owner)
+
+    private float GetOriginAxisOffset(float main, float side)
+    {
+        float originOffset = -BorderThickness / 2;
+
+        if (main > side)
+            originOffset = BorderThickness / 2;
+        else if (main < side)
+            originOffset = -BorderThickness / 2;
+
+        return originOffset;
+    }
+    public override HorizontalAlign HorizontalAlignment
+    {
+        get => _horizontalAlignment;
+        set
+        {
+            _horizontalAlignment = value;
+            Border.Origin = new Vector2f(GetHorizontalBounds(Border.GetLocalBounds()), Border.Origin.Y);
+
+            float originXOffset = GetOriginAxisOffset(Border.Origin.X, Forward.Fill.Origin.X);
+            Forward.Fill.Origin = new Vector2f(GetHorizontalBounds(Forward.Fill.GetLocalBounds()) + originXOffset, Forward.Fill.Origin.Y);
+            Backward.Fill.Origin = new Vector2f(GetHorizontalBounds(Backward.Fill.GetLocalBounds()) + originXOffset, Backward.Fill.Origin.Y);
+        }
+    }
+    public override VerticalAlign VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set
+        {
+            _verticalAlignment = value;
+            Border.Origin = new Vector2f(Border.Origin.X, GetVerticalBounds(Border.GetLocalBounds()));
+
+            float originYOffset = GetOriginAxisOffset(Border.Origin.Y, Forward.Fill.Origin.Y);
+            Forward.Fill.Origin = new Vector2f(Forward.Fill.Origin.X, GetVerticalBounds(Forward.Fill.GetLocalBounds()) + originYOffset);
+            Backward.Fill.Origin = new Vector2f(Backward.Fill.Origin.X, GetVerticalBounds(Backward.Fill.GetLocalBounds()) + originYOffset);
+        }
+    }
+
+
+    public FillBar(RectangleShape border, IBarContent forwardFillContent, IBarContent backwardFillContent, Stat stat, IUnit? owner = null)
+        : base(border, owner)
     {
         FillColor = Color.Transparent;
+        Stat = stat;
+        Stat.OnChanged += UpdateValues;
 
         Forward = new(forwardFillContent);
-        Forward.ValueProgress.SetValue(forwardValue, MaxValue, MinValue);
+        Forward.ValueProgress.SetValue(Stat.Value, Stat.Max);
 
         Backward = new(backwardFillContent);
-        Backward.ValueProgress.SetValue(backwardValue, MaxValue, MinValue);
+        Backward.ValueProgress.SetValue(Stat.Max - Stat.Value, Stat.Max);
 
         Drawables.Add(Forward.Fill);
         Drawables.Add(Backward.Fill);
         UpdatePosition();
     }
-    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent, IUnit? owner = null)
-        : this(forwardFillContent, backwardFillContent, 100, 0, owner)
-    { }
+    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent, Stat stat, IUnit? owner = null)
+        :this(new RectangleShape(), forwardFillContent, backwardFillContent, stat, owner)
+    {}
 
-    private void UpdateMaxValues()
-    {
-        if (_minValue > _maxValue)
-        {
-            var value = _minValue;
-            _minValue = _maxValue;
-            _maxValue = value;
-        }
 
-        UpdateValues();
-    }
     private void UpdateValues()
     {
-        Forward.SetValue(this, Forward.ValueProgress.Value);
-        Backward.SetValue(this, Backward.ValueProgress.Value, Forward.Fill.Size.X);
+        Forward.SetValue(this, Stat.Value);
+        Backward.SetValue(this, Stat.Max - Stat.Value, Forward.Fill.Size.X);
     }
     private void UpdatePosition()
     {
@@ -144,7 +150,7 @@ public class FillBar : Bar
         Forward.Content.UpdateContent(Forward.Fill);
         Backward.Content.UpdateContent(Backward.Fill);
     }
-    public override void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();

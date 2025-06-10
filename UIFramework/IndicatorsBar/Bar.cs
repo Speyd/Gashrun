@@ -11,16 +11,13 @@ using UIFramework.Sights.Crosses;
 using UIFramework.Render;
 using ProtoRender.Object;
 using NGenerics.DataStructures.General;
+using UIFramework.Text.AlignEnums;
 
 
 namespace UIFramework.IndicatorsBar;
-public class Bar: IUIElement
+public class Bar: UIElement
 {
-    public float PreviousScreenWidth { get; protected set; } = Screen.ScreenWidth;
-    public float PreviousScreenHeight { get; protected set; } = Screen.ScreenHeight;
-
-    protected Vector2f _positionOnScreen;
-    public virtual Vector2f PositionOnScreen
+    public override Vector2f PositionOnScreen
     {
         get => _positionOnScreen;
         set
@@ -29,51 +26,13 @@ public class Bar: IUIElement
             Border.Position = value;
         }
     }
-    public virtual List<Drawable> Drawables { get; init; } = new List<Drawable>();
-
-
-    private RenderOrder _renderOrder = RenderOrder.Indicators;
-    public RenderOrder RenderOrder
-    {
-        get => _renderOrder;
-        set
-        {
-            IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
-            _renderOrder = value;
-        }
-    }
-    public bool _isHide = false;
-    public bool IsHide
-    {
-        get => _isHide;
-        set
-        {
-            if (_isHide != value)
-            {
-                _isHide = value;
-                Hide();
-            }
-
-        }
-    }
-
-    private IUnit? _owner = null;
-    public IUnit? Owner
-    {
-        get => _owner;
-        set
-        {
-            IUIElement.SetOwner(_owner, value, this);
-            _owner = value;
-        }
-    }
-
 
     protected virtual void UpdateBorderSize()
     {
         Border.Size = new Vector2f(_width, _height);
         Border.Origin = new Vector2f(-_borderThickness, _height + _borderThickness);
     }
+
     protected float _width = 0;
     public float OriginWidth { get; protected set; } = 0;
     public virtual float Width
@@ -137,6 +96,24 @@ public class Bar: IUIElement
         }
     }
 
+    public override HorizontalAlign HorizontalAlignment 
+    {
+        get => _horizontalAlignment;
+        set
+        {
+            _horizontalAlignment = value;
+            Border.Origin = new Vector2f(GetHorizontalBounds(Border.GetLocalBounds()), Border.Origin.Y);
+        }
+    }
+    public override VerticalAlign VerticalAlignment 
+    {
+        get => _verticalAlignment;
+        set
+        {
+            _verticalAlignment = value;
+            Border.Origin = new Vector2f(Border.Origin.X, GetVerticalBounds(Border.GetLocalBounds()));
+        }
+    }
 
 
     private void SetTextureRect()
@@ -182,25 +159,23 @@ public class Bar: IUIElement
 
 
     public Bar(IUnit? owner = null)
+        :base(owner)
     {
         Owner = owner;
         Border = new RectangleShape();
 
-        Screen.WidthChangesFun += UpdateScreenInfo;
-        Screen.HeightChangesFun += UpdateScreenInfo;
+        Drawables.Add(Border);
+    }
+    public Bar(RectangleShape border, IUnit? owner = null)
+        : base(owner)
+    {
+        Owner = owner;
+        Border = new RectangleShape(border);
 
         Drawables.Add(Border);
     }
 
-    public virtual void Render()
-    {
-        UpdateInfo();
-        foreach (var draw in Drawables)
-            Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
-    }
-    public virtual void UpdateInfo() 
-    { }
-    public virtual void UpdateScreenInfo()
+    public override void UpdateScreenInfo()
     {
         UpdateWidth();
         UpdateHeight();
@@ -209,21 +184,7 @@ public class Bar: IUIElement
         Height = OriginHeight;
         BorderThickness = _originBorderThickness;
     }
-    public void UpdateWidth()
-    {
-        float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
-
-        PreviousScreenWidth = Screen.ScreenWidth;
-    }
-    public void UpdateHeight()
-    {
-        float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-        PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
-
-        PreviousScreenHeight = Screen.ScreenHeight;
-    }
-    public virtual void Hide()
+    public override void ToggleVisibilityObject()
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();

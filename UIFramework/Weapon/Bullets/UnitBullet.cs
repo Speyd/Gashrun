@@ -1,7 +1,8 @@
 ﻿using System.Collections.Concurrent;
-using ObjectFramework;
+using ControlLib.Buttons;
 using ProtoRender.Object;
 using SFML.System;
+using MoveLib;
 using ScreenLib;
 using RayTracingLib;
 using InteractionFramework.VisualImpact;
@@ -20,16 +21,16 @@ public class UnitBullet : Bullet
     private ConcurrentDictionary<IUnit, byte> ignoreCollisionList = new();
 
 
-    public UnitBullet(float damage, float speed, Unit unit, ControlLib.ButtonBinding? hitObject)
+    public UnitBullet(float damage, float speed, Unit unit, ButtonBinding? hitObject)
         :base(damage, hitObject)
     {
         Unit = new Unit(unit);
         Speed = speed;
     }
-    public UnitBullet(float damage, Unit unit, ControlLib.ButtonBinding? hitObject)
+    public UnitBullet(float damage, Unit unit, ButtonBinding? hitObject)
        : this(damage, baseSpeed, unit, hitObject)
     {}
-    public UnitBullet(Unit unit, ControlLib.ButtonBinding? hitObject)
+    public UnitBullet(Unit unit, ButtonBinding? hitObject)
         : this(baseDamage, baseSpeed, unit, hitObject)
     {}
     public UnitBullet(UnitBullet bullet)

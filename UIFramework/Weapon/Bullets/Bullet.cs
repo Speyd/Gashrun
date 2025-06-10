@@ -1,24 +1,10 @@
 ﻿using ProtoRender.Object;
-using RayTracingLib;
 using SFML.System;
-using ControlLib;
+using ControlLib.Buttons;
 using InteractionFramework.Death;
-using SFML.Graphics;
-using TextureLib;
-using RayTracingLib.Detection;
 using InteractionFramework.VisualImpact;
 using InteractionFramework.HitAction;
-using ObstacleLib.SpriteLib;
-using HitBoxLib.HitBoxSegment;
-using HitBoxLib.PositionObject;
-using HitBoxLib.Segment.SignsTypeSide;
-using ObstacleLib.TexturedWallLib;
-using ObstacleLib;
-using ProtoRender.RenderAlgorithm;
-using ProtoRender.RenderInterface;
-using ScreenLib;
-using SFML.Audio;
-using ObjectFramework;
+
 
 
 namespace UIFramework.Weapon.Bullets;
@@ -65,7 +51,7 @@ public abstract class Bullet : IBullet
         }
         if (target is IDamageable damageable)
         {
-            damageable.DamageAction?.Invoke(Damage);
+            damageable.Hp.Decrease(Damage);
             HitObject?.Listen();
         }
         if (hitEffect?.SoundHit is not null && bullet.Map is not null)
