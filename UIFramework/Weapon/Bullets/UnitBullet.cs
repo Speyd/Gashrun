@@ -67,9 +67,9 @@ public class UnitBullet : Bullet
             MoveAngle(newUnit, collisionObject.Item2);
             var raycastResult = Raycast.RaycastFun(newUnit);
 
-            var result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1 ?
+            (IObject?, Vector3f?) result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1 ?
                 collisionObject :
-                raycastResult;
+                (raycastResult.Item1, raycastResult.Item2);
             OnHit(owner, newUnit, result.Item1, result.Item2 ?? new Vector3f());
 
         }

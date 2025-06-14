@@ -1,5 +1,5 @@
 ﻿using ProtoRender.Object;
-using MoveLib.Move;
+using MoveLib;
 using TextureLib.Textures.Pair;
 
 
@@ -39,7 +39,7 @@ public class TriggerCollision : ITrigger
             return;
 
 
-        var result = Collision.CheckCollisionWithSide(unit, TriggerObject, true);
+        var result = CollisionHelper.CheckCollisionWithSide(unit, TriggerObject, TriggerObject.HitBox.MainHitBox, true);
         if (result.Item1)
             lastCollisionSide = result.Item2;
 

@@ -7,8 +7,8 @@ using InteractionFramework.Audio.SoundType;
 namespace UIFramework.Weapon;
 public class Gun
 {
-    private ProtoRender.Object.IUnit _owner;
-    public ProtoRender.Object.IUnit Owner 
+    private ProtoRender.Object.IUnit? _owner = null;
+    public ProtoRender.Object.IUnit? Owner 
     {
         get => _owner;
         set
@@ -37,7 +37,7 @@ public class Gun
     {
         bool hasAmmo = await Magazine.UseAmmoAsync();
 
-        if (hasAmmo && Sound is not null && Owner.Map is not null)
+        if (hasAmmo && Sound is not null && Owner?.Map is not null)
         {
             Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
@@ -46,7 +46,7 @@ public class Gun
     public void Shot()
     {
         bool hasAmmo = Magazine.UseAmmo();
-        if (hasAmmo && Sound is not null && Owner.Map is not null)
+        if (hasAmmo && Sound is not null && Owner?.Map is not null)
         {
             Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }

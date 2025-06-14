@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UIFramework.Render;
+using UIFramework.Sprite;
 using UIFramework.Text.AlignEnums;
 
 
@@ -52,7 +53,20 @@ public class UIShape : UIElement
         RectangleShape = rectangleShape;
         Drawables.Add(RectangleShape);
     }
+    public UIShape(UIShape uIShape, IUnit? owner = null)
+        : base(owner)
+    {
+        RectangleShape = new RectangleShape(uIShape.RectangleShape);
 
+        RenderOrder = uIShape.RenderOrder;
+        PreviousScreenHeight = uIShape.PreviousScreenHeight;
+        PreviousScreenWidth = uIShape.PreviousScreenWidth;
+
+        HorizontalAlignment = uIShape.HorizontalAlignment;
+        VerticalAlignment = uIShape.VerticalAlignment;
+
+        Drawables.Add(RectangleShape);
+    }
 
     #region IUIElement
     public override void ToggleVisibilityObject()

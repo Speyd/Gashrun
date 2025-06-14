@@ -13,7 +13,7 @@ using UIFramework.Render;
 using UIFramework.Text;
 
 namespace UIFramework.Windows;
-public class Button : UIElement
+public class UIButton : UIElement
 {
     public override Vector2f PositionOnScreen
     {
@@ -80,7 +80,7 @@ public class Button : UIElement
     public Action? OnClick { get; set; }
 
 
-    public Button(Vector2f position, Vector2f size, string label, string font, IUnit? owner = null)
+    public UIButton(Vector2f position, Vector2f size, string label, string font, IUnit? owner = null)
         :base(owner)
     {
         Shape = new UIShape(new RectangleShape(size)
@@ -94,7 +94,17 @@ public class Button : UIElement
 
         PositionOnScreen = position;
     }
+    public UIButton(Vector2f position, UIShape uIShape, UIText uIText, IUnit? owner = null)
+       : base(owner)
+    {
+        Shape = new UIShape(uIShape);
+        Shape.RectangleShape.FillColor = DefaultColorShape;
 
+        TextButton = new UIText(uIText);
+        TextButton.RenderOrder = RenderOrder;
+
+        PositionOnScreen = position;
+    }
 
 
     #region IUIElement

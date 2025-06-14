@@ -8,9 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.Core" Version="2.0.3" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.0.9" />
-    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.6.0" />
+    <PackageReference Include="EnginePseudo3D.Core" Version="2.0.8" />
 
   </ItemGroup>
 

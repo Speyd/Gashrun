@@ -1,32 +1,25 @@
-﻿
-using InteractionFramework;
-using InteractionFramework.Dialog;
+﻿using InteractionFramework.Dialog;
+using NGenerics.Extensions;
 using ProtoRender.Object;
 using ProtoRender.WindowInterface;
-using SFML.Graphics;
-using System.Drawing;
-using UIFramework.Render;
-using UIFramework.Sprite;
+using SFML.Audio;
 using UIFramework.Text;
 using UIFramework.Windows;
+
 
 namespace UIFramework.Dialog;
 public class DialogLvl
 {
     public UIText QuestText { get; set; }
     public Dictionary<int, Button> AnswerText { get; set; } = new();
-    public UIShape ShapeBackround { get; set; }
 
     public int AnswerNumber = -1;
 
     private TaskCompletionSource<int>? _answerSelected;
-
-    public DialogLvl(RenderText render, Dictionary<int, Button> answerText, RectangleShape shapeBackround)
+    public Action OnDialogueResponse { get; set; }
+    public DialogLvl(RenderText render, Dictionary<int, Button> answerText, Action? onDialogueResponse = null)
     {
-        ShapeBackround = new(shapeBackround);
-        ShapeBackround.HorizontalAlignment = Text.AlignEnums.HorizontalAlign.Center;
-        ShapeBackround.VerticalAlignment = Text.AlignEnums.VerticalAlign.Center;
-        ShapeBackround.RenderOrder = RenderOrder.Dialog;
+        OnDialogueResponse = onDialogueResponse ?? (() => { });
 
         QuestText = new UIText(render);
         QuestText.VerticalAlignment = Text.AlignEnums.VerticalAlign.Bottom;
@@ -38,24 +31,42 @@ public class DialogLvl
 
 
         AnswerText = answerText;
+        AnswerText.ForEach
+            (
+            ans =>
+            ans.Value.TextButton.SetText($"{ans.Key}. {ans.Value.TextButton.RenderText.Text.DisplayedString}")
+            );
     }
 
-    public async Task<int> StartAsync(IDialogObject listener, IDialogObject speaker)
+    private void SubscribeListener(IUnit listener, IDialogObject speaker)
     {
-        if (listener is not IUnit unit)
-            return -1;
-        _answerSelected = new TaskCompletionSource<int>();
-
-        ShapeBackround.Owner = unit;
         if (speaker.DialogSprite is not null)
-            speaker.DialogSprite.Owner = unit;
-        speaker.DisplayName.Owner = unit;
+            speaker.DialogSprite.Owner = listener;
+        if (speaker.DisplayName is not null)
+            speaker.DisplayName.Owner = listener;
+    }
+    private void UnsubscribeListener(IUnit listener, IDialogObject speaker)
+    {
+        if (speaker.DialogSprite is not null)
+            speaker.DialogSprite.Owner = null;
+        if (speaker.DisplayName is not null)
+            speaker.DisplayName.Owner = null;
+
+        foreach (var btn in AnswerText.Values)
+        {
+            btn.Owner = null;
+            QuestText.Owner = null;
+        }
+    }
+    private async Task<int> InitializeAnswerButtons(IUnit listener, IDialogObject speaker)
+    {
+        _answerSelected = new TaskCompletionSource<int>();
 
         foreach (var item in AnswerText)
         {
             var button = item.Value;
-            button.Owner = unit;
-            QuestText.Owner = unit;
+            button.Owner = listener;
+            QuestText.Owner = listener;
 
             int thisAnswer = item.Key;
 
@@ -66,22 +77,18 @@ public class DialogLvl
                 {
                     AnswerNumber = thisAnswer;
                     _answerSelected.TrySetResult(AnswerNumber);
+                    OnDialogueResponse.Invoke();
                 }
             };
         }
 
-        int answer = await _answerSelected.Task;
-
-        ShapeBackround.Owner = null;
-        speaker.DisplayName.Owner = null;
-        if (speaker.DialogSprite is not null)
-            speaker.DialogSprite.Owner = null;
-
-        foreach (var btn in AnswerText.Values)
-        {
-            btn.Owner = null;
-            QuestText.Owner = null;
-        }
+        return await _answerSelected.Task;
+    }
+    public async Task<int> StartAsync(IUnit listener, IDialogObject speaker)
+    {
+        SubscribeListener(listener, speaker);
+        int answer = await InitializeAnswerButtons(listener, speaker);
+        UnsubscribeListener(listener, speaker);
 
         return answer;
     }
