@@ -93,13 +93,6 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlH
     #endregion
 
     #region IDamageable
-    private void ValidateDamage(float damage)
-    {
-        if (damage > 0)
-            Hp.Decrease(damage);
-        else
-            Hp.Increase(Math.Abs(damage));
-    }
     public Stat Hp { get; set; }
     public DeathEffect? DeathAnimation { get; set; } = null;
     private void ClearingDataAfteDeath()

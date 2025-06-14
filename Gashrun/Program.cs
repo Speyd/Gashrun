@@ -466,20 +466,19 @@ Camera.CurrentUnit.Control.AddBottomBind(bindBurHide);
 //Sight sight = new RoundSight(Color.Blue, 4);
 
 
-UIFramework.Windows.Button button = new UIFramework.Windows.Button(new Vector2f(300, 300), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
-UIFramework.Windows.Button button1 = new UIFramework.Windows.Button(new Vector2f(400, 400), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button = new UIButton(new Vector2f(300, 300), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button1 = new UIButton(new Vector2f(400, 400), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
 
-UIFramework.Windows.Button button2 = new UIFramework.Windows.Button(new Vector2f(200, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
-UIFramework.Windows.Button button3 = new UIFramework.Windows.Button(new Vector2f(400, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button2 = new UIButton(new Vector2f(200, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button3 = new UIButton(new Vector2f(400, 200), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
 
-UIFramework.Windows.Button button4 = new UIFramework.Windows.Button(new Vector2f(200, 300), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
-UIFramework.Windows.Button button5 = new UIFramework.Windows.Button(new Vector2f(300, 100), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button4 = new UIButton(new Vector2f(200, 300), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
+UIButton button5 = new UIButton(new Vector2f(300, 100), new Vector2f(150, 25), "Нажми на меня", PathResolver.GetPath(mainBold));
 var size = new SFML.System.Vector2f(Screen.ScreenWidth, Screen.ScreenHeight);
 
 RectangleShape ShapeBackround1 = new RectangleShape(size)
 {
     Position = new SFML.System.Vector2f(Screen.ScreenWidth / 2, Screen.ScreenHeight / 2),
-    Origin = new SFML.System.Vector2f(size.X / 2f, size.Y / 2f),
     FillColor = new SFML.Graphics.Color(0, 0, 0, 100),
 };
 DialogManager dialogManager = new DialogManager(player2, player, ShapeBackround1);
@@ -488,16 +487,16 @@ DialogManager dialogManager = new DialogManager(player2, player, ShapeBackround1
 
 dialogManager.AddLevelDialog(0, new Dictionary<int, DialogLvl>()
 {
-    { 0, new DialogLvl(textMa,new Dictionary<int, UIFramework.Windows.Button>() { { 1, button }, { 2, button1 } }) }
+    { 0, new DialogLvl(textMa,new Dictionary<int, UIButton>() { { 1, button }, { 2, button1 } }) }
 });
 dialogManager.AddLevelDialog(1, new Dictionary<int, DialogLvl>()
 {
-    { 1, new DialogLvl(textMa, new Dictionary<int, UIFramework.Windows.Button>() { { 1, button2 }, { 2, button3 } }) },
-    { 2, new DialogLvl(textMa,new Dictionary<int, UIFramework.Windows.Button>() { { 1, button2 }, { 2, button3 } }) }
+    { 1, new DialogLvl(textMa, new Dictionary<int, UIButton>() { { 1, button2 }, { 2, button3 } }) },
+    { 2, new DialogLvl(textMa,new Dictionary<int, UIButton>() { { 1, button2 }, { 2, button3 } }) }
 });
 dialogManager.AddLevelDialog(2, new Dictionary<int, DialogLvl>()
 {
-    { 1, new DialogLvl(textMa, new Dictionary<int, UIFramework.Windows.Button>() { { 1, button4 }, { 2, button5 } }) },
+    { 1, new DialogLvl(textMa, new Dictionary<int, UIButton>() { { 1, button4 }, { 2, button5 } }) },
 });
 VisualizerHitBox.VisualizerType = RenderLib.HitBox.VisualizerHitBoxType.VisualizeSelfRenderable;
 
@@ -594,14 +593,7 @@ TriggerButton moveBB = new TriggerButton(new ButtonBinding(new ControlLib.Button
     (unit) => { soundMove.Sound.Stop(); }
     );
 TriggerHandler.AddTriger(player, moveBB);
-float NormalizeAngle(float angle)
-{
-    while (angle > Math.PI)
-        angle -= 2 * (float)Math.PI;
-    while (angle < -Math.PI)
-        angle += 2 * (float)Math.PI;
-    return angle;
-}
+
 
 VisualEffectHelper.VisualEffect = new Darkness(PathResolver.GetPath(Path.Combine("Resources", "Shader", "Effect", "DarknessEffect.glsl")));
 VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeSelfRenderable;

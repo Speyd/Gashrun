@@ -50,7 +50,9 @@ public class UIShape : UIElement
     public UIShape(RectangleShape rectangleShape, IUnit? owner = null)
         :base(owner)
     {
-        RectangleShape = rectangleShape;
+        RectangleShape = new RectangleShape(rectangleShape);
+        PositionOnScreen = rectangleShape.Position;
+
         Drawables.Add(RectangleShape);
     }
     public UIShape(UIShape uIShape, IUnit? owner = null)
@@ -89,6 +91,9 @@ public class UIShape : UIElement
         RectangleShape.Scale = new Vector2f(RectangleShape.Scale.X * widthScale, RectangleShape.Scale.Y);
         PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
 
+        HorizontalAlignment = HorizontalAlignment;
+        VerticalAlignment = VerticalAlignment;
+
         PreviousScreenWidth = Screen.ScreenWidth;
     }
     public override void UpdateHeight()
@@ -100,6 +105,9 @@ public class UIShape : UIElement
 
         RectangleShape.Scale = new Vector2f(RectangleShape.Scale.X, RectangleShape.Scale.Y * heightScale);
         PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
+
+        HorizontalAlignment = HorizontalAlignment;
+        VerticalAlignment = VerticalAlignment;
 
         PreviousScreenHeight = Screen.ScreenHeight;     
     }

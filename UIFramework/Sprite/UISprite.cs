@@ -88,10 +88,8 @@ public class UISprite: UIElement
     public override void UpdateWidth()
     {
         float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
-        float widthBaseScale = PreviousScreenWidth / Screen.BaseScreenWidth;
 
-
-        Sprite.Scale = new Vector2f(Sprite.Scale.X * widthBaseScale, Sprite.Scale.Y);
+        Sprite.Scale = new Vector2f(Sprite.Scale.X * widthScale, Sprite.Scale.Y);
         PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
 
         PreviousScreenWidth = Screen.ScreenWidth;
@@ -99,9 +97,8 @@ public class UISprite: UIElement
     public override void UpdateHeight()
     {
         float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
-        float heightBaseScale = PreviousScreenHeight / Screen.BaseScreenHeight;
 
-        Sprite.Scale = new Vector2f(Sprite.Scale.X, Sprite.Scale.Y * heightBaseScale);
+        Sprite.Scale = new Vector2f(Sprite.Scale.X, Sprite.Scale.Y * heightScale);
         PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
 
         PreviousScreenHeight = Screen.ScreenHeight;

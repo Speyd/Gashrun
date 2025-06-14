@@ -11,13 +11,13 @@ namespace UIFramework.Dialog;
 public class DialogLvl
 {
     public UIText QuestText { get; set; }
-    public Dictionary<int, Button> AnswerText { get; set; } = new();
+    public Dictionary<int, UIButton> AnswerText { get; set; } = new();
 
     public int AnswerNumber = -1;
 
     private TaskCompletionSource<int>? _answerSelected;
     public Action OnDialogueResponse { get; set; }
-    public DialogLvl(RenderText render, Dictionary<int, Button> answerText, Action? onDialogueResponse = null)
+    public DialogLvl(RenderText render, Dictionary<int, UIButton> answerText, Action? onDialogueResponse = null)
     {
         OnDialogueResponse = onDialogueResponse ?? (() => { });
 
