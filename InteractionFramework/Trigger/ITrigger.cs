@@ -6,7 +6,7 @@ public interface ITrigger
 {
     DateTime LastCheckTime { get; set; }
     int CooldownMs { get; set; }
-
+    
     bool isTriggered {  get; }
     public Action<IUnit>? OnTriggered { get; set; }
     public Action<IUnit>? OnUntriggered { get; set; }

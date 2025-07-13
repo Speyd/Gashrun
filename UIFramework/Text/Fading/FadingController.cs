@@ -17,7 +17,7 @@ public class FadingController
     public long FadingTimeMilliseconds { get; set; }
 
     public readonly Stopwatch Stopwatch = new();
-    private bool StartStopwatch = true;
+    private bool StartStopwatch = false;
 
     private FadingType _fadingType;
     public FadingType FadingType
@@ -42,6 +42,9 @@ public class FadingController
         get => _fadingTextLife;
         set
         {
+            if (_fadingTextLife == value)
+                return;
+
             _fadingTextLife = value;
             if (!StartStopwatch)
             {
@@ -59,11 +62,10 @@ public class FadingController
 
     public FadingController(FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds)
     {
-        FadingType = fasingType;
+        _fadingType = fasingType;
         usedFadingType = fasingType;
         FadingTextLife = fadingTextLife;
         FadingTimeMilliseconds = fadingTimeMilliseconds;
-        manualElapsed = 0;
     }
 
     private float GetCurrentProgress()
@@ -81,10 +83,12 @@ public class FadingController
     public void Update()
     {
         if (!Stopwatch.IsRunning && StartStopwatch)
+        {
             Stopwatch.Restart();
+        }
+       
 
         long elapsedTime = manualElapsed + (Stopwatch.IsRunning ? Stopwatch.ElapsedMilliseconds : 0);
-
         if (elapsedTime >= FadingTimeMilliseconds)
         {
             ResetTime();
@@ -152,7 +156,7 @@ public class FadingController
 
     public void Restart()
     {
-        Stopwatch.Restart();
+        Stopwatch.Reset();
         manualElapsed = 0;
         StartStopwatch = true;
 

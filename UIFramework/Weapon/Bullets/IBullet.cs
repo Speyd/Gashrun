@@ -10,9 +10,16 @@ using System.Threading.Tasks;
 namespace UIFramework.Weapon.Bullets;
 public interface IBullet
 {
+    IUnit? Owner { get; }
     float Damage { get; set; }
-    Task FlightAsync(IUnit owner);
-    void Flight(IUnit owner);
 
+    public static float InfinityFlightDistance { get; } = -1;
+    public static float BaseDamage { get; } = 1;
+
+    float FlightDistance { get; set; }
+    bool IsActive { get; }
+
+    void Flight(IUnit owner);
+    void Update();
     IBullet GetCopy();
 }

@@ -9,6 +9,7 @@ using ScreenLib.Output;
 using UIFramework.Render;
 using SFML.Graphics;
 using ProtoRender.Object;
+using TextureLib.Textures;
 
 
 namespace UIFramework.Sprite;
@@ -21,6 +22,9 @@ public class UISprite: UIElement
         {
             _positionOnScreen = value;
             Sprite.Position = value;
+
+            HorizontalAlignment = HorizontalAlignment;
+            VerticalAlignment = VerticalAlignment;
         }
     }
     public Vector2f _scale = new Vector2f(1f, 1f);
@@ -39,6 +43,7 @@ public class UISprite: UIElement
     }
 
     public SFML.Graphics.Sprite Sprite { get; set; }
+    public TextureWrapper? Texture { get; set; }
 
     public UISprite(UISprite uiSprite, IUnit? owner = null)
        : base(owner)
@@ -67,14 +72,31 @@ public class UISprite: UIElement
 
         Drawables.Add(Sprite);
     }
-    public UISprite(SFML.Graphics.Texture? texture, IUnit? owner = null)
+    public UISprite(TextureWrapper? texture, IUnit? owner = null)
         :base(owner)
     {
-        if(texture is not null)
-            Sprite = new SFML.Graphics.Sprite(texture);
+        if (texture is not null)
+        {
+            Texture = new TextureWrapper(texture.PathTexture, true);
+            Sprite = new SFML.Graphics.Sprite(Texture.Texture);
+        }
         else
             Sprite = new SFML.Graphics.Sprite();
         Scale = new Vector2f(1f,1f);
+
+        FloatRect bounds = Sprite.GetLocalBounds();
+        Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);
+        PositionOnScreen = Sprite.Position;
+
+        Drawables.Add(Sprite);
+    }
+    public UISprite(string path, IUnit? owner = null)
+       : base(owner)
+    {
+        Texture = new TextureWrapper(path, true);
+        Sprite = new SFML.Graphics.Sprite(Texture.Texture);
+
+        Scale = new Vector2f(1f, 1f);
 
         FloatRect bounds = Sprite.GetLocalBounds();
         Sprite.Origin = new Vector2f(bounds.Width / 2f, bounds.Height / 2f);

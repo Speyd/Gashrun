@@ -15,6 +15,8 @@ public class Gun
         {
             _owner = value;
             Magazine.Owner = value;
+            Animation.Owner = value;
+            Animation.BottomBinding = Animation.BottomBinding;
         }
     }
 
@@ -26,23 +28,30 @@ public class Gun
     {
         Animation = animation;
 
-        bottomBinding.ExecutableFunction = ShotAsync;
+        bottomBinding.ExecutableFunction = Shot;
         Animation.BottomBinding = bottomBinding;
 
         Magazine = magazine;
         Owner = owner;
     }
 
-    public async Task ShotAsync()
-    {
-        bool hasAmmo = await Magazine.UseAmmoAsync();
+    //public async Task ShotAsync()
+    //{
+    //    _ = Task.Run(async () =>
+    //    {
+    //        bool hasAmmo = await Magazine.UseAmmoAsync();
 
-        if (hasAmmo && Sound is not null && Owner?.Map is not null)
-        {
-            Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
-        }
-        Animation.IsAnimation = hasAmmo;
-    }
+    //        if (hasAmmo && Sound is not null && Owner?.Map is not null)
+    //        {
+    //            Sound.Play(Owner.Map, new SFML.System.Vector3f(
+    //                (float)Owner.X.Axis,
+    //                (float)Owner.Y.Axis,
+    //                (float)Owner.Z.Axis));
+    //        }
+
+    //        Animation.IsAnimation = hasAmmo;
+    //    });
+    //}
     public void Shot()
     {
         bool hasAmmo = Magazine.UseAmmo();

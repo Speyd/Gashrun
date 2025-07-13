@@ -7,9 +7,9 @@ public class SoundDataCache
 {
     private static readonly PathDataCache<SoundBuffer> _cache = new();
 
-    public static SoundBuffer? Get(string? path) => _cache.Get(path);
+    public static IReadOnlyList<SoundBuffer>? Get(string? path) => _cache.Get(path);
 
-    public static SoundBuffer GetOrAdd(string path, Func<string, SoundBuffer> factory) =>
+    public static IReadOnlyList<SoundBuffer> GetOrAdd(string path, Func<string, SoundBuffer> factory) =>
         _cache.GetOrAdd(path, factory);
 
     public static void Load(string path, SoundBuffer texture) => _cache.Load(path, texture);

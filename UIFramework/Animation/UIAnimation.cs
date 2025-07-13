@@ -6,7 +6,13 @@ using ControlLib.Buttons;
 using TextureLib.Loader;
 using UIFramework.Render;
 using ProtoRender.Object;
-
+using ImageMagick;
+using TextureLib.Textures;
+using System.Diagnostics;
+using TextureLib.DataCache;
+using System.Collections.Concurrent;
+using ObstacleLib.TexturedWallLib;
+using TextureLib.Loader.ImageProcessing;
 
 namespace UIFramework.Animation;
 public class UIAnimation : AnimationState, IUIElement
@@ -54,7 +60,7 @@ public class UIAnimation : AnimationState, IUIElement
     }
 
     private IUnit? _owner = null;
-    public IUnit? Owner 
+    public IUnit? Owner
     {
         get => _owner;
         set
@@ -64,8 +70,22 @@ public class UIAnimation : AnimationState, IUIElement
         }
     }
 
-
-    public ButtonBinding? BottomBinding { get; set; } = null;
+    public ButtonBinding? _bottomBinding = null;
+    public ButtonBinding? BottomBinding 
+    {
+        get => _bottomBinding;
+        set
+        {
+            if (Owner is not null)
+            {
+                if (_bottomBinding is not null)
+                    Owner.Control.DeleteBottomBind(_bottomBinding);
+                if (value is not null)
+                    Owner.Control.AddBottomBind(value);
+            }
+            _bottomBinding = value;
+        }
+    }
 
     public float _scaleX = 1.0f;
     private float _originScaleX = 0;
@@ -133,21 +153,23 @@ public class UIAnimation : AnimationState, IUIElement
 
 
     #region Constructor 
-    public UIAnimation(Vector2f position, IUnit? owner = null, ButtonBinding? bottomBinding = null, params string[] paths)
+    public UIAnimation(Vector2f position, ImageLoadOptions? options = null, ButtonBinding? bottomBinding = null, params string[] paths)
+        : base(options, false, paths)
     {
-        Owner = owner;
-
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
-
-        AddFrames(ImageLoader.Load(paths));
 
         Drawables.Add(RenderSprite);
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
     }
-    public UIAnimation(IUnit? owner = null, ButtonBinding? bottomBinding = null, params string[] paths)
-        : this(new Vector2f(), owner, bottomBinding, paths)
+    public UIAnimation(ImageLoadOptions? options = null, ButtonBinding? bottomBinding = null, params string[] paths)
+        : this(new Vector2f(), options, bottomBinding, paths)
+    {
+        SetPositionCenter();
+    }
+    public UIAnimation(ImageLoadOptions? options = null, params string[] paths)
+        : this(new Vector2f(), options, null, paths)
     {
         SetPositionCenter();
     }
@@ -160,7 +182,7 @@ public class UIAnimation : AnimationState, IUIElement
     }
     protected virtual void AnimationPress()
     {
-        if (Index == AmountFrame - 1)
+        if (Index == CountFrame - 1)
         {
             UpdateFrame();
             IsAnimatingOnPress = false;
@@ -205,19 +227,19 @@ public class UIAnimation : AnimationState, IUIElement
 
         PercentShiftX = _originPercentShiftX;
         PercentShiftY = _originPercentShiftY;
-        
-      
+
+
         ScaleX = _originScaleX;
         ScaleY = _originScaleY;
     }
-    public void UpdateWidth()
+    public virtual void UpdateWidth()
     {
         float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
         PositionOnScreen = new Vector2f(PositionOnScreen.X * widthScale, PositionOnScreen.Y);
 
         PreviousScreenWidth = Screen.ScreenWidth;
     }
-    public void UpdateHeight()
+    public virtual void UpdateHeight()
     {
         float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
         PositionOnScreen = new Vector2f(PositionOnScreen.X, PositionOnScreen.Y * heightScale);
@@ -232,7 +254,7 @@ public class UIAnimation : AnimationState, IUIElement
     {
         if (_isHide && Drawables.Count > 0)
             Drawables.Clear();
-        else if(!_isHide)
+        else if (!_isHide)
         {
             if (!Drawables.Contains(RenderSprite))
                 Drawables.Add(RenderSprite);
@@ -262,7 +284,7 @@ public class UIAnimation : AnimationState, IUIElement
 
     private Vector2f GetFirstSizeFrame()
     {
-        Vector2u? textureSize = GetFrame(0)?.Texture.Size;
+        Vector2u? textureSize = GetFrame(0)?.Texture?.Size;
         if (textureSize is null)
             throw new NullReferenceException("Frame UIAnimation is null(GetFirstSizeFrame)");
 

@@ -20,6 +20,8 @@ public class UIText : UIElement
             AdjustTextSize();
             RenderText.Text.Position = value;
 
+            HorizontalAlignment = HorizontalAlignment;
+            VerticalAlignment = VerticalAlignment;
         }
     }
 
@@ -49,7 +51,6 @@ public class UIText : UIElement
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
         :base(owner)
     {
-
         RenderText = new RenderText(text, size, position, pathToFont, color);
         OriginCharacterSize = RenderText.Text.CharacterSize;
         PositionOnScreen = position;
@@ -106,11 +107,8 @@ public class UIText : UIElement
     {
         if (IsHide && Drawables.Count > 0)
             Drawables.Clear();
-        else
-        {
-            if(!Drawables.Contains(RenderText.Text))
-                Drawables.Add(RenderText.Text);
-        }
+        else if(!Drawables.Contains(RenderText.Text))
+            Drawables.Add(RenderText.Text);
     }
     #endregion
 }

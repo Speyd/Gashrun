@@ -6,14 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using AnimationLib;
 using SFML.Graphics;
+using TextureLib.Loader.ImageProcessing;
 using UIFramework.Animation;
 
 namespace UIFramework.IndicatorsBar.Content;
 public class AnimationContent : AnimationState, IBarContent
 {
-    public AnimationContent(params string[] paths)
-        : base(paths)
+    public AnimationContent(ImageLoadOptions? options = null, params string[] paths)
+        : base(options, true, paths)
     { }
+    public AnimationContent(AnimationState state)
+       : base(state)
+    {
+    }
 
     public void UpdateContent(RectangleShape bar)
     {

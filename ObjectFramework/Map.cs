@@ -12,6 +12,10 @@ namespace ObjectFramework;
 public class Map : IMap
 {
     /// <summary>
+    /// Globally unique identifier for the object.
+    /// </summary>
+    public Guid UUID { get; set; } = Guid.NewGuid();
+    /// <summary>
     /// Gets the map's configuration including dimensions.
     /// </summary>
     public ProtoRender.Map.Setting Setting { get; init; }
@@ -20,6 +24,7 @@ public class Map : IMap
     /// A concurrent dictionary storing obstacles grouped by their cell coordinates.
     /// </summary>
     public ConcurrentDictionary<(int, int), ConcurrentDictionary<IObject, byte>> Obstacles { get; init; }
+
 
     /// <summary>
     /// Initializes a new map with a border filled with a specified object.
@@ -33,6 +38,13 @@ public class Map : IMap
         Obstacles = new ConcurrentDictionary<(int X, int Y), ConcurrentDictionary<IObject, byte>>();
         RefillingObstacles(fillingObject);
     }
+    public Map(int height, int width)
+    {
+        Setting = new Setting(height, width);
+        Obstacles = new ConcurrentDictionary<(int X, int Y), ConcurrentDictionary<IObject, byte>>();
+    }
+
+
     /// <summary>
     /// Fills the borders of the map with the specified obstacle.
     /// </summary>
@@ -45,11 +57,19 @@ public class Map : IMap
             {
                 if (y == 0 || y == Setting.MapHeight - 1 || x == 0 || x == Setting.MapWidth - 1)
                 {
-                    AddObstacle(x, y, fillingObject.GetCopy());
+                    AddObstacle(x, y, fillingObject.GetDeepCopy());
                 }
             }
         }
     }
+
+    private void AddObstacleToList(ConcurrentDictionary<IObject, byte> list, IObject addObstacle)
+    {
+        list.TryAdd(addObstacle, 0);
+        addObstacle.OnPositionChanged -= UpdateCoordinatesObstacle;
+        addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
+    }
+
     /// <summary>
     /// Validates the position and constraints for adding an obstacle.
     /// </summary>
@@ -61,9 +81,7 @@ public class Map : IMap
         var list = Obstacles.GetOrAdd((x, y), _ => new ConcurrentDictionary<IObject, byte>());
         if (list.Count == 0)
         {
-            list.TryAdd(addObstacle, 0);
-            //addObstacle.Map = this;
-            addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
+            AddObstacleToList(list, addObstacle);
             return;
         }
 
@@ -81,11 +99,9 @@ public class Map : IMap
             if (addObstacle.X == obst.Key.X && addObstacle.Y == obst.Key.Y)
                 throw new Exception("An object at these coordinates already exists! (CheckTrueAddObstacle)");
         }
-
-       // addObstacle.Map = this;
-        list.TryAdd(addObstacle, 0);
-        addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
+        AddObstacleToList(list, addObstacle);
     }
+
     /// <summary>
     /// Adds an obstacle at a specific cell.
     /// </summary>
@@ -106,7 +122,10 @@ public class Map : IMap
 
         addObstacle.HandleObjectAddition(x, y, resetHitBoxSide);
         CheckTrueAddObstacle(addObstacle, x, y);
+
+        addObstacle.Map = this;
     }
+
     /// <summary>
     /// Asynchronously adds an obstacle at a specific cell.
     /// </summary>
@@ -129,8 +148,11 @@ public class Map : IMap
 
             addObstacle.HandleObjectAddition(x, y, resetHitBoxSide);
             CheckTrueAddObstacle(addObstacle, x, y);
+
+            addObstacle.Map = this;
         });
     }
+
     /// <summary>
     /// Updates an obstacle's location if it moves to another cell.
     /// </summary>
@@ -169,7 +191,6 @@ public class Map : IMap
             newList.TryAdd(obstacle, 0);
         }
     }
-
     private void RemoveObstacle(IObject obstacle)
     {
         Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].TryRemove(obstacle, out _);
@@ -177,6 +198,7 @@ public class Map : IMap
         if (Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].Count == 0)
             Obstacles.Remove((Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY)), out _);
     }
+
     /// <summary>
     /// Deletes all obstacles from a given cell.
     /// </summary>
@@ -190,6 +212,7 @@ public class Map : IMap
 
         Obstacles.TryRemove((x, y), out _);
     }
+
     /// <summary>
     /// Deletes an obstacle at specific coordinates.
     /// </summary>
@@ -206,10 +229,11 @@ public class Map : IMap
 
         IObject? tempObst = Obstacles[(mX, mY)].FirstOrDefault(o => o.Key.X.Axis == x && o.Key.Y.Axis == y).Key;
         if (tempObst is null)
-            throw new Exception("There is no such object in this cell(DeleteAllCellObstacle)");
+            return;
 
         RemoveObstacle(tempObst);
     }
+
     /// <summary>
     /// Deletes a specific obstacle from its current cell.
     /// </summary>
@@ -224,6 +248,7 @@ public class Map : IMap
             RemoveObstacle(obstacle);
         }
     }
+
     /// <summary>
     /// Asynchronously deletes a specific obstacle.
     /// </summary>
@@ -251,6 +276,7 @@ public class Map : IMap
             }
         });
     }
+
     /// <summary>
     /// Validates if real-world coordinates (double) are within the map's tile boundaries.
     /// </summary>
@@ -258,6 +284,7 @@ public class Map : IMap
     {
         return x >= 0 && y >= 0 && x <= Setting.MapTileWidth && y <= Setting.MapTileHeight;
     }
+
     /// <summary>
     /// Validates if integer grid coordinates are within the map boundaries.
     /// </summary>
@@ -265,6 +292,7 @@ public class Map : IMap
     {
         return x >= 0 && y >= 0 && x <= Setting.MapWidth && y <= Setting.MapHeight;
     }
+
     /// <summary>
     /// Validates if a coordinate tuple is within the map's tile boundaries.
     /// </summary>
@@ -272,5 +300,15 @@ public class Map : IMap
     {
         return coordinate.Item1 >= 0 && coordinate.Item2 >= 0 &&
             coordinate.Item1 <= Setting.MapTileWidth && coordinate.Item2 <= Setting.MapTileHeight;
+    }
+
+    public void SetWidthMap(int width)
+    {
+        
+    }
+
+    public void SetHeightMap(int height)
+    {
+
     }
 }

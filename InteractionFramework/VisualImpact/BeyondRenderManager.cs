@@ -1,7 +1,6 @@
 ﻿using ProtoRender.Object;
 using System.Collections.Concurrent;
 using InteractionFramework.VisualImpact.Data;
-using ProtoRender.Map;
 
 
 namespace InteractionFramework.VisualImpact;

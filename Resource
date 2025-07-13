@@ -1,0 +1,94 @@
+{
+  "TexturePaths": {
+    "Left": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\WallTexture\\Wall1.png",
+    "Right": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\WallTexture\\Wall1.png",
+    "Bottom": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\WallTexture\\Wall1.png",
+    "Top": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\WallTexture\\Wall1.png"
+  },
+  "hitBoxSideEntry": {
+    "MainHitBox": {
+      "Body": [
+        {
+          "CoordinatePlane": 0,
+          "SideSize": 0,
+          "HitBoxSide": {
+            "CoordinatePlane": 0,
+            "Side": 0,
+            "OrginalSide": 0,
+            "Offset": -0,
+            "SideSize": 0
+          }
+        },
+        {
+          "CoordinatePlane": 0,
+          "SideSize": 1,
+          "HitBoxSide": {
+            "CoordinatePlane": 0,
+            "Side": 0,
+            "OrginalSide": 0,
+            "Offset": 0,
+            "SideSize": 1
+          }
+        },
+        {
+          "CoordinatePlane": 1,
+          "SideSize": 0,
+          "HitBoxSide": {
+            "CoordinatePlane": 1,
+            "Side": 0,
+            "OrginalSide": 0,
+            "Offset": -0,
+            "SideSize": 0
+          }
+        },
+        {
+          "CoordinatePlane": 1,
+          "SideSize": 1,
+          "HitBoxSide": {
+            "CoordinatePlane": 1,
+            "Side": 0,
+            "OrginalSide": 0,
+            "Offset": 0,
+            "SideSize": 1
+          }
+        },
+        {
+          "CoordinatePlane": 2,
+          "SideSize": 0,
+          "HitBoxSide": {
+            "CoordinatePlane": 2,
+            "Side": -425,
+            "OrginalSide": 0,
+            "Offset": -425,
+            "SideSize": 0
+          }
+        },
+        {
+          "CoordinatePlane": 2,
+          "SideSize": 1,
+          "HitBoxSide": {
+            "CoordinatePlane": 2,
+            "Side": 425,
+            "OrginalSide": 0,
+            "Offset": 425,
+            "SideSize": 1
+          }
+        }
+      ],
+      "Title": "Body"
+    },
+    "SegmentedHitbox": []
+  },
+  "LvlWall": 0,
+  "TextureInMiniMap": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\WallTexture\\Wall1.png",
+  "X": 0,
+  "Y": 0,
+  "Z": 0,
+  "CellX": 0,
+  "CellY": 0,
+  "SizeScale": 1,
+  "PositionScale": 1,
+  "IsPassability": false,
+  "IgnoreCollisonMainBox": false,
+  "IsSingleAddable": false
+}

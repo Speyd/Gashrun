@@ -24,7 +24,7 @@ public abstract class SoundEmitter : ISound
             if (string.IsNullOrEmpty(value))
                 throw new ArgumentException("Path to sound buffer cannot be null or empty.");
 
-            Sound.SoundBuffer = SoundDataCache.GetOrAdd(value, path => new SoundBuffer(path));
+            Sound.SoundBuffer = SoundDataCache.GetOrAdd(value, path => new SoundBuffer(path)).First();
             _soundBufferPath = value;
         }
     }

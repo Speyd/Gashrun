@@ -2,11 +2,6 @@
 using ScreenLib;
 using SFML.Graphics;
 using SFML.System;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UIFramework.Render;
 using UIFramework.Text.AlignEnums;
 
@@ -40,6 +35,8 @@ public abstract class UIElement : IUIElement
         set
         {
             _positionOnScreen = value;
+            HorizontalAlignment = HorizontalAlignment;
+            VerticalAlignment = VerticalAlignment;
         }
     }
     public virtual List<Drawable> Drawables { get; init; } = new();

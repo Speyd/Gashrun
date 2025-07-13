@@ -10,6 +10,7 @@ using UIFramework.Render;
 using SFML.Graphics;
 using UIFramework.Text.Fading;
 using UIFramework.Text.Fading.FadingEnums;
+using TextureLib.Textures;
 
 
 namespace UIFramework.Texture;
@@ -34,7 +35,7 @@ public class FadingSprite : UISprite
 
         Controller.Restart();
     }
-    public FadingSprite(SFML.Graphics.Texture texture, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
+    public FadingSprite(TextureWrapper texture, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
         : base(texture, owner)
     {
         Controller = new FadingController(fasingType, fadingTextLife, fadingTimeMilliseconds);
@@ -43,7 +44,7 @@ public class FadingSprite : UISprite
 
         Controller.Restart();
     }
-    public FadingSprite(SFML.Graphics.Texture texture, FadingController controller, IUnit? owner)
+    public FadingSprite(TextureWrapper texture, FadingController controller, IUnit? owner)
        : base(texture, owner)
     {
         Controller = controller;

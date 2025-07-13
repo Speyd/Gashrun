@@ -11,7 +11,6 @@ namespace UIFramework.Text;
 public static class WriteQueue
 {
     private static readonly ConcurrentDictionary<UIText, string> drawQueue = new();
-    private static readonly object locker = new();
 
     /// <summary>
     /// Adds a drawing action with its target drawable object to the queue.

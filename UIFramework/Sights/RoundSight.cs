@@ -21,6 +21,9 @@ public class RoundSight : Sight
         {
             _positionOnScreen = value;
             Circle.Position = value;
+
+            HorizontalAlignment = HorizontalAlignment;
+            VerticalAlignment = VerticalAlignment;
         }
     }
 

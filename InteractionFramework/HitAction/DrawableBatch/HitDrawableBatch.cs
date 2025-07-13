@@ -25,7 +25,7 @@ public class HitDrawableBatch
     {
         DrawList.AddRange(drawList);
     }
-    public HitDrawableBatch(List<TextureObstacle> drawList)
+    public HitDrawableBatch(List<TextureWrapper> drawList)
     {
         foreach(var texture in drawList)
             DrawList.Add(new Sprite(texture.Texture));

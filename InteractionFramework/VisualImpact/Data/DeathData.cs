@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using InteractionFramework.Death;
 using InteractionFramework.Audio.SoundType;
 using ProtoRender.Map;
+using TextureLib.Textures;
 
 
 namespace InteractionFramework.VisualImpact.Data;
@@ -68,7 +69,7 @@ public class DeathData : IBeyoundData
             case DeathPhase.AfterAnimation:
                 break;
             case DeathPhase.FrozenFinalFrame:
-                Sprite.Animation = new AnimationLib.AnimationState(Sprite.Animation.GetFrame(Sprite.Animation.AmountFrame - 1));
+                Sprite.Animation = new AnimationLib.AnimationState(Sprite.Animation.GetFrame(Sprite.Animation.CountFrame - 1) ?? TextureWrapper.Placeholder);
                 Sprite.Animation.IsAnimation = false;                                                                                                          //            Sprite.Animation.IsAnimation = false;
                 break;
         }
@@ -93,7 +94,7 @@ public class DeathData : IBeyoundData
     }
     public void UpdateCheckRemove(ConcurrentDictionary<int, IBeyoundData> toRemove)
     {
-        if (Sprite.Animation.Index == Sprite.Animation.AmountFrame - 1)
+        if (Sprite.Animation.Index == Sprite.Animation.CountFrame - 1)
         {
             DeathEffect.LastFrame = true;
             ActionBeforeLastFrame();

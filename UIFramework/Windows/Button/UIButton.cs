@@ -1,18 +1,15 @@
 ﻿using ProtoRender.Object;
 using ScreenLib;
+using SFML.Audio;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
+using UIFramework.Animation;
 using UIFramework.Render;
 using UIFramework.Text;
+using UIFramework.Windows;
 
-namespace UIFramework.Windows;
+namespace UIFramework.Windows.Button;
 public class UIButton : UIElement
 {
     public override Vector2f PositionOnScreen
@@ -22,8 +19,8 @@ public class UIButton : UIElement
         {
             _positionOnScreen = value;
 
-            TextButton.PositionOnScreen = value;
             Shape.PositionOnScreen = value;
+            CenterTextInShape();
         }
     }
     public override RenderOrder RenderOrder
@@ -32,7 +29,7 @@ public class UIButton : UIElement
         set
         {
             IUIElement.SetRenderOrder(Owner, _renderOrder, value, this);
-            TextButton.RenderOrder = value;
+            Text.RenderOrder = value;
             Shape.RenderOrder = value;
 
             _renderOrder = value;
@@ -49,9 +46,8 @@ public class UIButton : UIElement
             IUIElement.SetOwner(_owner, value, this);
 
             _owner = value;
-            TextButton.Owner = value;
+            Text.Owner = value;
             Shape.Owner = value;
-
         }
     }
     public override bool IsHide
@@ -59,7 +55,7 @@ public class UIButton : UIElement
         get => _isHide;
         set
         {
-            TextButton.IsHide = value;
+            Text.IsHide = value;
             Shape.IsHide = value;
 
             if (_isHide != value)
@@ -72,16 +68,23 @@ public class UIButton : UIElement
     }
 
     public UIShape Shape { get; private set; }
-    public UIText TextButton { get; private set; }
+    public UIText Text { get; private set; }
     public Color DefaultColorShape { get; set; } = new Color(255, 255, 255, 0);
     public Color DefaultColorText { get; set; } = Color.White;
 
     public Color HoverColor { get; set; } = Color.Cyan;
+
     public Action? OnClick { get; set; }
+    private bool _wasLeftPressedLastFrame = false;
+    public Action? OnHold { get; set; }
+
+    public ButtonClickMode ClickMode { get; set; } = ButtonClickMode.ClickOnly;
+
+
 
 
     public UIButton(Vector2f position, Vector2f size, string label, string font, IUnit? owner = null)
-        :base(owner)
+        : base(owner)
     {
         Shape = new UIShape(new RectangleShape(size)
         {
@@ -89,8 +92,8 @@ public class UIButton : UIElement
             FillColor = DefaultColorShape
         });
 
-        TextButton = new UIText(label, 32, position, font, Color.White);
-        TextButton.RenderOrder = RenderOrder;
+        Text = new UIText(label, 32, position, font, Color.White);
+        Text.RenderOrder = RenderOrder;
 
         PositionOnScreen = position;
     }
@@ -100,12 +103,42 @@ public class UIButton : UIElement
         Shape = new UIShape(uIShape);
         Shape.RectangleShape.FillColor = DefaultColorShape;
 
-        TextButton = new UIText(uIText);
-        TextButton.RenderOrder = RenderOrder;
+        Text = new UIText(uIText);
+        Text.RenderOrder = RenderOrder;
 
         PositionOnScreen = position;
     }
 
+    private void HandleClickMode(bool isLeftPressed)
+    {
+        switch (ClickMode)
+        {
+            case ButtonClickMode.ClickOnly:
+                if (isLeftPressed && !_wasLeftPressedLastFrame)
+                    OnClick?.Invoke();
+                break;
+
+            case ButtonClickMode.HoldOnly:
+                if (isLeftPressed)
+                    OnHold?.Invoke();
+                break;
+
+            case ButtonClickMode.ClickAndHold:
+                if (isLeftPressed && !_wasLeftPressedLastFrame)
+                    OnClick?.Invoke();
+                if (isLeftPressed)
+                    OnHold?.Invoke();
+                break;
+        }
+    }
+    public void CenterTextInShape()
+    {
+        var shapeBounds = Shape.RectangleShape.GetGlobalBounds();
+
+        Text.PositionOnScreen = new Vector2f(
+            shapeBounds.Left + shapeBounds.Width / 2f,
+            shapeBounds.Top + shapeBounds.Height / 2f);
+    }
 
     #region IUIElement
     public override void UpdateInfo()
@@ -116,18 +149,21 @@ public class UIButton : UIElement
         var mouseWorld = window.MapPixelToCoords(mousePos);
         var bounds = Shape.RectangleShape.GetGlobalBounds();
 
-        if (bounds.Contains(mouseWorld.X, mouseWorld.Y))
-        {
-            TextButton.RenderText.Text.FillColor = HoverColor;
+        bool isHovered = bounds.Contains(mouseWorld.X, mouseWorld.Y);
+        bool isLeftPressed = Mouse.IsButtonPressed(Mouse.Button.Left);
 
-            if (Mouse.IsButtonPressed(Mouse.Button.Left))
-                OnClick?.Invoke();
+        if (isHovered)
+        {
+            Text.RenderText.Text.FillColor = HoverColor;
+            HandleClickMode(isLeftPressed);
         }
         else
         {
             Shape.RectangleShape.FillColor = DefaultColorShape;
-            TextButton.RenderText.Text.FillColor = DefaultColorText;
+            Text.RenderText.Text.FillColor = DefaultColorText;
         }
+
+        _wasLeftPressedLastFrame = isLeftPressed;
     }
     public override void ToggleVisibilityObject()
     {

@@ -1,4 +1,4 @@
-﻿using GameStatsFramework;
+﻿
 
 namespace InteractionFramework.Death;
 public interface IDamageable

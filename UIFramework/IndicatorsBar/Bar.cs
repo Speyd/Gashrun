@@ -24,6 +24,9 @@ public class Bar: UIElement
         {
             _positionOnScreen = value;
             Border.Position = value;
+
+            HorizontalAlignment = HorizontalAlignment;
+            VerticalAlignment = VerticalAlignment;
         }
     }
 

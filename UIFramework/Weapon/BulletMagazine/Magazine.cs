@@ -39,8 +39,7 @@ public class Magazine
         get => _owner;
         set
         {
-            if (UIText.Owner != value)
-                UIText.Owner = value;
+            UIText.Owner = value;
 
             if (_owner is not null)
             {
@@ -117,24 +116,6 @@ public class Magazine
 
             ClipBullet.AddBullet(MagazineBullet.GetBullet(ammoToReload));
         }
-    }
-
-    public async Task<bool> UseAmmoAsync()
-    {
-        if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
-            return false;
-
-        if (ClipBullet.Capacity > 0)
-        {
-            var bullet = ClipBullet.GetBullet();
-            if (bullet != null)
-                await bullet.FlightAsync(Owner);
-
-        }
-        if (ClipBullet.Capacity == 0)
-            Reload();
-
-        return !IsReload;
     }
     public bool UseAmmo()
     {

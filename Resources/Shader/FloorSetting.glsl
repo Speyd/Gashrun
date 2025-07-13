@@ -1,56 +1,76 @@
-﻿#version 330 core
+﻿uniform sampler2D renderTexture;
+uniform vec2 resolution;
+uniform float angle;
+uniform float verticalAngle;
+uniform vec2 originPosition;
+uniform float FOV;
+uniform float scale;
 
-uniform vec2 u_screenSize;      // Size screen
-uniform vec2 u_playerPos;       // Position of player
-uniform vec2 u_playerDir;       // Player direction
-uniform vec2 u_playerPlane;     // Camera plane
-uniform sampler2D u_texture;        // Floor texture
-uniform float u_verticalAngle;      // Player's angle
-uniform float u_Raising;     // Raises the wall to a certain height, multiplied by the player's position
-uniform float u_textureScale;       //Increase texture size
-uniform float u_DivisionCoef;      //Basic screen size divider (initially half)
-uniform float u_normalAngleGreaterZero;     //Normalization of the divider when lowering the chamber    
-uniform float u_maxDivisionCoef;       //Maximum divisor   
+uniform float upFactor;
+uniform float downFactor;
+uniform float downLogScale;
 
+uniform bool invertEffect;
+uniform vec4 effectColor;
+uniform float effectStrength;
+uniform float effectRange;
+uniform float effectStart;
+uniform float effectEnd;
 
-out vec4 FragColor;         //Changeable color
+uniform float offsetY;
 
-void main()
-{
+float smoothFactor(float edge0, float edge1, float x, float softness) {
+    float t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    float s = pow(t, softness) / (pow(t, softness) + pow(1.0 - t, softness));
+    return s;
+}
 
-    // Pixel coordinates
+void main() {
     vec2 fragCoord = gl_FragCoord.xy;
+     float halfHeight = resolution.y * 0.5;
+    
 
-    //halfScreenHeight
-    float halfHeight = u_screenSize.y /  u_DivisionCoef;
-    if(u_verticalAngle > 0)
-        halfHeight = u_screenSize.y / (u_DivisionCoef + min(u_verticalAngle / u_normalAngleGreaterZero, u_maxDivisionCoef));
-
-    if(fragCoord.y < halfHeight * (1 + u_verticalAngle))
+    float verticalOffset = 0;
+    if(verticalAngle <= 0.0)
     {
+        verticalOffset = verticalAngle * upFactor;
+    }
+    else
+    {
+        verticalOffset = log(verticalAngle * downLogScale + 1.0) * downFactor;
+    }
 
-        float multTexture = u_verticalAngle < 0 ? 1 : -1;
+    vec2 realUV = vec2(
+        (fragCoord.x - 0.5 * resolution.x) / resolution.y,
+        ((fragCoord.y - 0.5 * resolution.y) / resolution.y) - verticalOffset
+    );
 
-        // Calculating the distance to a row
-        float rowDistance = abs((u_screenSize.y / (fragCoord.y - halfHeight * (1 + u_verticalAngle)))); 
+    vec2 uv = realUV;
+    uv.y *= offsetY;
+    if (uv.y >= 0.0)
+    {
+        discard;
+    }
 
-        //Steps to move on the floor that depend on the player's direction
-        vec2 rayDirLeft = (u_playerDir - u_playerPlane) * -(1 - u_verticalAngle * multTexture); // Left vector for movement on the floor
-        vec2 rayDirRight = (u_playerDir + u_playerPlane) * -(1 - u_verticalAngle * multTexture); // Right vector for movement on the floor
+    float ang = uv.x * FOV + angle;
+
+    float dist = 1.0 / ((abs(uv.y) + 0.001) * cos(uv.x * FOV));
+    vec2 floorUV = vec2(cos(ang), sin(ang)) * dist + originPosition / scale;
 
 
-        // Step on the floor
-        vec2 floorStep = rowDistance * (rayDirRight - rayDirLeft) / u_screenSize.x;
+    floorUV = floorUV * scale;
+    vec2 texUV = floorUV - floor(floorUV);
 
-        // Initial floor position taking into account scale
-        vec2 floor = (-u_playerPos * u_Raising) + rowDistance * rayDirLeft + fragCoord.x * floorStep;
+    vec4 color = texture(renderTexture, texUV);
 
-        // Normalize texture coordinates to prevent texture stretching
-        vec2 texCoords = vec2(fract(floor.x  * u_textureScale), fract(floor.y * u_textureScale));
+    float scaledDist = dist * effectStrength;
+    float factor = smoothFactor(effectEnd, effectStart, scaledDist, effectRange);
 
-        // Color from texture
-        vec4 texColor = texture(u_texture, texCoords);
+    float effectFactor = invertEffect ? (1.0 - factor) : factor;
+    color.rgb = mix(effectColor, color.rgb, effectFactor);
 
-        FragColor = texColor;
-   }
+
+    vec3 finalColor = mix(effectColor.rgb, color.rgb, effectFactor);
+    float finalAlpha = mix(effectColor.a, color.a, effectFactor);
+    gl_FragColor = vec4(finalColor, finalAlpha);
 }

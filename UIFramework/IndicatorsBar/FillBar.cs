@@ -1,11 +1,11 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 using ScreenLib;
-using GameStatsFramework;
 using UIFramework.IndicatorsBar.Content;
 using UIFramework.IndicatorsBar.Filler;
 using ProtoRender.Object;
 using UIFramework.Text.AlignEnums;
+using InteractionFramework;
 
 
 namespace UIFramework.IndicatorsBar;

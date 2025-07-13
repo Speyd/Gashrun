@@ -8,16 +8,16 @@ using System.Collections.Concurrent;
 using InteractionFramework.Death;
 using InteractionFramework.VisualImpact;
 using InteractionFramework.VisualImpact.Data;
-using GameStatsFramework;
 using InteractionFramework.Dialog;
 using UIFramework.Dialog;
 using UIFramework.Sprite;
 using UIFramework.Text;
 using ObjectFramework;
+using InteractionFramework;
 
 
 namespace UIFramework;
-public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlHandler
+public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject
 {
     #region IMoveble
     public float MoveSpeed { get; set; } = 200f;
@@ -116,10 +116,28 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlH
     public ControlLib.Control Control { get; init; } = new ControlLib.Control();
     #endregion
 
-    public Unit(IMap map, SpriteObstacle obstacle, int maxHp)
-        : base(obstacle)
+    //public Unit(SpriteObstacle obstacle, int maxHp)
+    //    : base(obstacle)
+    //{
+    //    Map = map;
+    //    Hp = new Stat(maxHp);
+
+    //    Hp.OnDepleted += ClearingDataAfteDeath;
+
+    //    Fov = Math.PI / 3;
+    //    HalfFov = (float)Fov / 2;
+
+    //    Angle = 0;
+    //    Angle -= 0.000001;
+    //    VerticalAngle -= 0.000001;
+    //    MaxRenderTile = 1200;
+    //    ObserverSettingChangesFun();
+    //    Screen.WidthChangesFun += ObserverSettingChangesFun;
+    //}
+    public Unit(SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
+       : base(obstacle, true)
     {
-        Map = map;
+        Animation = obstacle.Animation;
         Hp = new Stat(maxHp);
 
         Hp.OnDepleted += ClearingDataAfteDeath;
@@ -134,9 +152,11 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlH
         ObserverSettingChangesFun();
         Screen.WidthChangesFun += ObserverSettingChangesFun;
     }
-    public Unit(SpriteObstacle obstacle, int maxHp)
-       : base(obstacle)
+    public Unit(IMap map, SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
+       : base(obstacle, false)
     {
+        Map = map;
+        Animation = obstacle.Animation;
         Hp = new Stat(maxHp);
 
         Hp.OnDepleted += ClearingDataAfteDeath;
@@ -152,7 +172,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IControlH
         Screen.WidthChangesFun += ObserverSettingChangesFun;
     }
     public Unit(Unit unit, bool updateTexture = true)
-       : base(unit, updateTexture)
+       : base(unit, false)
     {
         Map = unit.Map;
         Hp = unit.Hp;
