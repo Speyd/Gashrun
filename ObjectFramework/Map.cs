@@ -19,7 +19,7 @@ public class Map : IMap
     /// Gets the map's configuration including dimensions.
     /// </summary>
     public ProtoRender.Map.Setting Setting { get; init; }
-
+    public bool IsLoad = false;
     /// <summary>
     /// A concurrent dictionary storing obstacles grouped by their cell coordinates.
     /// </summary>
@@ -37,11 +37,13 @@ public class Map : IMap
         Setting = new Setting(height, width);
         Obstacles = new ConcurrentDictionary<(int X, int Y), ConcurrentDictionary<IObject, byte>>();
         RefillingObstacles(fillingObject);
+        IsLoad = true;
     }
     public Map(int height, int width)
     {
         Setting = new Setting(height, width);
         Obstacles = new ConcurrentDictionary<(int X, int Y), ConcurrentDictionary<IObject, byte>>();
+        IsLoad = true;
     }
 
 
@@ -221,7 +223,6 @@ public class Map : IMap
         int mX = Screen.Mapping(x);
         int mY = Screen.Mapping(y);
 
-
         if (!CheckTrueCoordinates(x, y))
             throw new Exception("Deletion in this area is not allowed(DeleteAllCellObstacle)");
         else if (!Obstacles.ContainsKey((mX, mY)))
@@ -304,7 +305,6 @@ public class Map : IMap
 
     public void SetWidthMap(int width)
     {
-        
     }
 
     public void SetHeightMap(int height)

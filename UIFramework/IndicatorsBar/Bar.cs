@@ -12,6 +12,8 @@ using UIFramework.Render;
 using ProtoRender.Object;
 using NGenerics.DataStructures.General;
 using UIFramework.Text.AlignEnums;
+using AnimationLib;
+using TextureLib.Textures;
 
 
 namespace UIFramework.IndicatorsBar;
@@ -85,14 +87,13 @@ public class Bar: UIElement
         }
     }
 
-    private SFML.Graphics.Texture? _fillTexture = null;
-    public SFML.Graphics.Texture? FillTexture
+    private AnimationState? _fillTexture = null;
+    public AnimationState? FillTexture
     {
         get => _fillTexture;
         set
         {
             _fillTexture = value;
-            Border.Texture = value;
            
             if (value is not null)
                 SetTextureRect();
@@ -124,10 +125,7 @@ public class Bar: UIElement
         if (FillTexture is null)
             return;
 
-        int rectWidth = (int)FillTexture.Size.X;
-        int rectHeight = (int)FillTexture.Size.Y;
-
-        TextureRect = new IntRect(0, 0, rectWidth, rectHeight);
+        TextureRect = FillTexture.MaxFrameRect;
     }
     private IntRect _textureRect = new IntRect();
     public IntRect TextureRect
@@ -198,4 +196,12 @@ public class Bar: UIElement
         }
     }
 
+    public override void UpdateInfo()
+    {
+        if (FillTexture is null)
+            return;
+
+        AnimationManager.DefiningDesiredSprite(FillTexture, Owner?.Angle ?? 0);
+        Border.Texture = FillTexture.CurrentFrame?.Texture ?? TextureWrapper.Placeholder.Texture;
+    }
 }

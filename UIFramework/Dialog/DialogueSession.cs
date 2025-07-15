@@ -2,8 +2,7 @@
 using ProtoRender.Object;
 using ScreenLib;
 using SFML.Graphics;
-using UIFramework.Windows;
-
+using UIFramework.Shape;
 
 namespace UIFramework.Dialog;
 public class DialogueSession

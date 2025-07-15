@@ -37,7 +37,8 @@ public class FillSegment
     }
     private void UpdateOriginSize(Bar mainBar, float mainThickness)
     {
-        Fill.Origin = new Vector2f(-mainThickness, Fill.Size.Y + mainThickness);
+        var mainOrigin = mainBar.Border.Origin;
+        Fill.Origin = new Vector2f(mainOrigin.X + mainThickness, mainOrigin.Y - mainThickness);
     }
     private void UpdatePosition(Bar mainBar, float mainThickness, float addWidth)
     {

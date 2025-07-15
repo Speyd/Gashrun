@@ -89,9 +89,9 @@ public abstract class UIElement : IUIElement
 
         float boundsX = HorizontalAlignment switch
         {
-            HorizontalAlign.Left => bounds.Left,
+            HorizontalAlign.Right => bounds.Left,
             HorizontalAlign.Center => bounds.Left + bounds.Width / 2f,
-            HorizontalAlign.Right => bounds.Left + bounds.Width,
+            HorizontalAlign.Left => bounds.Left + bounds.Width,
             _ => bounds.Left
         };
 
@@ -104,9 +104,9 @@ public abstract class UIElement : IUIElement
 
         float boundsY = VerticalAlignment switch
         {
-            VerticalAlign.Top => bounds.Top,
+            VerticalAlign.Bottom => bounds.Top,
             VerticalAlign.Center => bounds.Top + bounds.Height / 2f,
-            VerticalAlign.Bottom => bounds.Top + bounds.Height,
+            VerticalAlign.Top => bounds.Top + bounds.Height,
             _ => bounds.Top
         };
 

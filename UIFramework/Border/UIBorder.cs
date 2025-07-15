@@ -21,8 +21,8 @@ public class UIBorder : UIAnimation, IBorder
     public float ExtraScaleY { get; set; } = 1.4f;
 
 
-    public UIBorder(ImageLoadOptions? options = null, ButtonBinding ? bottomBinding = null, params string[] paths)
-        : base(options, bottomBinding, paths)
+    public UIBorder(ImageLoadOptions? options = null, bool loadAsync = true, ButtonBinding? bottomBinding = null, params string[] paths)
+        : base(options, loadAsync, bottomBinding, paths)
     {}
 
     public Vector2f GetScaledOrigin(Vector2u baseOrigin, Vector2f targetScaleOrigin)

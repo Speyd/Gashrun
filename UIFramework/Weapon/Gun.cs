@@ -34,24 +34,6 @@ public class Gun
         Magazine = magazine;
         Owner = owner;
     }
-
-    //public async Task ShotAsync()
-    //{
-    //    _ = Task.Run(async () =>
-    //    {
-    //        bool hasAmmo = await Magazine.UseAmmoAsync();
-
-    //        if (hasAmmo && Sound is not null && Owner?.Map is not null)
-    //        {
-    //            Sound.Play(Owner.Map, new SFML.System.Vector3f(
-    //                (float)Owner.X.Axis,
-    //                (float)Owner.Y.Axis,
-    //                (float)Owner.Z.Axis));
-    //        }
-
-    //        Animation.IsAnimation = hasAmmo;
-    //    });
-    //}
     public void Shot()
     {
         bool hasAmmo = Magazine.UseAmmo();

@@ -67,8 +67,19 @@ public class FillBar : Bar
         }
     }
 
+    private Stat _stat;
+    public Stat Stat 
+    {
+        get => _stat;
+        set
+        {
+            _stat = value;
+            _stat.OnChanged -= UpdateValues;
+            _stat.OnChanged += UpdateValues;
 
-    public Stat Stat { get; set; }
+            SetStat();
+        }
+    }
 
     public FillSegment Forward { get; init; }
     public FillSegment Backward { get; init; }
@@ -94,8 +105,8 @@ public class FillBar : Bar
             Border.Origin = new Vector2f(GetHorizontalBounds(Border.GetLocalBounds()), Border.Origin.Y);
 
             float originXOffset = GetOriginAxisOffset(Border.Origin.X, Forward.Fill.Origin.X);
-            Forward.Fill.Origin = new Vector2f(GetHorizontalBounds(Forward.Fill.GetLocalBounds()) + originXOffset, Forward.Fill.Origin.Y);
-            Backward.Fill.Origin = new Vector2f(GetHorizontalBounds(Backward.Fill.GetLocalBounds()) + originXOffset, Backward.Fill.Origin.Y);
+            Forward.Fill.Origin = new Vector2f(GetHorizontalBounds(Forward.Fill.GetLocalBounds()) - originXOffset, Forward.Fill.Origin.Y);
+            Backward.Fill.Origin = new Vector2f(GetHorizontalBounds(Backward.Fill.GetLocalBounds()) - originXOffset, Backward.Fill.Origin.Y);
         }
     }
     public override VerticalAlign VerticalAlignment
@@ -117,13 +128,12 @@ public class FillBar : Bar
         : base(border, owner)
     {
         FillColor = Color.Transparent;
-        Stat = stat;
-        Stat.OnChanged += UpdateValues;
-
         Forward = new(forwardFillContent);
-        Forward.ValueProgress.SetValue(Stat.Value, Stat.Max);
-
         Backward = new(backwardFillContent);
+
+        Stat = stat;  
+
+        Forward.ValueProgress.SetValue(Stat.Value, Stat.Max);
         Backward.ValueProgress.SetValue(Stat.Max - Stat.Value, Stat.Max);
 
         Drawables.Add(Forward.Fill);
@@ -134,6 +144,11 @@ public class FillBar : Bar
         :this(new RectangleShape(), forwardFillContent, backwardFillContent, stat, owner)
     {}
 
+    private void SetStat()
+    {
+        Forward.ValueProgress.SetValue(Stat.Value, Stat.Max);
+        Backward.ValueProgress.SetValue(Stat.Max - Stat.Value, Stat.Max);
+    }
 
     private void UpdateValues()
     {
@@ -144,9 +159,13 @@ public class FillBar : Bar
     {
         Forward.SetPositionBar(this);
         Backward.SetPositionBar(this, Forward.Fill.Size.X);
+
+        //HorizontalAlignment = _horizontalAlignment;
+        //VerticalAlignment = _verticalAlignment;
     }
     public override void UpdateInfo()
     {
+        base.UpdateInfo();
         Forward.Content.UpdateContent(Forward.Fill);
         Backward.Content.UpdateContent(Backward.Fill);
     }

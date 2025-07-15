@@ -14,6 +14,12 @@ public class Stat
         Max = Math.Max(0, max);
         Value = Max;
     }
+    public Stat(Stat stat)
+    {
+        Max = stat.Max;
+        Value = stat.Value;
+    }
+
 
     public void SetMax(float newMax)
     {

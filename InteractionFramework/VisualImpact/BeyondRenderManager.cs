@@ -1,7 +1,7 @@
 ﻿using ProtoRender.Object;
 using System.Collections.Concurrent;
 using InteractionFramework.VisualImpact.Data;
-
+using ObjectFramework;
 
 namespace InteractionFramework.VisualImpact;
 public static class BeyondRenderManager

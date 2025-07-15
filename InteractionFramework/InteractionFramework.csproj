@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.1.6" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.6.6" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.6.7" />
   </ItemGroup>
 
   <ItemGroup>

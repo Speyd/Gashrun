@@ -2,10 +2,12 @@
 using SFML.Audio;
 
 
-namespace InteractionFramework;
+namespace ObjectFramework;
 public static class Camera
 {
     public static IUnit? CurrentUnit { get; set; }
+    public static Map? map { get; set; }
+
 
     public static void UpdateListener()
     {

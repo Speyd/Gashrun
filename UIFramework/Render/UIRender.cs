@@ -1,25 +1,20 @@
-﻿using ScreenLib.Output;
-using SFML.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ScreenLib;
-using ProtoRender.Object;
+﻿using ProtoRender.Object;
 using System.Collections.Concurrent;
-using InteractionFramework;
+using ObjectFramework;
 
 namespace UIFramework.Render;
 
 public static class UIRender
 {
     public static ConcurrentDictionary<IUnit, SortedDictionary<RenderOrder, ConcurrentDictionary<IUIElement, byte>>> TreePriority { get; }
+    private static readonly ConcurrentDictionary<IUnit, object> Locks = new();
 
     static UIRender()
     {
         TreePriority = new();
     }
+
+    private static object GetLock(IUnit owner) => Locks.GetOrAdd(owner, _ => new object());
 
     public static void AddToPriority(IUnit? owner, RenderOrder objRender, IUIElement uiElement)
     {
@@ -28,13 +23,15 @@ public static class UIRender
 
         var priorityTree = TreePriority.GetOrAdd(owner, _ => new SortedDictionary<RenderOrder, ConcurrentDictionary<IUIElement, byte>>());
 
-        if (!priorityTree.TryGetValue(objRender, out var elementSet))
+        lock (GetLock(owner))
         {
-            elementSet = new ConcurrentDictionary<IUIElement, byte>();
-            priorityTree[objRender] = elementSet;
+            if (!priorityTree.TryGetValue(objRender, out var elementSet))
+            {
+                elementSet = new ConcurrentDictionary<IUIElement, byte>();
+                priorityTree[objRender] = elementSet;
+            }
+            elementSet.TryAdd(uiElement, 0);
         }
-
-        elementSet.TryAdd(uiElement, 0);
     }
 
     public static void RemoveFromPriority(IUnit? owner, RenderOrder objRender, IUIElement uiElement)
@@ -44,14 +41,17 @@ public static class UIRender
 
         if (TreePriority.TryGetValue(owner, out var priorityTree))
         {
-            if (priorityTree.TryGetValue(objRender, out var elementSet))
+            lock (GetLock(owner))
             {
-                elementSet.TryRemove(uiElement, out _);
-                if (elementSet.IsEmpty)
-                    priorityTree.Remove(objRender);
+                if (priorityTree.TryGetValue(objRender, out var elementSet))
+                {
+                    elementSet.TryRemove(uiElement, out _);
+                    if (elementSet.IsEmpty)
+                        priorityTree.Remove(objRender);
 
-                if (priorityTree.Count == 0)
-                    TreePriority.TryRemove(owner, out _);
+                    if (priorityTree.Count == 0)
+                        TreePriority.TryRemove(owner, out _);
+                }
             }
         }
     }
@@ -63,18 +63,20 @@ public static class UIRender
 
         if (TreePriority.TryGetValue(Camera.CurrentUnit, out var priorityTree))
         {
-            var renderOrders = priorityTree.Keys.ToList();
-            foreach (var renderOrder in renderOrders)
+            lock (GetLock(Camera.CurrentUnit))
             {
-                if (priorityTree.TryGetValue(renderOrder, out var elements))
+                var renderOrders = priorityTree.Keys.ToList();
+                foreach (var renderOrder in renderOrders)
                 {
-                    foreach (var uiElement in elements.Keys)
+                    if (priorityTree.TryGetValue(renderOrder, out var elements))
                     {
-                        uiElement.Render();
+                        foreach (var uiElement in elements.Keys)
+                        {
+                            uiElement.Render();
+                        }
                     }
                 }
             }
         }
     }
-
 }

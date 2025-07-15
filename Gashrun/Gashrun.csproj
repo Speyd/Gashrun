@@ -11,7 +11,7 @@
     <PackageReference Include="EnginePseudo3D.Core" Version="2.1.6" />
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.6.6" />
     <PackageReference Include="EnginePseudo3D.MiniMapLib" Version="2.1.8" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.6.6" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.6.7" />
     <PackageReference Include="EnginePseudo3D.PartsWorldLib" Version="1.9.9" />
 
   </ItemGroup>

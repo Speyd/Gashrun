@@ -3,16 +3,11 @@ using SFML.System;
 using AnimationLib;
 using ScreenLib;
 using ControlLib.Buttons;
-using TextureLib.Loader;
 using UIFramework.Render;
 using ProtoRender.Object;
-using ImageMagick;
 using TextureLib.Textures;
-using System.Diagnostics;
-using TextureLib.DataCache;
-using System.Collections.Concurrent;
-using ObstacleLib.TexturedWallLib;
 using TextureLib.Loader.ImageProcessing;
+
 
 namespace UIFramework.Animation;
 public class UIAnimation : AnimationState, IUIElement
@@ -130,7 +125,7 @@ public class UIAnimation : AnimationState, IUIElement
         {
             ResetPosition();
             _percentShiftX = -value / Screen.MultWidth;
-            _originPercentShiftX = -value;
+            _originPercentShiftX = value;
             SetPosition();
         }
     }
@@ -151,40 +146,62 @@ public class UIAnimation : AnimationState, IUIElement
     }
     public bool IsAnimatingOnPress { get; protected set; } = false;
 
+    private Vector2f PreviousSize { get; set; }
 
     #region Constructor 
-    public UIAnimation(Vector2f position, ImageLoadOptions? options = null, ButtonBinding? bottomBinding = null, params string[] paths)
-        : base(options, false, paths)
+    public UIAnimation(Vector2f position, ImageLoadOptions? options = null, bool loadAsync = true, ButtonBinding? bottomBinding = null, params string[] paths)
+        : base(options, loadAsync, paths)
     {
         BottomBinding = bottomBinding;
         PositionOnScreen = position;
 
+        if (loadAsync)
+            CheckAddTexture();
+
         Drawables.Add(RenderSprite);
         Screen.WidthChangesFun += UpdateScreenInfo;
         Screen.HeightChangesFun += UpdateScreenInfo;
+
     }
-    public UIAnimation(ImageLoadOptions? options = null, ButtonBinding? bottomBinding = null, params string[] paths)
-        : this(new Vector2f(), options, bottomBinding, paths)
+    public UIAnimation(ImageLoadOptions? options = null, bool loadAsync = true, ButtonBinding ? bottomBinding = null, params string[] paths)
+        : this(new Vector2f(), options, loadAsync, bottomBinding, paths)
     {
         SetPositionCenter();
     }
-    public UIAnimation(ImageLoadOptions? options = null, params string[] paths)
-        : this(new Vector2f(), options, null, paths)
+    public UIAnimation(ImageLoadOptions? options = null, bool loadAsync = true, params string[] paths)
+        : this(new Vector2f(), options, loadAsync, null, paths)
     {
         SetPositionCenter();
     }
     #endregion
 
-
-    public virtual void UpdateFrame(float angle = 0)
+    private void CheckAddTexture()
     {
-        AnimationManager.DefiningDesiredSprite(this, angle);
+        _ = Task.Run(async () => 
+        {
+
+            while (true)
+            {
+                if (IsLoaded)
+                {
+                    RenderSprite.TextureRect = MaxFrameRect;
+                    ResetSetting();
+                    return;
+                }
+                await Task.Delay(500);
+            }
+        });
+    }
+
+    public virtual void UpdateFrame()
+    {
+        AnimationManager.DefiningDesiredSprite(this, Owner?.Angle ?? 0);
     }
     protected virtual void AnimationPress()
     {
         if (Index == CountFrame - 1)
         {
-            UpdateFrame();
+            CurrentFrame = GetFrame(0);
             IsAnimatingOnPress = false;
         }
         if (IsAnimation && BottomBinding?.IsPress == true || IsAnimatingOnPress == true)
@@ -195,7 +212,7 @@ public class UIAnimation : AnimationState, IUIElement
         else if (IsAnimation && BottomBinding?.IsPress == false)
         {
             IsAnimation = false;
-            UpdateFrame();
+            CurrentFrame = GetFrame(0);
             IsAnimation = true;
         }
     }
@@ -215,7 +232,7 @@ public class UIAnimation : AnimationState, IUIElement
         else
             AnimationPress();
 
-        if (CurrentFrame is not null)
+        if (CurrentFrame is not null && GetFrame(0) is not null)
             RenderSprite.Texture = CurrentFrame.Texture;
     }
     public virtual void UpdateScreenInfo()
@@ -285,15 +302,17 @@ public class UIAnimation : AnimationState, IUIElement
     private Vector2f GetFirstSizeFrame()
     {
         Vector2u? textureSize = GetFrame(0)?.Texture?.Size;
-        if (textureSize is null)
-            throw new NullReferenceException("Frame UIAnimation is null(GetFirstSizeFrame)");
 
-        return new Vector2f(textureSize.Value.X, textureSize.Value.Y);
+        if (textureSize is null)
+            PreviousSize = new Vector2f(TextureWrapper.Placeholder.Texture!.Size.X, TextureWrapper.Placeholder.Texture!.Size.Y);
+        else
+            PreviousSize = new Vector2f(textureSize.Value.X, textureSize.Value.Y);
+
+        return PreviousSize;
     }
     Vector2f SetShiftCoordination(Vector2f value, Vector2f textureSize)
     {
         RenderSprite.Origin = textureSize / 2;
-
 
         Vector2f newCoordination;
         float percentSizeX = textureSize.X * PercentShiftX / 100;
@@ -308,5 +327,25 @@ public class UIAnimation : AnimationState, IUIElement
     {
         ScaleX = scale;
         ScaleY = scale;
+    }
+
+
+    public Vector2f GetOriginalPositionOnScreen(Vector2f value, Vector2f textureSize)
+    {
+        RenderSprite.Origin = GetFirstSizeFrame() / 2;
+
+        Vector2f newCoordination;
+        float percentSizeX = textureSize.X * PercentShiftX / 100;
+        float percentSizeY = textureSize.Y * PercentShiftY / 100;
+
+        newCoordination.X = value.X + percentSizeX;
+        newCoordination.Y = value.Y + percentSizeY;
+
+        return newCoordination;
+    }
+    private void ResetSetting()
+    {
+        PositionOnScreen = GetOriginalPositionOnScreen(PositionOnScreen, PreviousSize);
+        PositionOnScreen = SetShiftCoordination(PositionOnScreen, GetFirstSizeFrame());
     }
 }
