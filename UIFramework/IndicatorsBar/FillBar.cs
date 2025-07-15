@@ -166,8 +166,8 @@ public class FillBar : Bar
     public override void UpdateInfo()
     {
         base.UpdateInfo();
-        Forward.Content.UpdateContent(Forward.Fill);
-        Backward.Content.UpdateContent(Backward.Fill);
+        Forward?.Content.UpdateContent(Forward.Fill);
+        Backward?.Content.UpdateContent(Backward.Fill);
     }
     public override void ToggleVisibilityObject()
     {

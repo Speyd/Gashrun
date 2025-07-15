@@ -26,19 +26,14 @@ public class Menu
             }
             _owner = value;
 
-            Buttons.ForEach(b => b.Owner = Owner);
-            Texts.ForEach(t => t.Owner = Owner);
-            Sprites.ForEach(s => s.Owner = Owner);
+            UIElements.ForEach(b => b.Owner = Owner);
             if (Background is not null)
                 Background.Owner = value;
         }
     }
 
     public UIShape? Background { get; private set; } = null;
-    public List<UIButton> Buttons { private get; init; } = new();
-    public List<UIText> Texts { private get; init; } = new();
-    public List<UISprite> Sprites { private get; init; } = new();
-
+    public List<IUIElement> UIElements { private get; init; } = new();
 
     public Menu(IUnit? owner = null)
     {
@@ -83,24 +78,10 @@ public class Menu
             Background.Owner = Owner;
     }
 
-    public void AddButton(UIButton button)
+    public void AddUIElements(UIElement element)
     {
-        Buttons.Add(button);
+        UIElements.Add(element);
         if (IsRun)
-            button.Owner = Owner;
-    }
-
-    public void AddText(UIText text)
-    {
-        Texts.Add(text);
-        if (IsRun)
-            text.Owner = Owner;
-    }
-
-    public void AddSprites(UISprite sprite)
-    {
-        Sprites.Add(sprite);
-        if (IsRun)
-            sprite.Owner = Owner;
+            element.Owner = Owner;
     }
 }

@@ -28,14 +28,10 @@ using AnimationLib;
 using UIFramework.Weapon;
 using UIFramework.Weapon.BulletMagazine;
 using UIFramework.Weapon.Bullets.Variants;
-using EffectLib.EffectCore;
-using ObstacleLib;
-using ProtoRender.RenderAlgorithm;
-using TextureLib.Textures;
-using ProtoRender.RenderInterface;
-using System.Collections.Concurrent;
 using ObstacleLib.SpriteLib;
 using UIFramework.Sprite;
+using UIFramework.IndicatorsBar;
+using UIFramework.IndicatorsBar.Content;
 
 
 namespace Gashrun;
@@ -211,7 +207,7 @@ public static class GameInitializer
         uISprite.HorizontalAlignment = HorizontalAlign.Center;
         uISprite.VerticalAlignment = VerticalAlign.Center;
 
-        MainMenu.AddSprites(uISprite);
+        MainMenu.AddUIElements(uISprite);
 
         #region Button "Press to Start"
         Vector2f buttonPos = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
@@ -228,8 +224,29 @@ public static class GameInitializer
 
         startGameButton.OnClick += MainMenu.Stop;
         startGameButton.OnClick += async () => await LoadMapAsync();
-        MainMenu.AddButton(startGameButton);
+        MainMenu.AddUIElements(startGameButton);
         #endregion
+
+
+        if (Camera.CurrentUnit is Unit unit)
+        {
+            AnimationState hpBarAnimation = new AnimationState(null, true, PathResolver.GetPath(Path.Combine("Resources", "UI", "small.gif")))
+            {
+                IsAnimation = true,
+                Speed = 30
+            };
+
+            FillBar bar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent(SFML.Graphics.Color.Red), unit.Hp, unit)
+            {
+                BorderThickness = 10,
+                Width = 400,
+                Height = 100,
+                PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
+                BorderFillColor = SFML.Graphics.Color.Black,
+            };
+            bar.IsHide = true;
+            OnLoadCompleted += () => { bar.IsHide = false; };
+        }
     }
 
     private static void InitializeControls()

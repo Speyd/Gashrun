@@ -136,6 +136,8 @@ public abstract class UIElement : IUIElement
 
     public virtual void Render()
     {
+        if(IsHide) return;
+
         UpdateInfo();
         foreach (var draw in Drawables)
             Screen.OutputPriority?.AddToPriority(IUIElement.OutputPriorityType, draw);
