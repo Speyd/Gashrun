@@ -47,12 +47,17 @@ using RenderLib.Algorithm;
 using MiniMapLib;
 using DataPipes.DTO.Converters;
 using MiniMapLib.DTO;
+using EffectLib.EffectCore;
+using System.Drawing;
+using ObstacleLib;
+using ProtoRender.RenderAlgorithm;
+using TextureLib.Textures;
 
 Screen.Initialize(1000, 600);
 #region Static Properties
 FPS.BufferSize = 50;
 
-RayTracingLib.Raycast.CoordinatesMoving = 2;
+RayTracingLib.Raycast.CoordinatesMoving = 3;
   
 RenderAlgorithm.UseHeightPerspective = false;
 RenderAlgorithm.UseVerticalPerspective = false;
@@ -60,10 +65,12 @@ RenderAlgorithm.UseVerticalPerspective = false;
 MoveLib.Move.Collision.RadiusCheckTouch = 3;
 #endregion
 
+
+
 #region Effect
 
-//EffectManager.CurrentEffect = new CustomEffect(DefaultPresets.BlinEffect);
-//EffectManager.CurrentEffect.EffectEnd = 15;
+EffectManager.CurrentEffect = new CustomEffect(DefaultPresets.BlinEffect);
+EffectManager.CurrentEffect.EffectEnd = 15;
 
 
 CustomEffect effectBorderWall = new CustomEffect();
@@ -71,26 +78,47 @@ effectBorderWall.EffectColor = new SFML.Graphics.Glsl.Vec4(0, 0, 0, 0);
 effectBorderWall.EffectEnd = 4;
 #endregion
 
+#region Paths Texture
+string RedBarrierPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Barrier.png"));
+string BrickWindowPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWindow.png"));
+string BrickWallPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWall.png"));
+string BrickDoorPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickDoor.png"));
+string WoodCeiling = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Wood.png"));
+string GrassFloor = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.png"));
+string NightSky = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "nightSky.jpg"));
+
+#endregion
+
 #region Font
 string fontArialBold = PathResolver.GetMainPath(Path.Combine("Resources", "FontText", "ArialBold.ttf"));
 #endregion
 
 #region Shader
-string pathCeilingShader = PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "CeilingSettingWithoutBOM.glsl"));
+string pathCeilingWithoutBOMShader = PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "CeilingSettingWithoutBOM.glsl"));
+string pathFloorWithoutBOMShader = PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "FloorSettingWithoutBOM.glsl"));
+string pathCeilingShader = PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "CeilingSetting.glsl"));
+string pathFloorShader = PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "FloorSetting.glsl"));
+#endregion
+
+#region Parts World
+var nightSkyObject = new Sky(NightSky);
+var grassFloorObject = new TexturedFloor(GrassFloor, pathFloorWithoutBOMShader)
+{
+    DownAngleLogScale = 2.7f,
+    Scale = 0.4f,
+    TextureScrollingSpeed = 0.4f,
+};
+var woodCeilingObject = new TexturedCeiling(WoodCeiling, pathCeilingWithoutBOMShader);
+
+
+GameManager.PartsWorld.UpPart = nightSkyObject;
+GameManager.PartsWorld.DownPart = grassFloorObject;
 #endregion
 
 #region Base UIText
 UIText ArialBold_Cyan_20 = new UIText("", 20, new Vector2f(0, 0), fontArialBold, SFML.Graphics.Color.Cyan);
 #endregion
 
-#region Paths Texture
-string RedBarrierPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Barrier.png"));
-string BrickWindowPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWindow.png"));
-string BrickWallPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWall.png"));
-string BrickDoorPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickDoor.png"));
-string WoodCeiling = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "textu26.png"));
-
-#endregion
 
 
 
@@ -142,7 +170,7 @@ map.AddObstacle(11, 6, MainMapMisticBrickDoor);
 #region Create Unit
 
 #region Main Unit
-Unit unit = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
+Unit unit = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
@@ -155,6 +183,8 @@ unit.ShiftCubedX = 50;
 unit.ShiftCubedY = 50;
 
 map?.AddObstacle(5, 5, unit);
+
+
 #endregion
 
 #endregion
@@ -164,6 +194,7 @@ map?.AddObstacle(5, 5, unit);
 
 Map? houseMap = null;
 Vector2i positionMisticHouseBrickDoor = new Vector2i(0, 3);
+Vector2i positionMisticHouseNewspaperHint = new Vector2i(4, 3);
 
 Action CreateHouseMap = () =>
 {
@@ -173,40 +204,59 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(positionMisticHouseBrickDoor.X, positionMisticHouseBrickDoor.Y, MisticHouseBrickDoor);
 
     TexturedWall MisticHouseBrickWall = new TexturedWall(null, false, BrickWallPng);
-    houseMap.AddObstacle(0, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(0, 1, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(0, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(0, 5, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(1, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(1, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(3, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(3, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(4, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(4, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(6, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(6, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(7, 0, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(7, 6, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(7, 5, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(7, 1, new TexturedWall(MisticHouseBrickWall, true));
-    houseMap.AddObstacle(7, 3, new TexturedWall(MisticHouseBrickWall, true));
+    houseMap.AddObstacle(0, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(0, 1, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(0, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(0, 5, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(1, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(1, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(3, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(3, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(4, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(4, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(6, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(6, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(7, 0, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(7, 6, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(7, 5, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(7, 1, MisticHouseBrickWall.GetDeepCopy());
+    houseMap.AddObstacle(7, 3, MisticHouseBrickWall.GetDeepCopy());
 
     TexturedWall MisticHouseBrickWindow = new TexturedWall(null, false, BrickWindowPng);
-    houseMap.AddObstacle(0, 4, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(0, 2, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(2, 0, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(2, 6, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(5, 0, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(5, 6, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(7, 4, new TexturedWall(MisticHouseBrickWindow, true));
-    houseMap.AddObstacle(7, 2, new TexturedWall(MisticHouseBrickWindow, true));
+    houseMap.AddObstacle(0, 4, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(0, 2, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(2, 0, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(2, 6, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(5, 0, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(5, 6, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(7, 4, MisticHouseBrickWindow.GetDeepCopy());
+    houseMap.AddObstacle(7, 2, MisticHouseBrickWindow.GetDeepCopy());
+
+    #region Unit
+    Unit? newspaperHint = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "rotating_newspaper.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }), 100);
+    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
+    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
+    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
+    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
+    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(150);
+    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(150);
+
+    newspaperHint.Scale = 64;
+    newspaperHint.ShiftCubedX = 50;
+    newspaperHint.ShiftCubedY = 50;
+
+    newspaperHint.Animation.Speed = 20;
+    newspaperHint.Animation.IsAnimation = true;
+
+    houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, newspaperHint);
+    #endregion
 };
 #endregion
 
 
 #region Create Triggers
 
-#region Create Trigger Mistic House Door
+#region Trigger Mistic House Door
 FadingText fadingTextOpenDoor = new FadingText(ArialBold_Cyan_20, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
 fadingTextOpenDoor.RenderText.Text.DisplayedString = "Press E to open";
 fadingTextOpenDoor.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(65), Screen.GetPercentHeight(65));
@@ -237,17 +287,11 @@ var distanceOpenExitDoorTrigger = new TriggerDistance
 
 
 UIShape blackSreenOpenDoor = new UIShape(new RectangleShape(new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight)));
-blackSreenOpenDoor.RectangleShape.FillColor = Color.Black;
+blackSreenOpenDoor.RectangleShape.FillColor = SFML.Graphics.Color.Black;
 blackSreenOpenDoor.RenderOrder = RenderOrder.SystemNotification;
 
 Vector2i safePositionOpenEntranceDoor = new Vector2i(MainMapMisticBrickDoor.CellX / Screen.Setting.Tile, MainMapMisticBrickDoor.CellY / Screen.Setting.Tile + 1);
 Vector2i safePositionOpenExitDoor = new Vector2i(positionMisticHouseBrickDoor.X + 1, positionMisticHouseBrickDoor.Y);
-
-TexturedCeiling? woodCeilingMisticHouse = null;
-Action CreateWoodCeilingMisticHouse = () =>
-{
-    woodCeilingMisticHouse =  new TexturedCeiling(WoodCeiling, pathCeilingShader);
-};
 
 TriggerAnd openEntranceDoorTrigger = new TriggerAnd(buttonOpenEntranceDoorTrigger, distanceOpenEntranceDoorDistancTrigger);
 openEntranceDoorTrigger.OnTriggered = (unit) =>
@@ -261,16 +305,32 @@ openEntranceDoorTrigger.OnTriggered = (unit) =>
     blackSreenOpenDoor.IsHide = false;
 
     Camera.CurrentUnit.Map = null;
-    if (houseMap is null)
-        CreateHouseMap.Invoke();
-    if (woodCeilingMisticHouse is null)
-        CreateWoodCeilingMisticHouse.Invoke();
-
-    houseMap?.AddObstacle(safePositionOpenExitDoor.X, safePositionOpenExitDoor.Y, Camera.CurrentUnit);
-
-    GameManager.PartsWorld.UpPart = woodCeilingMisticHouse;
-    blackSreenOpenDoor.IsHide = true;
+    EnsureHouseMapAndApply();
 };
+#region Func
+void EnsureHouseMapAndApply()
+{
+    if (houseMap is null)
+    {
+        GameManager.DeferredAction += () =>
+        {
+            CreateHouseMap?.Invoke();
+            ApplyHouseMapChanges();
+        };
+    }
+    else
+    {
+        ApplyHouseMapChanges();
+    }
+}
+void ApplyHouseMapChanges()
+{
+    houseMap?.AddObstacle(safePositionOpenExitDoor.X, safePositionOpenExitDoor.Y, Camera.CurrentUnit);
+    GameManager.PartsWorld.UpPart = woodCeilingObject;
+    blackSreenOpenDoor.IsHide = true;
+}
+#endregion
+
 TriggerHandler.AddTriger(unit, openEntranceDoorTrigger);
 
 TriggerAnd openExitDoorTrigger = new TriggerAnd(buttonOpenExitDoorTrigger, distanceOpenExitDoorTrigger);
@@ -286,22 +346,60 @@ openExitDoorTrigger.OnTriggered = (unit) =>
     blackSreenOpenDoor.IsHide = false;
 
     Camera.CurrentUnit.Map = null;
-    map.AddObstacle(safePositionOpenEntranceDoor.X, safePositionOpenEntranceDoor.Y, Camera.CurrentUnit);
+    map?.AddObstacle(safePositionOpenEntranceDoor.X, safePositionOpenEntranceDoor.Y, Camera.CurrentUnit);
 
-
+    GameManager.PartsWorld.UpPart = nightSkyObject;
     blackSreenOpenDoor.IsHide = true;
 };
 TriggerHandler.AddTriger(unit, openExitDoorTrigger);
 
 #endregion
 
+#region Trigger Open NewspaperHint Mistic House
+FadingText fadingTextOpenNewspaperHint = new FadingText(ArialBold_Cyan_20, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
+fadingTextOpenNewspaperHint.RenderText.Text.DisplayedString = "Press E to open";
+fadingTextOpenNewspaperHint.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(65), Screen.GetPercentHeight(65));
+
+var buttonOpenNewspaperHintTrigger = new TriggerButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.E), () => { }, 1000), null, null);
+var distanceOpenNewspaperHintTrigger = new TriggerDistance
+    (
+    (target) =>
+    {
+        if (houseMap != null && houseMap.Obstacles.TryGetValue(
+            (positionMisticHouseNewspaperHint.X * Screen.Setting.Tile,
+            positionMisticHouseNewspaperHint.Y * Screen.Setting.Tile),
+         out var value))
+        {
+            return target is not null && target == value.FirstOrDefault().Key;
+        }
+
+        return false;
+    },
+    (owner) => { fadingTextOpenNewspaperHint.Controller.FadingType = FadingType.Appears; fadingTextOpenNewspaperHint.Controller.FadingTextLife = FadingTextLife.OneShotFreeze; fadingTextOpenNewspaperHint.Owner = owner; },
+    (owner) => { fadingTextOpenNewspaperHint.SwapType(); fadingTextOpenNewspaperHint.Controller.FadingTextLife = FadingTextLife.OneShotDispose; }
+);
+
+
+TriggerAnd openNewspaperHintTrigger = new TriggerAnd(buttonOpenNewspaperHintTrigger, distanceOpenNewspaperHintTrigger);
+openNewspaperHintTrigger.OnTriggered = (unit) =>
+{
+    var npc = distanceOpenNewspaperHintTrigger.GetTarget();
+    if (npc is null)
+        return;
+
+    if (blackSreenOpenDoor.Owner != unit)
+        blackSreenOpenDoor.Owner = unit;
+    blackSreenOpenDoor.IsHide = false;
+
+};
+TriggerHandler.AddTriger(unit, openNewspaperHintTrigger);
+#endregion
+
 #endregion
 
 
 
-
-
-Unit devil = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
+Unit devil = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
 devil.Scale = 100;
 devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(150);
 devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(150);
@@ -309,7 +407,7 @@ devil.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(150);
 devil.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(150);
 devil.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(800);
 devil.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(400);
-map?.AddObstacle(54, 54, devil);
+map?.AddObstacle(3, 3, devil);
 devil.DialogSprite = new UISprite(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil", "3.png")));
 devil.DialogSprite.Scale = new Vector2f(0.5f, 0.5f);
 devil.DialogSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(10), Screen.GetPercentHeight(40));
@@ -398,16 +496,6 @@ FillBar bar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent
 };
 #endregion
 
-#region Part World
-GameManager.PartsWorld.UpPart = new Sky(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "nightSky.jpg")));
-var floor = new TexturedFloor(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass1.png")),
-                                            PathResolver.GetMainPath(Path.Combine("Resources", "Shader", "FloorSettingWithoutBOM.glsl")));
-floor.DownAngleLogScale = 2.7f;
-floor.Scale = 0.4f;
-floor.TextureScrollingSpeed = 0.4f;
-GameManager.PartsWorld.DownPart = floor;
-#endregion
-
 #region Gun
 #region Pistol
 ImageLoadOptions pistolImageLoadOptions = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
@@ -429,7 +517,7 @@ pistolBulletText.HorizontalAlignment = HorizontalAlign.Center;
 pistolBulletText.RenderOrder = RenderOrder.Hands;
 
 //StandartBullet pistolBullet = new StandartBullet(20, null);
-var b = new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
+var b = new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
 var u = new Unit(b, 0, false);
 u.Animation.IsAnimation = true;
 u.Animation.Speed = 30;
@@ -532,6 +620,24 @@ dialogManager.AddLevel(0, new Dictionary<int, DialogueStep>()
     { 0, stepFirst }
 });
 
+
+FadingText fadingDialog = new FadingText(ArialBold_Cyan_20, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
+fadingDialog.RenderText.Text.DisplayedString = "Press E to open";
+fadingDialog.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(65), Screen.GetPercentHeight(65));
+
+var buttonDialog = new TriggerButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.E), () => { }, 1000), null, null);
+var distanceDialogTrigger = new TriggerDistance((target) => target is not null && target == devil,
+    (owner) => { fadingTextOpenDoor.Controller.FadingType = FadingType.Appears; fadingTextOpenDoor.Controller.FadingTextLife = FadingTextLife.OneShotFreeze; fadingTextOpenDoor.Owner = owner; },
+    (owner) => { fadingTextOpenDoor.SwapType(); fadingTextOpenDoor.Controller.FadingTextLife = FadingTextLife.OneShotDispose; });
+
+var buttonDialogTrigger = new TriggerButton(new ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.E), () => { }, 1000), null, null);
+TriggerAnd DialogTrigger = new TriggerAnd(buttonDialogTrigger, distanceDialogTrigger);
+DialogTrigger.OnTriggered = async (unit) =>
+{
+    await dialogManager.RunAsync();
+};
+TriggerHandler.AddTriger(unit, DialogTrigger);
+
 #endregion
 
 
@@ -611,12 +717,4 @@ triggerCollision.OnTriggered += (unit) =>
 //TriggerHandler.AddTriger(unit, triggerCollision);
 //_ = GameInitializer.InitializeAsync(map);
 GameManager.Start();
-
-
-
-
-
-
-
-
 

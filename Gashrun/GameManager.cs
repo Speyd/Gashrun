@@ -44,6 +44,7 @@ namespace Gashrun;
 public static class GameManager
 {
     private static bool hasStarted = false;
+    public static Action? DeferredAction;
 
     private static readonly Queue<Action> mainThreadActions = new();
     public static RenderPartsWorld PartsWorld { get; private set; } = new RenderPartsWorld();
@@ -77,19 +78,28 @@ public static class GameManager
             return;
         }
         hasStarted = true;
-
+        
         try
         {
-            VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeSelfRenderable;
+            VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeAll;
             while (Screen.Window.IsOpen)
             {
+                if (DeferredAction is not null)
+                {
+                    var temp = DeferredAction;
+                    DeferredAction = null;
+                    temp.Invoke();
+                }
+
+
                 //------------Update User Info------------
                 FPS.Track();
                 Camera.UpdateListener();
+
                 //------------Clear Screen------------
                 Screen.Window.DispatchEvents();
                 Screen.Window.Clear();
-
+              
                 ExecuteMainThreadActions();
                 //------------Controll------------
                 Camera.CurrentUnit?.Control.MakePressedParallel(Camera.CurrentUnit);
@@ -116,7 +126,6 @@ public static class GameManager
 
                 UIRender.DrawingByPriority();
                 Screen.OutputPriority?.DrawingByPriority();
-
                 Screen.Window.Display();
             }
         }
