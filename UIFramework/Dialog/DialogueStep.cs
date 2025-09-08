@@ -3,6 +3,7 @@ using NGenerics.Extensions;
 using ProtoRender.Object;
 using ProtoRender.WindowInterface;
 using SFML.Audio;
+using UIFramework.Shape;
 using UIFramework.Text;
 using UIFramework.Windows.Button;
 
@@ -10,6 +11,7 @@ namespace UIFramework.Dialog;
 public class DialogueStep
 {
     public UIText QuestText { get; set; }
+    public UIShape? BackgroundQuestText { get; set; } = null;
     public Dictionary<int, UIButton> AnswerButtons { get; set; } = new();
 
 
@@ -17,11 +19,26 @@ public class DialogueStep
 
     private TaskCompletionSource<int>? _answerSelectedTcs;
     public Action OnResponse { get; set; }
+
+
     public DialogueStep(RenderText render, Dictionary<int, UIButton> answerText, Action? onDialogueResponse = null)
     {
         OnResponse = onDialogueResponse ?? (() => { });
 
         QuestText = new UIText(render);
+
+        AnswerButtons = answerText;
+        AnswerButtons.ForEach
+            (
+            ans =>
+            ans.Value.Text.SetText($"{ans.Key}. {ans.Value.Text.RenderText.Text.DisplayedString}")
+            );
+    }
+    public DialogueStep(UIText text, Dictionary<int, UIButton> answerText, Action? onDialogueResponse = null)
+    {
+        OnResponse = onDialogueResponse ?? (() => { });
+
+        QuestText = new UIText(text);
 
         AnswerButtons = answerText;
         AnswerButtons.ForEach
@@ -48,8 +65,11 @@ public class DialogueStep
         foreach (var btn in AnswerButtons.Values)
         {
             btn.Owner = null;
-            QuestText.Owner = null;
         }
+
+        QuestText.Owner = null;
+        if (BackgroundQuestText is not null)
+            BackgroundQuestText.Owner = null;
     }
     private async Task<int> InitializeAnswerButtons(IUnit listener, IDialogObject speaker)
     {
@@ -60,6 +80,8 @@ public class DialogueStep
             var button = item.Value;
             button.Owner = listener;
             QuestText.Owner = listener;
+            if(BackgroundQuestText is not null)
+                BackgroundQuestText.Owner = listener;
 
             int thisAnswer = item.Key;
 

@@ -117,7 +117,7 @@ public class UIButton : UIElement
         });
 
        ColorText = colorText;
-        Text = new UIText(label, 32, position, font, colorText);
+        Text = new UIText(label, 20, position, font, colorText);
         Text.RenderOrder = RenderOrder;
 
         PositionOnScreen = position;

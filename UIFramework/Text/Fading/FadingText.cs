@@ -8,6 +8,15 @@ namespace UIFramework.Text.Fading;
 public class FadingText : UIText
 {
     public FadingController Controller;
+    public FadingText(UIText text, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
+       : base(text, owner)
+    {
+        Controller = new FadingController(fasingType, fadingTextLife, fadingTimeMilliseconds);
+        Controller.OnAlphaChanged = SetAlpha;
+        Controller.OnDispose = () => UIRender.RemoveFromPriority(Owner, RenderOrder, this);
+
+        Controller.Restart();
+    }
     public FadingText(RenderText text, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
         : base(text, owner)
     {

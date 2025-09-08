@@ -16,14 +16,12 @@ using TextureLib.Loader;
 using ObjectFramework;
 using SFML.Graphics;
 using ObstacleLib.TexturedWallLib;
-using ProtoRender.Object;
 using PartsWorldLib.Up;
 using PartsWorldLib.Down;
 using InteractionFramework.HitAction;
 using InteractionFramework.VisualImpact.Data;
 using InteractionFramework.Audio.SoundType;
 using InteractionFramework.HitAction.DrawableBatch;
-using DataPipes;
 using AnimationLib;
 using UIFramework.Weapon;
 using UIFramework.Weapon.BulletMagazine;
@@ -32,6 +30,7 @@ using ObstacleLib.SpriteLib;
 using UIFramework.Sprite;
 using UIFramework.IndicatorsBar;
 using UIFramework.IndicatorsBar.Content;
+using ProtoRender.Map;
 
 
 namespace Gashrun;
@@ -56,9 +55,9 @@ public static class GameInitializer
         }
     }
 
-    public static async Task InitializeAsync()
+    public static async Task InitializeAsync(IMap map)
     {
-        LoadCameraUnit();
+        LoadCameraUnit(map);
         LoadResources();
 
         await Task.Run(() =>
@@ -78,6 +77,7 @@ public static class GameInitializer
             InitializeGun();
 
             ShowProgress(false);
+
         });
     }
 
@@ -102,10 +102,12 @@ public static class GameInitializer
         ProgressAnimation.RenderOrder = RenderOrder.SystemNotification;
     }
 
-    private static void LoadCameraUnit()
+    private static void LoadCameraUnit(IMap map)
     {
         Unit unit = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
         Camera.CurrentUnit = unit;
+
+        map?.AddObstacle(5, 5, unit);
     }
 
 
@@ -153,8 +155,9 @@ public static class GameInitializer
         StandartBullet pistolBullet = new StandartBullet(20, null);
         Magazine pistolMagazine = new Magazine(20, 140, pistolBullet, VirtualKey.R, pistolBulletText);
 
-        ControlLib.Buttons.ButtonBinding shootPistol = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.LeftButton), 300);
+        ControlLib.Buttons.ButtonBinding shootPistol = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.LeftButton), null, 300);
         Gun pistol = new Gun(Camera.CurrentUnit, pistolAnimation, pistolMagazine, shootPistol);
+
         pistol.Animation.IsHide = true;
         pistol.Magazine.UIText.IsHide = true;
 
@@ -215,7 +218,7 @@ public static class GameInitializer
         {
             HorizontalAlignment = HorizontalAlign.Center,
             VerticalAlignment = VerticalAlign.Center,
-            RenderOrder = RenderOrder.Dialog,
+            RenderOrder = RenderOrder.DialogItem,
             ClickMode = ButtonClickMode.ClickOnly,
         };
 
@@ -223,7 +226,7 @@ public static class GameInitializer
         startGameButton.Text.VerticalAlignment = VerticalAlign.Center;
 
         startGameButton.OnClick += MainMenu.Stop;
-        startGameButton.OnClick += async () => await LoadMapAsync();
+        startGameButton.OnClick += () => { IsLoaded = true; };
         MainMenu.AddUIElements(startGameButton);
         #endregion
 
@@ -259,15 +262,15 @@ public static class GameInitializer
         ControlLib.Buttons.Button F6 = new ControlLib.Buttons.Button(VirtualKey.F6);
         ControlLib.Buttons.Button LeftArrow = new ControlLib.Buttons.Button(VirtualKey.LeftArrow);
 
-        ControlLib.Buttons.ButtonBinding forward = new ControlLib.Buttons.ButtonBinding(W, MovePositions.Move, new object[] { Camera.CurrentUnit, 1, 0 });
-        ControlLib.Buttons.ButtonBinding backward = new ControlLib.Buttons.ButtonBinding(S, MovePositions.Move, new object[] { Camera.CurrentUnit, -1, 0 });
-        ControlLib.Buttons.ButtonBinding left = new ControlLib.Buttons.ButtonBinding(A, MovePositions.Move, new object[] { Camera.CurrentUnit, 0, -1 });
-        ControlLib.Buttons.ButtonBinding right = new ControlLib.Buttons.ButtonBinding(D, MovePositions.Move, new object[] { Camera.CurrentUnit, 0, 1 });
+        ControlLib.Buttons.ButtonBinding forward = new ControlLib.Buttons.ButtonBinding(W, MovePositions.Move, 0, new object[] { Camera.CurrentUnit, 1, 0 });
+        ControlLib.Buttons.ButtonBinding backward = new ControlLib.Buttons.ButtonBinding(S, MovePositions.Move, 0, new object[] { Camera.CurrentUnit, -1, 0 });
+        ControlLib.Buttons.ButtonBinding left = new ControlLib.Buttons.ButtonBinding(A, MovePositions.Move, 0, new object[] { Camera.CurrentUnit, 0, -1 });
+        ControlLib.Buttons.ButtonBinding right = new ControlLib.Buttons.ButtonBinding(D, MovePositions.Move, 0, new object[] { Camera.CurrentUnit, 0, 1 });
 
         Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(new Button(VirtualKey.None), () => { FpsText.SetText($"Fps: {FPS.TextFPS}"); }));
         Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(F6, () => { FpsText.IsHide = !FpsText.IsHide; }, 500));
         Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(Q, Screen.Window.Close));
-        Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(new Button(VirtualKey.None), MoveLib.Angle.MoveAngle.ResetAngle, new object[] { Camera.CurrentUnit }));
+        Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(new Button(VirtualKey.None), MoveLib.Angle.MoveAngle.ResetAngle, 0, new object[] { Camera.CurrentUnit }));
         Camera.CurrentUnit?.Control.AddBottomBind(forward);
       
         Camera.CurrentUnit?.Control.AddBottomBind(backward);
@@ -275,66 +278,50 @@ public static class GameInitializer
         Camera.CurrentUnit?.Control.AddBottomBind(right);
     }
 
-    private static async Task LoadMapAsync()
+    private static void LoadMap()
     {
-        ShowProgress(true);
-
-        if (Camera.CurrentUnit != null)
-        {
-            Camera.CurrentUnit.Control.FreezeControlsKey = true;
-            Camera.CurrentUnit.Control.FreezeControlsMouse = true;
-        }
-
-        await Task.Run(() =>
-        {
-            TexturedWall boundaryWall = new TexturedWall(null, false, PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png")));
-            Map map = new Map(boundaryWall, 50, 50);
-            Camera.map = map;
-
-            if (Camera.CurrentUnit != null)
-                map.AddObstacle(5, 5, Camera.CurrentUnit);
-
-            SpriteObstacle spriteObstacle = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
-            spriteObstacle.Scale = 80;
-            spriteObstacle.ShiftCubedX = 50;
-            spriteObstacle.ShiftCubedY = 50;
-
-            ImageLoadOptions spriteObstacle1Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
-            SpriteObstacle spriteObstacle1 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Barel")), spriteObstacle1Opt);
-            spriteObstacle1.Scale = 80;
-            spriteObstacle1.Animation.IsAnimation = true;
-            spriteObstacle1.Animation.Speed = 30;
-            spriteObstacle1.Z.Axis = -200;
-            spriteObstacle1.ShiftCubedX = 20;
-            spriteObstacle1.ShiftCubedY = 20;
-
-            ImageLoadOptions flame1Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
-            SpriteObstacle flame1 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), flame1Opt);
-            flame1.Animation.RectMode = FrameRectMode.UseCurrentFrameRect;
-            flame1.Scale = 35;
-            flame1.Animation.IsAnimation = true;
-            flame1.Animation.Speed = 30;
-            flame1.Z.Axis = -350;
-            flame1.ShiftCubedX = 20;
-            flame1.ShiftCubedY = 60;
-
-            ImageLoadOptions flame2Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
-            SpriteObstacle flame2 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), flame2Opt);
-            flame2.Animation.RectMode = FrameRectMode.UseCurrentFrameRect;
-            flame2.Scale = 35;
-            flame2.Animation.IsAnimation = true;
-            flame2.Animation.Speed = 30;
-            flame2.Z.Axis = -350;
-            flame2.ShiftCubedX = 60;
-            flame2.ShiftCubedY = 20;
-
-            map.AddObstacle(3, 3, spriteObstacle);
-            map.AddObstacle(1, 1, spriteObstacle1);
-            map.AddObstacle(1, 1, flame1);
-            map.AddObstacle(1, 1, flame2);
+        TexturedWall boundaryWall = new TexturedWall(null, false, PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png")));
+        var map = new Map(boundaryWall, 50, 50);
 
 
-        });
+        SpriteObstacle spriteObstacle = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
+        spriteObstacle.Scale = 80;
+        spriteObstacle.ShiftCubedX = 50;
+        spriteObstacle.ShiftCubedY = 50;
+
+        ImageLoadOptions spriteObstacle1Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
+        SpriteObstacle spriteObstacle1 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Barel")), spriteObstacle1Opt);
+        spriteObstacle1.Scale = 80;
+        spriteObstacle1.Animation.IsAnimation = true;
+        spriteObstacle1.Animation.Speed = 30;
+        spriteObstacle1.Z.Axis = -200;
+        spriteObstacle1.ShiftCubedX = 20;
+        spriteObstacle1.ShiftCubedY = 20;
+
+        ImageLoadOptions flame1Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
+        SpriteObstacle flame1 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), flame1Opt);
+        flame1.Animation.RectMode = FrameRectMode.UseCurrentFrameRect;
+        flame1.Scale = 35;
+        flame1.Animation.IsAnimation = true;
+        flame1.Animation.Speed = 30;
+        flame1.Z.Axis = -350;
+        flame1.ShiftCubedX = 20;
+        flame1.ShiftCubedY = 60;
+
+        ImageLoadOptions flame2Opt = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
+        SpriteObstacle flame2 = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Flame")), flame2Opt);
+        flame2.Animation.RectMode = FrameRectMode.UseCurrentFrameRect;
+        flame2.Scale = 35;
+        flame2.Animation.IsAnimation = true;
+        flame2.Animation.Speed = 30;
+        flame2.Z.Axis = -350;
+        flame2.ShiftCubedX = 60;
+        flame2.ShiftCubedY = 20;
+
+        map.AddObstacle(3, 3, spriteObstacle);
+        map.AddObstacle(1, 1, spriteObstacle1);
+        map.AddObstacle(1, 1, flame1);
+        map.AddObstacle(1, 1, flame2);
 
         if (Camera.CurrentUnit != null)
         {

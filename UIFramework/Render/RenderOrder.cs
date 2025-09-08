@@ -10,6 +10,7 @@ public enum RenderOrder
     Background,
     Hands,
     Indicators,
-    Dialog,
+    DialogBackground,
+    DialogItem,
     SystemNotification,
 }

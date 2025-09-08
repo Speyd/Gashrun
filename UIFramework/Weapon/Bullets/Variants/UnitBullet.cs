@@ -2,11 +2,9 @@
 using ControlLib.Buttons;
 using ProtoRender.Object;
 using SFML.System;
-using MoveLib;
-using ScreenLib;
+using MoveLib.Move;
 using RayTracingLib;
-using InteractionFramework.VisualImpact;
-using InteractionFramework.VisualImpact.Data;
+using ObstacleLib.SpriteLib;
 
 
 namespace UIFramework.Weapon.Bullets.Variants;
@@ -16,10 +14,18 @@ public class UnitBullet : Bullet
     private float Speed { get; set; }
     private const float baseSpeed = 10;
 
-    public int? IdEffect { get; private set; }
+    public override IUnit? Owner
+    {
+        get => _owner;
+        protected set
+        {
+            if(value != _owner && _owner is not null)
+                ignoreCollisionList.TryRemove(_owner, out _);
 
-    private ConcurrentDictionary<IUnit, byte> ignoreCollisionList = new();
-
+            _owner = value;
+        }
+    }
+    private ConcurrentDictionary<IObject, byte> ignoreCollisionList = new();
 
     public UnitBullet(float damage, float speed, Unit unit, ButtonBinding? hitObject)
         : base(damage, hitObject)
@@ -41,6 +47,7 @@ public class UnitBullet : Bullet
         Speed = bullet.Speed;
         Damage = bullet.Damage;
         ignoreCollisionList = bullet.ignoreCollisionList;
+
     }
 
 
@@ -58,18 +65,18 @@ public class UnitBullet : Bullet
         float angleInDegrees = angleInRadians * (180f / (float)Math.PI);
         newUnit.Angle = angleInRadians;
     }
-    private void UseEffect(IUnit? owner, Unit bulletUnit, (IObject?, Vector3f?) collisionObject)
+    private void UseEffect(IUnit? owner, Unit bulletUnit, MoveLib.Move.CollisionResult collisionObject)
     {
         try
         {
             if (owner is null || bulletUnit.Map is null)
-                throw new Exception("newUnit map is null");
+                throw new Exception("Owner or bulletUnit map is null");
 
-            MoveAngle(bulletUnit, collisionObject.Item2);
+            MoveAngle(bulletUnit, collisionObject.CollisionCoordinate);
             var raycastResult = Raycast.RaycastFun(bulletUnit);
 
-            (IObject?, Vector3f?) result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.Item1 ?
-                collisionObject :
+            (IObject?, Vector3f?) result = raycastResult.Item1 is null || raycastResult.Item1 != collisionObject.CollisionObject ?
+                (collisionObject.CollisionObject, collisionObject.CollisionCoordinate) :
                 (raycastResult.Item1, raycastResult.Item2);
             OnHit(owner, bulletUnit, result.Item1, result.Item2 ?? new Vector3f());
 
@@ -78,7 +85,6 @@ public class UnitBullet : Bullet
         {
             Console.WriteLine($"Error in UseEffect: {ex.Message}");
             Console.WriteLine(ex.StackTrace);
-
         }
         finally
         {
@@ -86,52 +92,45 @@ public class UnitBullet : Bullet
         }
     }
 
-    private (IObject? Obj, Vector3f? Coordinate) MoveBullet()
+    private MoveLib.Move.CollisionResult MoveBullet()
     {
-        double deltaX = Unit.Direction.X * Unit.MoveSpeed;
-        double deltaY = Unit.Direction.Y * Unit.MoveSpeed;
+        double deltaX = Unit.Direction.X * Speed;
+        double deltaY = Unit.Direction.Y * Speed;
 
-        double deltaZ = Unit.MoveSpeed * -(Unit.VerticalAngle < 0
-         ? Unit.VerticalAngle * (2.25 * Screen.ScreenRatio)
-         : Unit.VerticalAngle * (1.8 * Screen.ScreenRatio));
-
+        double deltaZ = -Unit.VerticalAngle * 100;
         Unit.Z.Axis += deltaZ;
 
-       return MoveLib.Move.Collision.GetCollisionObject(Unit, deltaX, deltaY, ignoreCollisionList.Keys.ToList());
+        return Collision.TryMoveAndGetCollision(Unit, deltaX, deltaY, ignoreCollisionList.Keys.ToList());
     }
 
     public override void Update()
     {
+
         if (!IsActive || Unit.Map is null) return;
 
         Vector3f positionBullet = new Vector3f((float)Unit.X.Axis, (float)Unit.Y.Axis, (float)Unit.Z.Axis);
         float distance = DataPipes.MathUtils.CalculateDistance(positionBullet, PositionOwner);
 
         var collisionObject = MoveBullet();
-        if (collisionObject.Item1 != null ||
+
+        if (collisionObject.CollisionObject != null ||
             (distance > FlightDistance && FlightDistance != IBullet.InfinityFlightDistance))
         {
             UseEffect(Owner, Unit, collisionObject);
             return;
         }
-       
     }
     private void Destroy()
     {
-        if (!IsActive) return;
 
+        if (!IsActive) return;
         IsActive = false;
 
-        if (IdEffect is not null)
-        {
-            BeyondRenderManager.Remove(IdEffect.Value);
-            IdEffect = null;
-        }
         Unit.Map?.DeleteObstacle(Unit);
+        SpriteObstacle.RemoveObstacle(Unit);
 
         ignoreCollisionList.TryRemove(Unit, out _);
         Owner?.IgnoreCollisionObjects.TryRemove(Unit, out _);
-        IsActive = false;
     }
 
     public void InitializeUnit(IUnit owner)
@@ -145,7 +144,7 @@ public class UnitBullet : Bullet
         Unit.Angle = owner.Angle;
         Unit.VerticalAngle = owner.VerticalAngle;
 
-        IdEffect = BeyondRenderManager.Create(owner, new VisualImpactData(Unit, -1, false));
+        Unit.HasGravity = false;
     }
     public override void Flight(IUnit owner)
     {
@@ -161,7 +160,7 @@ public class UnitBullet : Bullet
         owner.IgnoreCollisionObjects.TryAdd(newUnit.Unit, 0);
 
         newUnit.InitializeUnit(owner);
-        BulletHandler.Add(newUnit);
+        BulletHandler.Add(newUnit);      
     }
 
     public override IBullet GetCopy()
@@ -169,3 +168,5 @@ public class UnitBullet : Bullet
         return new UnitBullet(this);
     }
 }
+
+

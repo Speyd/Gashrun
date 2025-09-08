@@ -1,4 +1,7 @@
-﻿uniform sampler2D renderTexture;
+﻿#version 130
+
+
+uniform sampler2D renderTexture;
 uniform vec2 resolution;
 uniform float angle;
 uniform float verticalAngle;
@@ -18,6 +21,8 @@ uniform float effectStart;
 uniform float effectEnd;
 
 uniform float offsetY;
+
+out vec4 FragColor;
 
 float smoothFactor(float edge0, float edge1, float x, float softness) {
     float t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
@@ -67,10 +72,8 @@ void main() {
     float factor = smoothFactor(effectEnd, effectStart, scaledDist, effectRange);
 
     float effectFactor = invertEffect ? (1.0 - factor) : factor;
-    color.rgb = mix(effectColor, color.rgb, effectFactor);
+    color.rgb = mix(effectColor.rgb, color.rgb, effectFactor);
+    color.a = mix(effectColor.a, color.a, effectFactor);
 
-
-    vec3 finalColor = mix(effectColor.rgb, color.rgb, effectFactor);
-    float finalAlpha = mix(effectColor.a, color.a, effectFactor);
-    gl_FragColor = vec4(finalColor, finalAlpha);
+    FragColor = color;
 }

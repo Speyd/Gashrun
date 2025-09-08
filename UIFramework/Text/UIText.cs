@@ -5,6 +5,7 @@ using SFML.Graphics;
 using SFML.System;
 using UIFramework.Render;
 using UIFramework.Text.AlignEnums;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace UIFramework.Text;
@@ -45,12 +46,56 @@ public class UIText : UIElement
     }
 
     public uint OriginCharacterSize{ get; protected set; }
+    private string _originalText = "";
     public RenderText RenderText { get; set; }
+
+
+    private TextResizeMode _textResizeMode = TextResizeMode.Fixed;
+    public TextResizeMode TextResizeMode
+    {
+        get => _textResizeMode;
+        set
+        {
+            if (_textResizeMode == value)
+                return;
+
+            _textResizeMode = value;
+
+            if (_textResizeMode == TextResizeMode.Fixed)
+            {
+                RenderText.Text.DisplayedString = _originalText;
+                RenderText.Text.CharacterSize = OriginCharacterSize;
+            }
+            else if (_textResizeMode == TextResizeMode.AutoFit)
+            {
+                AdjustTextSize();
+            }
+        }
+    }
+
+    private FloatRect _textBounds = new();
+    public FloatRect TextBounds 
+    {
+        get => _textBounds;
+        set
+        {
+            _textBounds = new FloatRect(
+                value.Left * Screen.MultWidth,
+                value.Top * Screen.MultHeight,
+                value.Width * Screen.MultWidth,
+                value.Height * Screen.MultHeight
+            );
+
+
+            ApplyTextSettings(_originalText);
+        }
+    }
 
 
     public UIText(string text, uint size, Vector2f position, string pathToFont, SFML.Graphics.Color color, IUnit? owner = null)
         :base(owner)
     {
+        _originalText = text;
         RenderText = new RenderText(text, size, position, pathToFont, color);
         OriginCharacterSize = RenderText.Text.CharacterSize;
         PositionOnScreen = position;
@@ -61,33 +106,94 @@ public class UIText : UIElement
         : base(owner)
     {
         RenderText = new RenderText(render);
+        _originalText = render.Text.DisplayedString;
         OriginCharacterSize = RenderText.Text.CharacterSize;
         PositionOnScreen = render.Text.Position;
 
         Drawables.Add(RenderText.Text);
     }
-    public UIText(UIText uIText)
-        :base(uIText.Owner)
+    public UIText(UIText uIText, IUnit? owner = null)
+        :base(owner ?? uIText.Owner)
     {
         RenderText = new RenderText(uIText.RenderText);
+        _originalText = uIText.RenderText.Text.DisplayedString;
         OriginCharacterSize = uIText.OriginCharacterSize;
         _positionOnScreen = uIText._positionOnScreen;
 
         VerticalAlignment = uIText.VerticalAlignment;
         HorizontalAlignment = uIText.HorizontalAlignment;
 
+        RenderOrder = uIText.RenderOrder;
+
         Drawables.Add(RenderText.Text);
     }
 
 
-    public virtual void AdjustTextSize()
+
+    public void AdjustTextSize()
     {
-        uint previousCharacterSize = OriginCharacterSize == RenderText.Text.CharacterSize? 0: RenderText.Text.CharacterSize;
-        RenderText.Text.CharacterSize = (uint)(OriginCharacterSize / Screen.MultHeight);
+        if (TextBounds.Width <= 0 || TextBounds.Height <= 0)
+            return;
+
+        uint size = OriginCharacterSize;
+        string sourceText = _originalText;
+
+      
+        do
+        {
+            RenderText.Text.CharacterSize = size;
+            string wrappedText = WrapTextToWidth(sourceText, size, TextBounds.Width);
+            RenderText.Text.DisplayedString = wrappedText;
+
+            var bounds = RenderText.Text.GetLocalBounds();
+
+            if (bounds.Height <= TextBounds.Height)
+                break;
+
+            size--;
+        }
+        while (size > 1);
+
+        var finalBounds = RenderText.Text.GetLocalBounds();
+        RenderText.Text.Origin = new Vector2f(GetHorizontalBounds(finalBounds), GetVerticalBounds(finalBounds));
     }
+    private string WrapTextToWidth(string text, uint charSize, float maxWidth)
+    {
+        string[] words = text.Split(' ');
+        string result = "";
+        string currentLine = "";
+
+        var tempText = new SFML.Graphics.Text("", RenderText.Text.Font)
+        {
+            CharacterSize = charSize
+        };
+        foreach (var word in words)
+        {
+           
+            string testLine = (currentLine.Length == 0) ? word : currentLine + " " + word;
+            tempText.DisplayedString = testLine;
+
+            var bounds = tempText.GetLocalBounds();
+
+            if (bounds.Width > maxWidth)
+            {
+                result += (currentLine + "\n");
+                currentLine = word;
+            }
+            else
+            {
+                currentLine = testLine;
+            }
+        }
+
+        result += currentLine;
+        return result;
+    }
+
     internal virtual void SetTextAsync(string text)
     {
         RenderText.Text.DisplayedString = text;
+        UpdateDisplayedText(text);
 
         var bounds = RenderText.Text.GetLocalBounds();
         RenderText.Text.Origin = new Vector2f(GetHorizontalBounds(bounds), GetVerticalBounds(bounds));
@@ -95,10 +201,30 @@ public class UIText : UIElement
     }
     public virtual void SetText(string text)
     {
-        if (RenderText.Text.DisplayedString == text)
+        if (_originalText == text)
             return;
 
         WriteQueue.EnqueueDraw(this, text);
+    }
+
+    private void ApplyTextSettings(string text)
+    {
+        switch (TextResizeMode)
+        {
+            case TextResizeMode.AutoFit:
+                AdjustTextSize();
+                break;
+
+            case TextResizeMode.Fixed:
+                RenderText.Text.DisplayedString = text;
+                RenderText.Text.CharacterSize = OriginCharacterSize;
+                break;
+        }
+    }
+    private void UpdateDisplayedText(string text)
+    {
+        _originalText = text;
+        ApplyTextSettings(text);
     }
 
 

@@ -1,4 +1,5 @@
 ﻿
+using ObjectFramework;
 using ProtoRender.Object;
 using ScreenLib;
 using SFML.Audio;
@@ -42,9 +43,9 @@ public class Menu
 
     public void Run()
     {
-        if(Owner is null)
+        if (Owner is null)
         {
-            IsRun = false;
+            IsRun = false;        
             return;
         }
 

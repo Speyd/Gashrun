@@ -1,0 +1,47 @@
+{
+  "Border": {
+    "texturePath": "D:\\C\u002B\u002B \u043F\u0440\u043E\u0435\u043A\u0442\u044B\\Gashrun\\Resources\\Image\\BorderMiniMap\\Border.png"
+  },
+  "PlayerCircle": {
+    "radiusCircle": 5,
+    "R": 255,
+    "G": 0,
+    "B": 0,
+    "A": 255
+  },
+  "ObstacleOutput": {
+    "renderMode": 2,
+    "renderMethod": 0,
+    "outLine": 1
+  },
+  "PlayerLine": {
+    "length": 50,
+    "R": 0,
+    "G": 255,
+    "B": 0,
+    "A": 255
+  },
+  "SettingMap": {
+    "IsRender": true,
+    "R": 0,
+    "G": 0,
+    "B": 255,
+    "A": 255
+  },
+  "SettingWindow": {
+    "CoordinatesInWindow": {
+      "X": 0,
+      "Y": 0
+    },
+    "ScaleX": 5,
+    "ScaleY": 5,
+    "Positions": 0
+  },
+  "Zoom": {
+    "minZoom": 0.1,
+    "maxZoom": 1.2,
+    "currentZoom": 1,
+    "isZooming": true
+  },
+  "outputLayer": 2
+}

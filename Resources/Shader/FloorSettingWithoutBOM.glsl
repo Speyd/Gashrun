@@ -1,4 +1,4 @@
-﻿#version 130
+#version 130
 
 uniform sampler2D renderTexture;
 uniform vec2 resolution;

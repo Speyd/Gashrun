@@ -7,6 +7,7 @@ namespace InteractionFramework.Trigger.TriggerTouch;
 public class TriggerCollision : ITrigger
 {
     public bool isTriggered { get; private set; } = false;
+    public bool IsBlocked { get; set; } = false;
 
     public Action<IUnit>? OnTriggered { get; set; }
     public Action<IUnit>? OnUntriggered { get; set; }
@@ -35,15 +36,15 @@ public class TriggerCollision : ITrigger
     private ObjectSide? lastCollisionSide = null;
     public void CheckTrigger(IUnit unit)
     {
-        if (!ITrigger.CheckCooldown(this))
+        if (IsBlocked || !ITrigger.CheckCooldown(this))
             return;
 
 
         var result = CollisionHelper.CheckCollisionWithSide(unit, TriggerObject, TriggerObject.HitBox.MainHitBox, true);
         if (result.Item1)
-            lastCollisionSide = result.Item2;
+            lastCollisionSide = result.CollisionSide;
 
-        if (result.Item1 && isTriggered == false && (TriggerSide is null || result.Item2 == TriggerSide))
+        if (result.Item1 && isTriggered == false && (TriggerSide is null || result.CollisionSide == TriggerSide))
         {
             OnTriggered?.Invoke(unit);
             isTriggered = true;

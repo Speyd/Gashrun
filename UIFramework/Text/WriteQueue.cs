@@ -18,6 +18,7 @@ public static class WriteQueue
     /// <param name="action">A tuple containing the drawing action and the drawable target.</param>
     public static void EnqueueDraw(UIText textElement, string text)
     {
+
         drawQueue[textElement] = text;
     }
 

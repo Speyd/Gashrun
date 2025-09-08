@@ -7,7 +7,10 @@ public interface ITrigger
     DateTime LastCheckTime { get; set; }
     int CooldownMs { get; set; }
     
-    bool isTriggered {  get; }
+    bool isTriggered { get; }
+
+    bool IsBlocked { get; set; }
+
     public Action<IUnit>? OnTriggered { get; set; }
     public Action<IUnit>? OnUntriggered { get; set; }
     void CheckTrigger(IUnit unit);

@@ -125,6 +125,7 @@ public class Magazine
         if (ClipBullet.Capacity > 0)
         {
             ClipBullet.GetBullet()?.Flight(Owner);
+           
         }
         if (ClipBullet.Capacity == 0)
             Reload();

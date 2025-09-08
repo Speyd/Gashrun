@@ -21,9 +21,6 @@ public class DialogueSession
         Listener = listener;
 
         BackgroundShape = new(shapeBackround);
-        BackgroundShape.HorizontalAlignment = Text.AlignEnums.HorizontalAlign.Center;
-        BackgroundShape.VerticalAlignment = Text.AlignEnums.VerticalAlign.Center;
-        BackgroundShape.RenderOrder = UIFramework.Render.RenderOrder.Dialog;
     }
     public DialogueSession(IDialogObject speaker, IDialogObject listener, UIShape backgroundShape)
     {
@@ -31,9 +28,6 @@ public class DialogueSession
         Listener = listener;
 
         BackgroundShape = new(backgroundShape);
-        BackgroundShape.HorizontalAlignment = Text.AlignEnums.HorizontalAlign.Center;
-        BackgroundShape.VerticalAlignment = Text.AlignEnums.VerticalAlign.Center;
-        BackgroundShape.RenderOrder = UIFramework.Render.RenderOrder.Dialog;
     }
 
     public async Task RunAsync()

@@ -4,11 +4,14 @@ using ControlLib.Buttons;
 using InteractionFramework.Death;
 using InteractionFramework.VisualImpact;
 using InteractionFramework.HitAction;
+using RayTracingLib.Detection;
+using SFML.Graphics;
 
 namespace UIFramework.Weapon.Bullets;
 public abstract class Bullet : IBullet
 {
-    public IUnit? Owner { get; protected set; }
+    protected IUnit? _owner = null;
+    public virtual IUnit? Owner { get => _owner; protected set => _owner = value; }
     protected Vector3f PositionOwner { get; set; } = new();
 
 
@@ -40,32 +43,63 @@ public abstract class Bullet : IBullet
         if (target is null)
             return;
 
-        var hitEffect = HitDataCache.Get(target.GetUsedTexture(owner)?.PathTexture)?.First();
+        var hitEffect = GetHitEffect(owner, bullet, target);
+        if (hitEffect is null)
+            return;
 
-
-        if (hitEffect?.VisualImpact is not null)
+        foreach (var effect in hitEffect)
         {
-            BeyondRenderManager.Create(owner, hitEffect.VisualImpact.GetCopy(), hitPosition.X, hitPosition.Y, hitPosition.Z);
+            HandleVisualImpact(effect, hitPosition, owner);
+            HandleDrawable(effect, target, bullet);
+            HandleSound(effect, bullet, hitPosition);
         }
-        if (target is IDrawable drawable && hitEffect?.DrawableBatch is not null)
+        HandleDamage(target);
+    }
+
+    #region Handle
+    private List<HitEffect>? GetHitEffect(IUnit owner, IUnit bullet, IObject target)
+    {
+        var coordinate = DrawLib.Drawing.GetDrawingCoordinte(target, bullet);
+        var texturePath = target.GetUsedTexture(owner)?.PathTexture;
+        return HitDataCache.Get(texturePath, coordinate)?.ToList();
+    }
+
+    private void HandleVisualImpact(HitEffect hitEffect, Vector3f position, IUnit owner)
+    {
+        if (hitEffect.VisualImpact != null)
+        {
+            BeyondRenderManager.Create(owner, hitEffect.VisualImpact.GetCopy(), position.X, position.Y, position.Z);
+        }
+    }
+
+    private void HandleDrawable(HitEffect hitEffect, IObject target, IUnit bullet)
+    {
+        if (target is IDrawable drawable && hitEffect.DrawableBatch != null)
         {
             var batch = hitEffect.DrawableBatch.Get();
             if (batch != null)
                 DrawLib.Drawing.DrawingObject(target, bullet, batch);
         }
+    }
+
+    private void HandleDamage(IObject target)
+    {
         if (target is IDamageable damageable)
         {
             damageable.Hp.Decrease(Damage);
             HitObject?.Listen();
         }
-        if (hitEffect?.SoundHit is not null && bullet.Map is not null)
+    }
+
+    private void HandleSound(HitEffect hitEffect, IUnit bullet, Vector3f position)
+    {
+        if (hitEffect.SoundHit != null && bullet.Map != null)
         {
-            hitEffect.SoundHit.Play(bullet.Map, new Vector3f(
-                 hitPosition.X,
-                 hitPosition.Y,
-                 hitPosition.Z
-             ));
+            hitEffect.SoundHit.Play(bullet.Map, position);
         }
     }
+    #endregion
+
+
     public abstract IBullet GetCopy();
 }

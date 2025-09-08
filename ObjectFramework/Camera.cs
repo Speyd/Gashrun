@@ -1,5 +1,6 @@
 ﻿using ProtoRender.Object;
 using SFML.Audio;
+using SFML.System;
 
 
 namespace ObjectFramework;
@@ -8,9 +9,10 @@ public static class Camera
     public static IUnit? CurrentUnit { get; set; }
     public static Map? map { get; set; }
 
-
     public static void UpdateListener()
     {
+
+
         if (CurrentUnit is null)
             return;
 

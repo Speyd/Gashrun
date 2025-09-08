@@ -41,7 +41,7 @@ public static class BeyondRenderManager
 
     public static void Create(IUnit owner, IBeyoundData visualImpact, double x, double y, double z)
     {
-        var newVisualImpact = visualImpact;
+        var newVisualImpact = visualImpact.GetCopy();
         newVisualImpact.Map = Camera.CurrentUnit?.Map;
         newVisualImpact.Owner = owner;
         newVisualImpact.Id = GetNextId();
@@ -51,7 +51,7 @@ public static class BeyondRenderManager
     }
     public static int Create(IUnit owner, IBeyoundData visualImpact)
     {
-        var newVisualImpact = visualImpact;
+        var newVisualImpact = visualImpact.GetCopy();
         newVisualImpact.Map = Camera.CurrentUnit?.Map;
         newVisualImpact.Owner = owner;
         newVisualImpact.Id = GetNextId();

@@ -139,7 +139,7 @@ public class Map : IMap
     {
         await Task.Run(() =>
         {
-            if (!CheckTrueIntCoordinates(x, y))
+            if (!CheckTrueIntCoordinates(x, y))     
                 throw new Exception("Index out of range 'addEmptyToMap'");
 
             x *= Screen.Setting.Tile;
@@ -155,42 +155,43 @@ public class Map : IMap
         });
     }
 
+    private static readonly object _obstacleUpdateLock = new();
+
     /// <summary>
     /// Updates an obstacle's location if it moves to another cell.
     /// </summary>
     public void UpdateCoordinatesObstacle(IObject obstacle)
     {
-        int cellX = obstacle.CellX;
-        int cellY = obstacle.CellY;
-
-        double x = obstacle.X.Axis;
-        double y = obstacle.Y.Axis;
-        int mappX = Screen.Mapping(x);
-        int mappY = Screen.Mapping(y);
-
-
-        if (!CheckTrueCoordinates(x, y))
-            throw new Exception("Error update coordinates(UpdateCoordinatesObstacle)");
-
-        if (!Obstacles.ContainsKey((cellX, cellY)))
-            throw new Exception("Coordinates to update not found(UpdateCoordinatesObstacle)");
-
-        if (!Obstacles[(cellX, cellY)].ContainsKey(obstacle))
-            throw new Exception("Object to update not found(UpdateCoordinatesObstacle)");
-
-        if (mappX != cellX || mappY != cellY)
+        lock (_obstacleUpdateLock)
         {
-            if (mappX != cellX)
-                obstacle.CellX = mappX;
-            if (mappY != cellY)
-                obstacle.CellY = mappY;
+            int cellX = obstacle.CellX;
+            int cellY = obstacle.CellY;
 
-            if (Obstacles.TryGetValue((cellX, cellY), out var list))
+            double x = obstacle.X.Axis;
+            double y = obstacle.Y.Axis;
+            int mappX = Screen.Mapping(x);
+            int mappY = Screen.Mapping(y);
+
+            if (!Obstacles.ContainsKey((cellX, cellY)))
+                throw new Exception($"Coordinates ({cellX},{cellY}) not found (UpdateCoordinatesObstacle)");
+
+            if (!Obstacles[(cellX, cellY)].ContainsKey(obstacle))
+                throw new Exception($"Object not found in cell ({cellX},{cellY}) (UpdateCoordinatesObstacle)");
+
+            if (mappX != cellX || mappY != cellY)
             {
-                list.TryRemove(obstacle, out _);
+                if (Obstacles.TryGetValue((cellX, cellY), out var list))
+                {
+                    list.TryRemove(obstacle, out _);
+                }
+
+                var newList = Obstacles.GetOrAdd((mappX, mappY), _ => new ConcurrentDictionary<IObject, byte>());
+                newList.TryAdd(obstacle, 0);
+
+                // Обновление координат — только после перемещения
+                obstacle.CellX = mappX;
+                obstacle.CellY = mappY;
             }
-            var newList = Obstacles.GetOrAdd((mappX, mappY), _ => new ConcurrentDictionary<IObject, byte>());
-            newList.TryAdd(obstacle, 0);
         }
     }
     private void RemoveObstacle(IObject obstacle)
