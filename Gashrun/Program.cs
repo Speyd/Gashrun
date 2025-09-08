@@ -52,6 +52,7 @@ using System.Drawing;
 using ObstacleLib;
 using ProtoRender.RenderAlgorithm;
 using TextureLib.Textures;
+using ObstacleLib.SpriteLib;
 
 Screen.Initialize(1000, 600);
 #region Static Properties
@@ -170,7 +171,7 @@ map.AddObstacle(11, 6, MainMapMisticBrickDoor);
 #region Create Unit
 
 #region Main Unit
-Unit unit = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
+Unit unit = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
@@ -233,7 +234,7 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(7, 2, MisticHouseBrickWindow.GetDeepCopy());
 
     #region Unit
-    Unit? newspaperHint = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "rotating_newspaper.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }), 100);
+    Unit? newspaperHint = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "rotating_newspaper.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }), 100);
     newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
     newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
     newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
@@ -399,7 +400,7 @@ TriggerHandler.AddTriger(unit, openNewspaperHintTrigger);
 
 
 
-Unit devil = new Unit(new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
+Unit devil = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
 devil.Scale = 100;
 devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(150);
 devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(150);
@@ -517,7 +518,7 @@ pistolBulletText.HorizontalAlignment = HorizontalAlign.Center;
 pistolBulletText.RenderOrder = RenderOrder.Hands;
 
 //StandartBullet pistolBullet = new StandartBullet(20, null);
-var b = new UIFramework.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
+var b = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
 var u = new Unit(b, 0, false);
 u.Animation.IsAnimation = true;
 u.Animation.Speed = 30;

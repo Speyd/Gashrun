@@ -162,8 +162,8 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         Map = null;
         IsAdded = false;
 
-       // if (DeathAnimation is not null)
-        // BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
+        if (DeathAnimation is not null)
+         BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
     }
     #endregion
 
