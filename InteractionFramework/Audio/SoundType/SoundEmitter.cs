@@ -30,6 +30,7 @@ public abstract class SoundEmitter : ISound
     public Sound Sound { get; private set; }
     public float HeightAttenuation { get; set; } = 1;
 
+    public bool RequireListeners { get; set; } = false;
     public ConcurrentDictionary<IObject, byte> AllowedListeners { protected get; init; } = new();
     public ConcurrentDictionary<IObject, byte> MonoListeners { protected get; init; } = new();
 
@@ -51,14 +52,27 @@ public abstract class SoundEmitter : ISound
         if (Camera.CurrentUnit is null || map != Camera.CurrentUnit.Map ||
             ISoundObject.AllowedListeners.Count != 0 && !ISoundObject.AllowedListeners.Keys.Contains(Camera.CurrentUnit))
             return;
+        else if(ISoundObject.RequireListeners && ISoundObject.AllowedListeners.Count != 0 &&
+            !ISoundObject.AllowedListeners.Keys.Contains(Camera.CurrentUnit))
+        {
+            return;
+        }
 
-        if (ISoundObject.MonoListeners.Keys.Contains(Camera.CurrentUnit))
+
+        ISoundObject.SelectMethodPlay(sound, positionSound);
+    }
+    private void SelectMethodPlay(Sound sound, Vector3f positionSound)
+    {
+        if (Camera.CurrentUnit is null)
+            return;
+
+        if (MonoListeners.Keys.Contains(Camera.CurrentUnit))
         {
             sound.Position = BaseMonoPosition;
             sound.RelativeToListener = true;
             sound.Play();
 
-            ISoundObject.RegisterSound(sound);
+            RegisterSound(sound);
             return;
         }
         else
@@ -68,6 +82,8 @@ public abstract class SoundEmitter : ISound
         sound.Position = new Vector3f(positionSound.X, positionSound.Z, positionSound.Y);
         sound.Play();
     }
+
+
     public virtual void SubscribeListener(IObject listener)
     {
         AllowedListeners.TryAdd(listener, 0);

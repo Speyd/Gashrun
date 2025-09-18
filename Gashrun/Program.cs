@@ -53,13 +53,22 @@ using ObstacleLib;
 using ProtoRender.RenderAlgorithm;
 using TextureLib.Textures;
 using ObstacleLib.SpriteLib;
+using DataPipes;
+using ObstacleLib.SpriteLib.Add;
+using ProtoRender.Map;
+using ProtoRender.RenderInterface;
+using System.Collections.Concurrent;
+using System.ComponentModel;
+using System;
+using UIFramework.Sights.Crosses;
+using UIFramework.Sights;
 
 Screen.Initialize(1000, 600);
 #region Static Properties
 FPS.BufferSize = 50;
 
 RayTracingLib.Raycast.CoordinatesMoving = 3;
-  
+SpriteObstacle.GlobalMinDistance = 0;
 RenderAlgorithm.UseHeightPerspective = false;
 RenderAlgorithm.UseVerticalPerspective = false;
 
@@ -70,8 +79,8 @@ MoveLib.Move.Collision.RadiusCheckTouch = 3;
 
 #region Effect
 
-EffectManager.CurrentEffect = new CustomEffect(DefaultPresets.BlinEffect);
-EffectManager.CurrentEffect.EffectEnd = 15;
+EffectManager.CurrentEffect = new CustomEffect(DefaultPresets.DarkEffect);
+EffectManager.CurrentEffect.EffectEnd = 5;
 
 
 CustomEffect effectBorderWall = new CustomEffect();
@@ -83,10 +92,28 @@ effectBorderWall.EffectEnd = 4;
 string RedBarrierPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Barrier.png"));
 string BrickWindowPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWindow.png"));
 string BrickWallPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickWall.png"));
+string BrickBloodWallPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickBloodWall.png"));
 string BrickDoorPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "BrickDoor.png"));
-string WoodCeiling = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Wood.png"));
-string GrassFloor = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.png"));
-string NightSky = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "nightSky.jpg"));
+string WoodCeilingPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Wood.png"));
+string GrassFloorPng = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "Grass.png"));
+string NightSkJpg = PathResolver.GetMainPath(Path.Combine("Resources", "Image", "PartsWorldTexture", "nightSky.jpg"));
+string LoadingPng = PathResolver.GetMainPath(Path.Combine("Resources", "Loading.png"));
+string WoodFloorPng = PathResolver.GetMainPath(Path.Combine("Resources", "WoodFloor.png"));
+string BigLampePng = PathResolver.GetMainPath(Path.Combine("Resources", "BigLampe.png"));
+
+string VisualEffectBulletGlassGif = PathResolver.GetMainPath(Path.Combine("Resources", "VisualEffect", "visualEffectBulletGlass.gif"));
+string VisualEffectBulletBrickGif = PathResolver.GetMainPath(Path.Combine("Resources", "VisualEffect", "visualEffectBulletBrick.gif"));
+
+string GlassHitDrawableBatchDir = PathResolver.GetMainPath(Path.Combine("Resources", "HitDrawableBatch", "Glass"));
+string WoodHitDrawableBatchDir = PathResolver.GetMainPath(Path.Combine("Resources", "HitDrawableBatch", "Wood"));
+string OrangeBrickHitDrawableBatchDir = PathResolver.GetMainPath(Path.Combine("Resources", "HitDrawableBatch", "OrangeBrick"));
+
+
+string SoundHitGlassWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitGlass.wav"));
+string SoundHitWoodWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitWood.wav"));
+string SoundHitBrickWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitBrick.wav"));
+
+
 
 #endregion
 
@@ -102,15 +129,20 @@ string pathFloorShader = PathResolver.GetMainPath(Path.Combine("Resources", "Sha
 #endregion
 
 #region Parts World
-var nightSkyObject = new Sky(NightSky);
-var grassFloorObject = new TexturedFloor(GrassFloor, pathFloorWithoutBOMShader)
+var nightSkyObject = new Sky(NightSkJpg);
+var grassFloorObject = new TexturedFloor(GrassFloorPng, pathFloorWithoutBOMShader)
 {
     DownAngleLogScale = 2.7f,
     Scale = 0.4f,
     TextureScrollingSpeed = 0.4f,
 };
-var woodCeilingObject = new TexturedCeiling(WoodCeiling, pathCeilingWithoutBOMShader);
-
+var woodCeilingObject = new TexturedCeiling(WoodCeilingPng, pathCeilingWithoutBOMShader);
+var woodFloorObject = new TexturedFloor(WoodFloorPng, pathFloorWithoutBOMShader)
+{
+    DownAngleLogScale = 2.7f,
+    Scale = 0.4f,
+    TextureScrollingSpeed = 0.4f,
+};
 
 GameManager.PartsWorld.UpPart = nightSkyObject;
 GameManager.PartsWorld.DownPart = grassFloorObject;
@@ -120,7 +152,63 @@ GameManager.PartsWorld.DownPart = grassFloorObject;
 UIText ArialBold_Cyan_20 = new UIText("", 20, new Vector2f(0, 0), fontArialBold, SFML.Graphics.Color.Cyan);
 #endregion
 
+#region Sound
+SoundDynamic SoundHitGlass = new(SoundHitGlassWav);
+SoundHitGlass.Sound.MinDistance = 300f;
+SoundHitGlass.Sound.Attenuation = 1f;
 
+SoundDynamic SoundHitBrickWall = new(SoundHitBrickWav);
+SoundHitBrickWall.Sound.MinDistance = 300f;
+SoundHitBrickWall.Sound.Attenuation = 1f;
+
+SoundDynamic SoundHitWood = new(SoundHitWoodWav);
+SoundHitWood.Sound.Volume = 50f;
+SoundHitWood.Sound.MinDistance = 300f;
+SoundHitWood.Sound.Attenuation = 1f;
+#endregion
+
+
+#region VisualImpactData
+ObstacleLib.SpriteLib.SpriteObstacle spriteEffectFallingParticlesHit = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, VisualEffectBulletGlassGif));
+spriteEffectFallingParticlesHit.Animation.IsAnimation = true;
+spriteEffectFallingParticlesHit.Animation.Speed = 80;
+spriteEffectFallingParticlesHit.IsPassability = true;
+spriteEffectFallingParticlesHit.Scale = 120;
+VisualImpactData visualImpactEffectFallingParticles = new(spriteEffectFallingParticlesHit, 1000, false);
+
+ObstacleLib.SpriteLib.SpriteObstacle spriteEffectExplosionParticlesHit = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, true, VisualEffectBulletBrickGif));
+spriteEffectExplosionParticlesHit.Animation.IsAnimation = true;
+spriteEffectExplosionParticlesHit.Animation.Speed = 80;
+spriteEffectExplosionParticlesHit.IsPassability = true;
+spriteEffectExplosionParticlesHit.Scale = 30;
+VisualImpactData visualImpactEffectExplosionParticles = new(spriteEffectExplosionParticlesHit, 500, false);
+#endregion
+
+#region HitData
+#region BrickWallWithGlass
+HitDrawableBatch brickWallWithGlassHitDrawableBatch = new (null, true, GlassHitDrawableBatchDir);
+HitEffect brickWallWithGlassHitEffect = new HitEffect(visualImpactEffectFallingParticles, brickWallWithGlassHitDrawableBatch, SoundHitGlass);
+#endregion
+
+#region BrickWall
+HitDrawableBatch brickWallHitDrawableBatch = new(null, true, OrangeBrickHitDrawableBatchDir);
+HitEffect brickWallHitEffect = new HitEffect(visualImpactEffectExplosionParticles, brickWallHitDrawableBatch, SoundHitBrickWall);
+#endregion
+
+#region BrickDoor
+HitDrawableBatch wallDoorHitDrawableBatch = new(null, true, WoodHitDrawableBatchDir);
+HitEffect wallDoorHitEffect = new HitEffect(visualImpactEffectFallingParticles, wallDoorHitDrawableBatch, SoundHitWood);
+#endregion
+
+
+HitDataCache.Load(BrickDoorPng, wallDoorHitEffect, new EffectArea(new Vector2f(250, 375), new Vector2f(747, 1264)));
+HitDataCache.Append(BrickDoorPng, brickWallHitEffect);
+
+HitDataCache.Load(BrickWindowPng, brickWallWithGlassHitEffect, new EffectArea(new Vector2f(297, 410), new Vector2f(725, 918)));
+HitDataCache.Append(BrickWindowPng, brickWallHitEffect);
+
+HitDataCache.Load(BrickWallPng, brickWallHitEffect);
+#endregion
 
 
 #region Create Main Map
@@ -130,7 +218,7 @@ boundaryWall.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100000);
 boundaryWall.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100000);
 boundaryWall.Effect = effectBorderWall;
 
-var map = new Map(boundaryWall, 100, 100);
+var map = new Map(boundaryWall, 25, 25);
 #endregion
 
 #region Create Structure
@@ -171,7 +259,7 @@ map.AddObstacle(11, 6, MainMapMisticBrickDoor);
 #region Create Unit
 
 #region Main Unit
-Unit unit = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
+Unit unit = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
@@ -221,7 +309,9 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(7, 6, MisticHouseBrickWall.GetDeepCopy());
     houseMap.AddObstacle(7, 5, MisticHouseBrickWall.GetDeepCopy());
     houseMap.AddObstacle(7, 1, MisticHouseBrickWall.GetDeepCopy());
-    houseMap.AddObstacle(7, 3, MisticHouseBrickWall.GetDeepCopy());
+
+    TexturedWall MisticHouseBrickBloodWall = new TexturedWall(null, false, BrickBloodWallPng);
+    houseMap.AddObstacle(7, 3, MisticHouseBrickBloodWall.GetDeepCopy());
 
     TexturedWall MisticHouseBrickWindow = new TexturedWall(null, false, BrickWindowPng);
     houseMap.AddObstacle(0, 4, MisticHouseBrickWindow.GetDeepCopy());
@@ -234,26 +324,50 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(7, 2, MisticHouseBrickWindow.GetDeepCopy());
 
     #region Unit
-    Unit? newspaperHint = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "rotating_newspaper.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }), 100);
-    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
-    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
-    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
-    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
-    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(150);
-    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(150);
+    //SpriteObstacle? newspaperHint = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "rotating_newspaper.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false);
+    //newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(150);
+    //newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(150);
 
-    newspaperHint.Scale = 64;
-    newspaperHint.ShiftCubedX = 50;
-    newspaperHint.ShiftCubedY = 50;
+    //newspaperHint.Scale = 64;
+    //newspaperHint.ShiftCubedX = 50;
+    //newspaperHint.ShiftCubedY = 50;
 
-    newspaperHint.Animation.Speed = 20;
-    newspaperHint.Animation.IsAnimation = true;
+    //newspaperHint.Animation.Speed = 20;
+    //newspaperHint.Animation.IsAnimation = true;
 
-    houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, newspaperHint);
+
+    //SpriteObstacle? woodTable = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "WoodTable.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false);
+    //woodTable.Scale = 164;
+    //woodTable.ShiftCubedX = 50;
+    //woodTable.ShiftCubedY = 50;
+    //woodTable.Z.Axis = -370;
+    //woodTable.Animation.IsAnimation = false;
+
+    SpriteObstacle? lampeMisticHouse = new SpriteObstacle(BigLampePng, null, false);
+    lampeMisticHouse.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
+    lampeMisticHouse.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
+    lampeMisticHouse.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
+    lampeMisticHouse.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
+    lampeMisticHouse.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(350);
+    lampeMisticHouse.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(350);
+    lampeMisticHouse.Scale = 150;
+    lampeMisticHouse.Z.Axis = -100;
+
+    houseMap?.AddObstacle(6, 1, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 80, ShiftCubedY = 20 });
+    houseMap?.AddObstacle(1, 1, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 20, ShiftCubedY = 20 });
+    houseMap?.AddObstacle(6, 5, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 80, ShiftCubedY = 80 });
+    houseMap?.AddObstacle(1, 5, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 20, ShiftCubedY = 80 });
+
+
+    //houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, newspaperHint);
+   // houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, woodTable);
     #endregion
 };
 #endregion
-
 
 #region Create Triggers
 
@@ -277,7 +391,7 @@ var distanceOpenExitDoorTrigger = new TriggerDistance
             positionMisticHouseBrickDoor.Y * Screen.Setting.Tile),
          out var value))
         {
-            return target is not null && target == value.First().Key;
+            return target is not null && value.ContainsKey(target);
         }
 
         return false;
@@ -288,7 +402,7 @@ var distanceOpenExitDoorTrigger = new TriggerDistance
 
 
 UIShape blackSreenOpenDoor = new UIShape(new RectangleShape(new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight)));
-blackSreenOpenDoor.RectangleShape.FillColor = SFML.Graphics.Color.Black;
+blackSreenOpenDoor.AnimationState.AddFrame(ImageLoader.Load(null, true, LoadingPng).FirstOrDefault() ?? TextureWrapper.Placeholder);
 blackSreenOpenDoor.RenderOrder = RenderOrder.SystemNotification;
 
 Vector2i safePositionOpenEntranceDoor = new Vector2i(MainMapMisticBrickDoor.CellX / Screen.Setting.Tile, MainMapMisticBrickDoor.CellY / Screen.Setting.Tile + 1);
@@ -328,6 +442,7 @@ void ApplyHouseMapChanges()
 {
     houseMap?.AddObstacle(safePositionOpenExitDoor.X, safePositionOpenExitDoor.Y, Camera.CurrentUnit);
     GameManager.PartsWorld.UpPart = woodCeilingObject;
+    GameManager.PartsWorld.DownPart = woodFloorObject;
     blackSreenOpenDoor.IsHide = true;
 }
 #endregion
@@ -350,6 +465,7 @@ openExitDoorTrigger.OnTriggered = (unit) =>
     map?.AddObstacle(safePositionOpenEntranceDoor.X, safePositionOpenEntranceDoor.Y, Camera.CurrentUnit);
 
     GameManager.PartsWorld.UpPart = nightSkyObject;
+    GameManager.PartsWorld.DownPart = grassFloorObject;
     blackSreenOpenDoor.IsHide = true;
 };
 TriggerHandler.AddTriger(unit, openExitDoorTrigger);
@@ -371,7 +487,7 @@ var distanceOpenNewspaperHintTrigger = new TriggerDistance
             positionMisticHouseNewspaperHint.Y * Screen.Setting.Tile),
          out var value))
         {
-            return target is not null && target == value.FirstOrDefault().Key;
+            return target is not null && value.ContainsKey(target);
         }
 
         return false;
@@ -400,7 +516,7 @@ TriggerHandler.AddTriger(unit, openNewspaperHintTrigger);
 
 
 
-Unit devil = new Unit(new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
+Unit devil = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil"))), 100);
 devil.Scale = 100;
 devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(150);
 devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(150);
@@ -425,24 +541,24 @@ devil.DisplayName.RenderOrder = RenderOrder.DialogItem;
 
 #region HitData
 #region Brick Wall
-ObstacleLib.SpriteLib.SpriteObstacle spriteHitBrickWall = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, PathResolver.GetPath(Path.Combine("Resources", "effectHitToBrick.gif"))));
-spriteHitBrickWall.Animation.IsAnimation = true;
-spriteHitBrickWall.Animation.Speed = 30;
-spriteHitBrickWall.IsPassability = true;
-spriteHitBrickWall.Scale = 45;
-VisualImpactData visualHitBrickWall = new VisualImpactData(spriteHitBrickWall, 500, false);
+//ObstacleLib.SpriteLib.SpriteObstacle spriteHitBrickWall = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, PathResolver.GetPath(Path.Combine("Resources", "effectHitToBrick.gif"))));
+//spriteHitBrickWall.Animation.IsAnimation = true;
+//spriteHitBrickWall.Animation.Speed = 30;
+//spriteHitBrickWall.IsPassability = true;
+//spriteHitBrickWall.Scale = 45;
+//VisualImpactData visualHitBrickWall = new VisualImpactData(spriteHitBrickWall, 500, false);
 
-HitDrawableBatch drawHitBrickWall = new HitDrawableBatch(null, true, PathResolver.GetPath(Path.Combine("Resources", "Image", "BulletHole", "UniversalHole")));
+//HitDrawableBatch drawHitBrickWall = new HitDrawableBatch(null, true, PathResolver.GetPath(Path.Combine("Resources", "Image", "BulletHole", "UniversalHole")));
 
 
 SoundEmitter soundHitBrickWall = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "soundHitToBrick.wav")));
 soundHitBrickWall.Sound.MinDistance = 300f;
 soundHitBrickWall.Sound.Attenuation = 1f;
 
-HitEffect hitBrickWall = new HitEffect(visualHitBrickWall, drawHitBrickWall, soundHitBrickWall);
-HitEffect hitBrickWall1 = new HitEffect(null, drawHitBrickWall, null);
+//HitEffect hitBrickWall = new HitEffect(visualHitBrickWall, drawHitBrickWall, soundHitBrickWall);
+//HitEffect hitBrickWall1 = new HitEffect(null, drawHitBrickWall, null);
 
-HitDataCache.Load(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png")), hitBrickWall);
+//HitDataCache.Load(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png")), hitBrickWall);
 #endregion
 #region Border Wall
 ObstacleLib.SpriteLib.SpriteObstacle spriteHitBorderWall = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, PathResolver.GetPath(Path.Combine("Resources", "effectHitToBorder.gif"))));
@@ -471,8 +587,8 @@ HitDataCache.Load(RedBarrierPng, hitBorderWall);
 
 
 HitEffect hitBorderWall122 = new HitEffect(visualHitBorderWall1, null, soundHitBorderWall1);
-HitDataCache.Load(BrickWindowPng, hitBorderWall, new EffectArea(new Vector2f(300, 500), new Vector2f(700, 1200)));
-HitDataCache.Append(BrickWindowPng, hitBorderWall122);
+//HitDataCache.Load(BrickWindowPng, hitBorderWall, new EffectArea(new Vector2f(300, 500), new Vector2f(700, 1200)));
+//HitDataCache.Append(BrickWindowPng, hitBorderWall122);
 #endregion
 
 #endregion
@@ -517,14 +633,14 @@ pistolBulletText.VerticalAlignment = VerticalAlign.Center;
 pistolBulletText.HorizontalAlignment = HorizontalAlign.Center;
 pistolBulletText.RenderOrder = RenderOrder.Hands;
 
-//StandartBullet pistolBullet = new StandartBullet(20, null);
-var b = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
+StandartBullet pistolBullet = new StandartBullet(20, null);
+var b = new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "Sprite", "Devil")));
 var u = new Unit(b, 0, false);
 u.Animation.IsAnimation = true;
 u.Animation.Speed = 30;
 u.Scale = 15;
 
-UnitBullet pistolBullet = new UnitBullet(20, 15, u, null);
+//UnitBullet pistolBullet = new UnitBullet(20, 15, u, null);
 Magazine pistolMagazine = new Magazine(20, 140, pistolBullet, VirtualKey.R, pistolBulletText);
 
 ControlLib.Buttons.ButtonBinding shootPistol = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.LeftButton), null, 300);
@@ -655,7 +771,7 @@ spriteTouchBorderWall.Scale = 40;
 VisualImpactData visualTouchBorderWall = new VisualImpactData(spriteTouchBorderWall, 500, false);
 
 Predicate<IObject> detectFun = (obj) =>
-obj.GetUsedTexture(unit)?.PathTexture == PathResolver.GetMainPath(Path.Combine("Resources", "brie.png"));
+obj is not null && obj.GetUsedTexture(unit)?.PathTexture == PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Barrier.png"));
 
 
 FadingSprite fadingSprite = new FadingSprite(ImageLoader.Load(null, true, PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall3.png"))).First(), FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
@@ -715,7 +831,6 @@ triggerCollision.OnTriggered += (unit) =>
     }
 };
 
-//TriggerHandler.AddTriger(unit, triggerCollision);
+TriggerHandler.AddTriger(unit, triggerCollision);
 //_ = GameInitializer.InitializeAsync(map);
 GameManager.Start();
-

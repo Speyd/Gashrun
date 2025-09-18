@@ -6,6 +6,9 @@ using InteractionFramework.VisualImpact;
 using InteractionFramework.HitAction;
 using RayTracingLib.Detection;
 using SFML.Graphics;
+using System.Collections.Concurrent;
+using RayTracingLib;
+using DrawLib;
 
 namespace UIFramework.Weapon.Bullets;
 public abstract class Bullet : IBullet
@@ -78,7 +81,7 @@ public abstract class Bullet : IBullet
         {
             var batch = hitEffect.DrawableBatch.Get();
             if (batch != null)
-                DrawLib.Drawing.DrawingObject(target, bullet, batch);
+                Drawing.DrawingObject(target, bullet, batch);
         }
     }
 

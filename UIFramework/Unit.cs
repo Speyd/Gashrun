@@ -55,11 +55,11 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float KnockbackVelocityEpsilon { get; set; } = 1;
     public float GroundLevel { get; set; } = 0;
     public float JumpElapsed { get; set; } = 0;
-    public float JumpDuration { get; set; } = 0.1f;
-    public float JumpHeight { get; set; } = 500;
+    public float JumpDuration { get; set; } = 0.5f;
+    public float JumpHeight { get; set; } = 1500;
     public float CurrentJumpForce { get; set; } = 1000;
     public float InitialJumpHeight { get; set; } = 0;
-    public float Gravity { get; } = 500000;
+    public float Gravity { get; } = 10000;
     public float Friction { get; } = 0.6f;
 
     /// <summary>
@@ -176,7 +176,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public ControlLib.Control Control { get; init; } = new ControlLib.Control();
     #endregion
     public Unit(SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
-       : base(obstacle, true)
+       : base(obstacle, createNewTexture)
     {
         Animation = obstacle.Animation;
         Hp = new Stat(maxHp);
@@ -200,7 +200,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         PhysicsHandler.Register(this);
     }
     public Unit(IMap map, SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
-       : base(obstacle, false)
+       : base(obstacle, createNewTexture)
     {
         Map = map;
         Animation = obstacle.Animation;

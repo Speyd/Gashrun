@@ -53,7 +53,16 @@ public class HitDrawableBatch
     private void LoadList(List<TextureWrapper> drawList)
     {
         foreach (var texture in drawList)
-            DrawList.Add(SpriteDataCache.Get(texture.PathTexture)?.First() ?? new Sprite(texture.Texture));
+        {
+            var cache = SpriteDataCache.Get(texture.PathTexture);
+            if (cache is null)
+                DrawList.Add(new Sprite(texture.Texture));
+            else
+            {
+                foreach (var sprite in cache)
+                    DrawList.Add(sprite);
+            }
+        }
     }
 
     public Drawable? Get(int index = 0)

@@ -8,14 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.AnimationLib" Version="1.7.2" />
+    <PackageReference Include="EnginePseudo3D.AnimationLib" Version="1.7.3" />
     <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.9.1" />
-    <PackageReference Include="EnginePseudo3D.DrawLib" Version="2.2.0" />
+    <PackageReference Include="EnginePseudo3D.DrawLib" Version="2.2.1" />
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
-    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.3.4" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.8.4" />
-    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="2.5.1" />
-    <PackageReference Include="EnginePseudo3D.TextureLib" Version="1.6.6" />
+    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.3.5" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="2.9.1" />
+    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="2.5.2" />
+    <PackageReference Include="EnginePseudo3D.TextureLib" Version="1.6.7" />
   </ItemGroup>
 
   <ItemGroup>
