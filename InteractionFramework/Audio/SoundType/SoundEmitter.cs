@@ -46,7 +46,7 @@ public abstract class SoundEmitter : ISound
 
 
 
-    public abstract void Play(IMap map, Vector3f positionSound = new Vector3f());
+    public abstract Sound Play(IMap map, Vector3f positionSound = new Vector3f());
     protected static void StandartPlay(SoundEmitter ISoundObject, Sound sound, IMap map, Vector3f positionSound = new Vector3f())
     {
         if (Camera.CurrentUnit is null || map != Camera.CurrentUnit.Map ||
@@ -79,6 +79,7 @@ public abstract class SoundEmitter : ISound
         {
             sound.RelativeToListener = false;
         }
+
         sound.Position = new Vector3f(positionSound.X, positionSound.Z, positionSound.Y);
         sound.Play();
     }
@@ -109,7 +110,10 @@ public abstract class SoundEmitter : ISound
     {
         lock (_lock)
         {
-            ActiveSounds.RemoveAll(s => s.Status == SoundStatus.Stopped);
+            ActiveSounds.RemoveAll(s =>
+                 s.Status == SoundStatus.Stopped || 
+                 s.CPointer == IntPtr.Zero
+            );
         }
     }
     public void RegisterSound(Sound sound)
@@ -119,5 +123,4 @@ public abstract class SoundEmitter : ISound
             ActiveSounds.Add(sound);
         }
     }
-
 }

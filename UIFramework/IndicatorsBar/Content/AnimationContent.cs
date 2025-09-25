@@ -22,7 +22,7 @@ public class AnimationContent : AnimationState, IBarContent
 
     public void UpdateContent(RectangleShape bar)
     {
-        if (CurrentFrame is not null && IsAnimation == false)
+        if (CurrentFrame is not null && AnimationMode != AnimationMode.Animated)
             return;
 
         AnimationManager.DefiningDesiredSprite(this, 0);

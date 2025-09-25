@@ -11,7 +11,7 @@ public class VisualImpactData : IBeyoundData
     public readonly long LifetimeMilliseconds;
     internal readonly Stopwatch Stopwatch = new();
 
-    internal SpriteObstacle VisualImpact;
+    public SpriteObstacle VisualImpact;
 
     public int Id { get; set; }
     public IUnit? Owner { get; set; }

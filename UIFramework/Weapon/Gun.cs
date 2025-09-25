@@ -2,6 +2,8 @@
 using UIFramework.Weapon.BulletMagazine;
 using ControlLib.Buttons;
 using InteractionFramework.Audio.SoundType;
+using AnimationLib;
+using ObjectFramework;
 
 
 namespace UIFramework.Weapon;
@@ -36,11 +38,15 @@ public class Gun
     }
     public void Shot()
     {
+        if(Camera.CurrentUnit != Owner && Magazine.IsReload == true)
+            Magazine.Reload();
+
         bool hasAmmo = Magazine.UseAmmo();
+        Console.WriteLine($"{hasAmmo} | {Magazine.MagazineBullet.Capacity} | {Magazine.IsReload}");
         if (hasAmmo && Sound is not null && Owner?.Map is not null)
         {
             Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
-        Animation.IsAnimation = hasAmmo;
+        Animation.AnimationMode = hasAmmo? AnimationMode.Animated : AnimationMode.Static;
     }
 }

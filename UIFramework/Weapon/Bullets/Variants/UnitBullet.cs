@@ -5,27 +5,40 @@ using SFML.System;
 using MoveLib.Move;
 using RayTracingLib;
 using ObstacleLib.SpriteLib;
+using InteractionFramework.Audio.SoundType;
+using SFML.Audio;
+using HitBoxLib.HitBoxSegment;
+using MoveLib.Move.Result;
+using ScreenLib;
+using CollisionResult = MoveLib.Move.Result.CollisionResult;
+using HitBoxLib.PositionObject;
+using HitBoxLib.Segment.SignsTypeSide;
+using TextureLib.Textures.Pair;
 
 
 namespace UIFramework.Weapon.Bullets.Variants;
 public class UnitBullet : Bullet
 {
-    public Unit Unit { get; set; }
-    private float Speed { get; set; }
-    private const float baseSpeed = 10;
-
     public override IUnit? Owner
     {
         get => _owner;
         protected set
         {
-            if(value != _owner && _owner is not null)
+            if (value != _owner && _owner is not null)
                 ignoreCollisionList.TryRemove(_owner, out _);
 
             _owner = value;
         }
     }
+    public Unit Unit { get; set; }
+    public ISound? SoundFly { get; set; }
+    private Sound? tempFlySound = null;
+
+    private float Speed { get; set; }
+    private const float baseSpeed = 10;
+
     private ConcurrentDictionary<IObject, byte> ignoreCollisionList = new();
+
 
     public UnitBullet(float damage, float speed, Unit unit, ButtonBinding? hitObject)
         : base(damage, hitObject)
@@ -50,7 +63,6 @@ public class UnitBullet : Bullet
 
     }
 
-
     private void MoveAngle(Unit newUnit, Vector3f? resultObject)
     {
         if (resultObject is null)
@@ -65,7 +77,7 @@ public class UnitBullet : Bullet
         float angleInDegrees = angleInRadians * (180f / (float)Math.PI);
         newUnit.Angle = angleInRadians;
     }
-    private void UseEffect(IUnit? owner, Unit bulletUnit, MoveLib.Move.CollisionResult collisionObject)
+    private void UseEffect(IUnit? owner, Unit bulletUnit, MoveLib.Move.Result.CollisionResult collisionObject)
     {
         try
         {
@@ -91,16 +103,28 @@ public class UnitBullet : Bullet
             Destroy();
         }
     }
-
-    private MoveLib.Move.CollisionResult MoveBullet()
+    private void PlaySound()
     {
+        if (Unit.Map is null)
+            return;
+
+        if (tempFlySound is null || tempFlySound.Status == SoundStatus.Stopped)
+            tempFlySound = SoundFly?.Play(Unit.Map, new Vector3f((float)Unit.X.Axis, (float)Unit.Z.Axis, (float)Unit.Y.Axis));
+        else if (tempFlySound is not null || tempFlySound.Status == SoundStatus.Playing)
+            tempFlySound.Position = new Vector3f((float)Unit.X.Axis, (float)Unit.Z.Axis, (float)Unit.Y.Axis);
+    }
+
+    private MoveLib.Move.Result.CollisionResult MoveBullet()
+    {
+        PlaySound();
+
         double deltaX = Unit.Direction.X * Speed;
         double deltaY = Unit.Direction.Y * Speed;
 
         double deltaZ = -Unit.VerticalAngle * 100;
         Unit.Z.Axis += deltaZ;
 
-        return Collision.TryMoveAndGetCollision(Unit, deltaX, deltaY, ignoreCollisionList.Keys.ToList());
+        return MoveLib.Move.Collision.TryMoveAndGetCollision(Unit, deltaX, deltaY, System.Linq.Enumerable.ToList(ignoreCollisionList.Keys));
     }
 
     public override void Update()
@@ -131,6 +155,9 @@ public class UnitBullet : Bullet
 
         ignoreCollisionList.TryRemove(Unit, out _);
         Owner?.IgnoreCollisionObjects.TryRemove(Unit, out _);
+
+        tempFlySound?.Stop();
+        tempFlySound = null;
     }
 
     public void InitializeUnit(IUnit owner)
@@ -144,6 +171,7 @@ public class UnitBullet : Bullet
         Unit.Angle = owner.Angle;
         Unit.VerticalAngle = owner.VerticalAngle;
 
+        Unit.IsPassability = true;
         Unit.HasGravity = false;
     }
     public override void Flight(IUnit owner)
@@ -153,6 +181,7 @@ public class UnitBullet : Bullet
 
         UnitBullet newUnit = new UnitBullet(this);
         newUnit.Owner = owner;
+        newUnit.SoundFly = SoundFly;
         newUnit.IsActive = true;
 
         ignoreCollisionList.TryAdd(newUnit.Unit, 0);
@@ -168,5 +197,3 @@ public class UnitBullet : Bullet
         return new UnitBullet(this);
     }
 }
-
-

@@ -12,12 +12,14 @@ public class SoundDynamic : SoundEmitter
 
     }
 
-    public override void Play(IMap map, Vector3f positionSound = new Vector3f())
+    public override Sound Play(IMap map, Vector3f positionSound = new Vector3f())
     {   
         var sound = new Sound(Sound);
 
         StandartPlay(this, sound, map, positionSound);
 
         RegisterSound(sound);
+
+        return sound;
     }
 }

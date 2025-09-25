@@ -39,7 +39,261 @@ using TextureLib.Loader;
 using TextureLib.Textures;
 
 namespace UIFramework;
+//public enum SurfaceCheckMode
+//{
+//    Ground, // искать поверхность под объектом
+//    Ceiling // искать поверхность над объектом
+//}
+//public class JumpStrategy : IPhysicsUpdateStrategy
+//{
+//    public static double FindGroundHeight(SurfaceCheckMode mode, IObject subject, Box subjectBox, List<IObject> ignoreList)
+//    {
+//        return FindGroundHeight(mode, subject, subjectBox, subject.Z.Axis, ignoreList);
+//    }
 
+//    public static double FindGroundHeight(SurfaceCheckMode mode, IObject subject, Box subjectBox, double newZ, List<IObject> ignoreList)
+//    {
+//        var defaultValue = mode == SurfaceCheckMode.Ground ? double.MinValue : double.MaxValue;
+//        if (subject.Map is null || subject is null)
+//            return defaultValue;
+
+//        ignoreList ??= new List<IObject>();
+
+
+//        double highestSurface = defaultValue;
+//        var (cellX, cellY) = Screen.Mapping(subject.X.Axis, subject.Y.Axis);
+
+//        int minX = cellX - 200;
+//        int maxX = cellX + 200;
+//        int minY = cellY - 200;
+//        int maxY = cellY + 200;
+
+//        var (subMinX, subMaxX) = CollisionHelper.GetBounds(subjectBox, CoordinatePlane.X);
+//        var (subMinY, subMaxY) = CollisionHelper.GetBounds(subjectBox, CoordinatePlane.Y);
+
+//        var (subMinZ, subMaxZ) = CollisionHelper.GetBounds(subjectBox, CoordinatePlane.Z);
+//        if (newZ != subject.Z.Axis)
+//        {
+//            subMinZ = newZ + (subjectBox[CoordinatePlane.Z, SideSize.Smaller]?.Offset ?? 0);
+//            subMaxZ = newZ + (subjectBox[CoordinatePlane.Z, SideSize.Larger]?.Offset ?? 0);
+//        }
+
+//        for (int x = minX; x <= maxX; x += Screen.Setting.Tile)
+//        {
+//            for (int y = minY; y <= maxY; y += Screen.Setting.Tile)
+//            {
+//                if (subject.Map.Obstacles is null ||
+//                    !subject.Map.Obstacles.TryGetValue((x, y), out var obstacles) ||
+//                    obstacles is null)
+//                {
+//                    continue;
+//                }
+
+//                foreach (var obstacle in obstacles.Keys)
+//                {
+//                    if (obstacle is null || obstacle == subject || ignoreList.Contains(obstacle))
+//                        continue;
+
+//                    var targetBox = obstacle.HitBox.MainHitBox;
+//                    if (targetBox is null)
+//                        continue;
+
+//                    var (tgtMinX, tgtMaxX) = CollisionHelper.GetBounds(targetBox, CoordinatePlane.X);
+//                    var (tgtMinY, tgtMaxY) = CollisionHelper.GetBounds(targetBox, CoordinatePlane.Y);
+//                    var (tgtMinZ, tgtMaxZ) = CollisionHelper.GetBounds(targetBox, CoordinatePlane.Z);
+
+//                    bool intersectsXY =
+//                        subMaxX >= tgtMinX &&
+//                        subMinX <= tgtMaxX &&
+//                        subMaxY >= tgtMinY &&
+//                        subMinY <= tgtMaxY;
+
+//                    if (!intersectsXY)
+//                        continue;
+
+//                    if (mode == SurfaceCheckMode.Ground &&
+//                        subMinZ >= tgtMaxZ && tgtMaxZ > highestSurface)
+//                    {
+//                        highestSurface = tgtMaxZ;
+//                    }
+
+//                    else if (mode == SurfaceCheckMode.Ceiling &&
+//                         subMaxZ >= tgtMinZ && subMaxZ <= tgtMaxZ && highestSurface > tgtMinZ)
+//                    {
+
+//                        highestSurface = tgtMinZ;
+//                    }
+//                }
+//            }
+//        }
+
+//        return highestSurface;
+//    }
+
+//    public void Update(IObject obj)
+//    {
+//        if (obj is not IJumper jumper || !jumper.HasGravity)
+//            return;
+
+//        float deltaTime = (float)FPS.GetDeltaTime();
+
+//        var ignoreList = obj is IMovable movable ? movable.IgnoreCollisionObjects.Keys.ToList() : new();
+//        float surfaceZ = (float)FindGroundHeight(SurfaceCheckMode.Ground, obj, obj.HitBox.MainHitBox, ignoreList);
+
+//        switch (jumper.GroundState)
+//        {
+//            case GroundState.Jumping:
+//                HandleJumping(jumper, obj, deltaTime, ignoreList);
+//                break;
+
+//            case GroundState.Falling:
+//                HandleFalling(jumper, obj, deltaTime, surfaceZ);
+//                break;
+
+//            default:
+//                HandleGroundCheck(jumper, obj, surfaceZ);
+//                break;
+//        }
+//    }
+
+//    private void HandleJumping(IJumper jumper, IObject obj, double deltaTime, List<IObject> ignoreList)
+//    {
+//        jumper.JumpElapsed += (float)deltaTime;
+
+//        float t = jumper.JumpElapsed / jumper.JumpDuration;
+//        if (t > 1f) t = 1f;
+
+//        var baseZ = obj.Z.Axis;
+        
+//        var g = FindGroundHeight(SurfaceCheckMode.Ceiling, obj, obj.HitBox.MainHitBox, jumper.InitialJumpHeight + jumper.JumpHeight * 4 * t * (1 - t), ignoreList);
+
+//        if (g != double.MaxValue)
+//        {        
+//            jumper.GroundState = GroundState.Falling;
+//            return;
+//        }
+//        else
+//            obj.Z.Axis = jumper.InitialJumpHeight + jumper.JumpHeight * 4 * t * (1 - t);
+
+//        if (t >= jumper.JumpApexTime)
+//        {
+//            jumper.GroundState = GroundState.Falling;
+//        }
+//    }
+//    public static double FindCeilingHeight(IObject subject, Box subjectBox, double newZ, List<IObject> ignoreList)
+//    {
+//        if (subject == null || subject.Map == null)
+//        {
+//            return double.MaxValue;
+//        }
+
+//        if (ignoreList == null)
+//        {
+//            ignoreList = new List<IObject>();
+//        }
+
+//        double num = double.MinValue;
+//        (int, int) tuple = Screen.Mapping(subject.X.Axis, subject.Y.Axis);
+//        int item = tuple.Item1;
+//        int item2 = tuple.Item2;
+//        int num2 = item - 200;
+//        int num3 = item + 200;
+//        int num4 = item2 - 200;
+//        int num5 = item2 + 200;
+//        (double Min, double Max) bounds = CollisionHelper.GetBounds(subjectBox, CoordinatePlane.X);
+//        double item3 = bounds.Min;
+//        double item4 = bounds.Max;
+//        (double Min, double Max) bounds2 = CollisionHelper.GetBounds(subjectBox, CoordinatePlane.Y);
+//        double item5 = bounds2.Min;
+//        double item6 = bounds2.Max;
+//        double item7 = newZ + (subjectBox[CoordinatePlane.Z, SideSize.Larger]?.Offset ?? 0);// CollisionHelper.GetBounds(subjectBox, CoordinatePlane.Z).Max;// CollisionHelper.GetBounds(subjectBox, CoordinatePlane.Z).Max;
+
+//        for (int i = num2; i <= num3; i += Screen.Setting.Tile)
+//        {
+//            for (int j = num4; j <= num5; j += Screen.Setting.Tile)
+//            {
+//                if (subject.Map.Obstacles == null || !subject.Map.Obstacles.TryGetValue((i, j), out ConcurrentDictionary<IObject, byte> value) || value == null)
+//                {
+//                    continue;
+//                }
+
+//                foreach (IObject key in value.Keys)
+//                {
+//                    if (key == null || key == subject || ignoreList.Contains(key))
+//                    {
+//                        continue;
+//                    }
+
+//                    Box mainHitBox = key.HitBox.MainHitBox;
+//                    if (mainHitBox != null)
+//                    {
+//                        (double Min, double Max) bounds3 = CollisionHelper.GetBounds(mainHitBox, CoordinatePlane.X);
+//                        double item8 = bounds3.Min;
+//                        double item9 = bounds3.Max;
+//                        (double Min, double Max) bounds4 = CollisionHelper.GetBounds(mainHitBox, CoordinatePlane.Y);
+//                        double item10 = bounds4.Min;
+//                        double item11 = bounds4.Max;
+//                        double item12 = CollisionHelper.GetBounds(mainHitBox, CoordinatePlane.Z).Min;
+//                        double item13 = CollisionHelper.GetBounds(mainHitBox, CoordinatePlane.Z).Max;
+
+//                        if (item4 >= item8 && item3 <= item9 && item6 >= item10 && item5 <= item11 && item7 >= item12 && item7 <= item13 && num < item13)
+//                        {
+
+//                            num = item12;
+//                            Console.WriteLine(num);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return (num == double.MinValue) ? double.MaxValue : num;
+//    }
+//    private void HandleFalling(IJumper jumper, IObject obj, double deltaTime, double surfaceZ)
+//    {
+//        if (surfaceZ > jumper.GroundLevel)
+//            surfaceZ += GetBottomOffset(jumper, obj);
+//        else
+//            surfaceZ = jumper.GroundLevel;
+
+//        jumper.CurrentJumpForce -= (float)(jumper.Gravity * deltaTime);
+//        var newZ = obj.Z.Axis + jumper.CurrentJumpForce * deltaTime;
+
+//        if (newZ <= surfaceZ)
+//        {
+//            newZ = surfaceZ;
+//            jumper.GroundState = GroundState.OnGround;
+//            jumper.CurrentJumpForce = 0;
+//        }
+
+
+//        obj.Z.Axis = newZ;
+//    }
+
+//    private void HandleGroundCheck(IJumper jumper, IObject obj, double surfaceZ)
+//    {
+//        if (surfaceZ > jumper.GroundLevel)
+//            surfaceZ += GetBottomOffset(jumper, obj);
+//        else
+//            surfaceZ = jumper.GroundLevel;
+
+//        if (obj.Z.Axis > surfaceZ)
+//        {
+//            jumper.GroundState = GroundState.Falling;
+//            jumper.CurrentJumpForce = 0;
+//        }
+//        else
+//        {
+//            obj.Z.Axis = surfaceZ;
+//            jumper.GroundState = GroundState.OnGround;
+//            jumper.CurrentJumpForce = 0;
+//        }
+//    }
+
+//    private double GetBottomOffset(IJumper jumper, IObject obj)
+//    {
+//        return (obj.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.OriginalOffset ?? 0) + jumper.GroundClearance;
+//    }
+//}
 
 public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, IKnockbackable
 {
@@ -55,11 +309,11 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float KnockbackVelocityEpsilon { get; set; } = 1;
     public float GroundLevel { get; set; } = 0;
     public float JumpElapsed { get; set; } = 0;
-    public float JumpDuration { get; set; } = 0.5f;
+    public float JumpDuration { get; set; } = 0.2f;
     public float JumpHeight { get; set; } = 1500;
     public float CurrentJumpForce { get; set; } = 1000;
     public float InitialJumpHeight { get; set; } = 0;
-    public float Gravity { get; } = 10000;
+    public float Gravity { get; } = 100000;
     public float Friction { get; } = 0.6f;
 
     /// <summary>

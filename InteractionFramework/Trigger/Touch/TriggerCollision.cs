@@ -1,6 +1,7 @@
 ﻿using ProtoRender.Object;
 using MoveLib.Move;
 using TextureLib.Textures.Pair;
+using HitBoxLib.HitBoxSegment;
 
 
 namespace InteractionFramework.Trigger.TriggerTouch;
@@ -40,7 +41,7 @@ public class TriggerCollision : ITrigger
             return;
 
 
-        var result = CollisionHelper.CheckCollisionWithSide(unit, TriggerObject, TriggerObject.HitBox.MainHitBox, true);
+        var result = CollisionHelper.CheckCollisionWithSide(unit, unit.HitBox.MainHitBox, TriggerObject, TriggerObject.HitBox.MainHitBox, true);
         if (result.Item1)
             lastCollisionSide = result.CollisionSide;
 

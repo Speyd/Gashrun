@@ -201,19 +201,19 @@ public class UIAnimation : AnimationState, IUIElement
     {
         if (Index == CountFrame - 1)
         {
-            CurrentFrame = GetFrame(0);
+            SetCurrentFrame(0);
             IsAnimatingOnPress = false;
         }
-        if (IsAnimation && BottomBinding?.IsPress == true || IsAnimatingOnPress == true)
+        if (AnimationMode == AnimationMode.Animated && BottomBinding?.IsPress == true || IsAnimatingOnPress == true)
         {
             IsAnimatingOnPress = true;
             UpdateFrame();
         }
-        else if (IsAnimation && BottomBinding?.IsPress == false)
+        else if (AnimationMode == AnimationMode.Animated && BottomBinding?.IsPress == false)
         {
-            IsAnimation = false;
-            CurrentFrame = GetFrame(0);
-            IsAnimation = true;
+            AnimationMode = AnimationMode.Static;
+            SetCurrentFrame(0);
+            AnimationMode = AnimationMode.Animated;
         }
     }
 

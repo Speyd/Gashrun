@@ -14,8 +14,10 @@ public class SoundStatic : SoundEmitter
 
     }
 
-    public override void Play(IMap map, Vector3f positionSound = new Vector3f())
+    public override Sound Play(IMap map, Vector3f positionSound = new Vector3f())
     {
         StandartPlay(this, Sound, map, positionSound);
+
+        return Sound;
     }
 }

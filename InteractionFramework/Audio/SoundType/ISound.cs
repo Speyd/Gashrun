@@ -28,5 +28,5 @@ public interface ISound
 
 
     void CleanupStoppedSounds();
-    void Play(IMap map, Vector3f positionSound = new Vector3f());
+    Sound Play(IMap map, Vector3f positionSound = new Vector3f());
 }

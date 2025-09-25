@@ -59,7 +59,7 @@ public class Map : IMap
             {
                 if (y == 0 || y == Setting.MapHeight - 1 || x == 0 || x == Setting.MapWidth - 1)
                 {
-                    AddObstacle(x, y, fillingObject.GetDeepCopy());
+                    AddObstacle(x, y, fillingObject.GetCopy());
                 }
             }
         }

@@ -5,6 +5,7 @@ using InteractionFramework.Death;
 using InteractionFramework.Audio.SoundType;
 using ProtoRender.Map;
 using TextureLib.Textures;
+using AnimationLib;
 
 
 namespace InteractionFramework.VisualImpact.Data;
@@ -26,7 +27,7 @@ public class DeathData : IBeyoundData
         SoundEmitter = soundEmitter;
 
         Sprite.Animation = DeathEffect.Animation;
-        Sprite.Animation.Index = 0;
+        //Sprite.Animation.Index = 0;
     }
     public DeathData(DeathData deathData)
     {
@@ -35,7 +36,7 @@ public class DeathData : IBeyoundData
         DeathEffect = deathData.DeathEffect;
 
         Sprite.Animation = DeathEffect.Animation;
-        Sprite.Animation.Index = 0;
+        //Sprite.Animation.Index = 0;
     }
 
 
@@ -70,7 +71,7 @@ public class DeathData : IBeyoundData
                 break;
             case DeathPhase.FrozenFinalFrame:
                 Sprite.Animation = new AnimationLib.AnimationState(Sprite.Animation.GetFrame(Sprite.Animation.CountFrame - 1) ?? TextureWrapper.Placeholder);
-                Sprite.Animation.IsAnimation = false;                                                                                                          //            Sprite.Animation.IsAnimation = false;
+                Sprite.Animation.AnimationMode = AnimationMode.Static;                                                                                                          //            Sprite.Animation.IsAnimation = false;
                 break;
         }
     }

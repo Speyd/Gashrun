@@ -71,6 +71,7 @@ public abstract class Bullet : IBullet
     {
         if (hitEffect.VisualImpact != null)
         {
+
             BeyondRenderManager.Create(owner, hitEffect.VisualImpact.GetCopy(), position.X, position.Y, position.Z);
         }
     }
