@@ -12,7 +12,7 @@
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
     <PackageReference Include="EnginePseudo3D.MiniMapLib" Version="2.2.8" />
     <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.0" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.3" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.4" />
     <PackageReference Include="EnginePseudo3D.PartsWorldLib" Version="2.0.6" />
 
   </ItemGroup>

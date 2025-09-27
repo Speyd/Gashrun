@@ -13,8 +13,8 @@
     <PackageReference Include="EnginePseudo3D.DrawLib" Version="2.2.1" />
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
     <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.0" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.3" />
-    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="2.5.2" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.4" />
+    <PackageReference Include="EnginePseudo3D.ProtoRender" Version="2.5.3" />
     <PackageReference Include="EnginePseudo3D.TextureLib" Version="1.6.7" />
   </ItemGroup>
 

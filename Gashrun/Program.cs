@@ -49,6 +49,18 @@ using TextureLib.Textures;
 using ObstacleLib.SpriteLib;
 using SFML.Graphics.Glsl;
 using ProtoRender.Physics;
+using InteractionFramework.Audio;
+using HitBoxLib.HitBoxSegment;
+using ObstacleLib;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System;
 
 
 Screen.Initialize(1000, 600);
@@ -101,10 +113,12 @@ string OrangeBrickHitDrawableBatchDir = PathResolver.GetMainPath(Path.Combine("R
 
 string SoundHitGlassWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitGlass.wav"));
 string SoundHitWoodWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitWood.wav"));
-string SoundHitBrickWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "looped_seamless.wav"));
+string SoundHitBrickWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "HitBrick.wav"));
+string SoundBulletFlyWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "BulletFly.wav"));
 
-
-
+string SoundLampSwitchWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "LampSwitch.wav"));
+string SoundOpenDoorWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "OpenDoor.wav"));
+string SoundCloseDoorWav = PathResolver.GetMainPath(Path.Combine("Resources", "Sound", "CloseDoor.wav"));
 #endregion
 
 #region Font
@@ -144,17 +158,34 @@ UIText ArialBold_Cyan_20 = new UIText("", 20, new Vector2f(0, 0), fontArialBold,
 
 #region Sound
 SoundDynamic SoundHitGlass = new(SoundHitGlassWav);
-SoundHitGlass.Sound.MinDistance = 20f;
+SoundHitGlass.Sound.MinDistance = 40f;
 SoundHitGlass.Sound.Attenuation = 1f;
 
 SoundDynamic SoundHitBrickWall = new(SoundHitBrickWav);
-SoundHitBrickWall.Sound.MinDistance = 20f;
-SoundHitBrickWall.Sound.Attenuation = 2f;
+SoundHitBrickWall.Sound.MinDistance = 40f;
+SoundHitBrickWall.Sound.Attenuation = 1f;
 
 SoundDynamic SoundHitWood = new(SoundHitWoodWav);
 SoundHitWood.Sound.Volume = 50f;
-SoundHitWood.Sound.MinDistance = 20f;
+SoundHitWood.Sound.MinDistance = 40f;
 SoundHitWood.Sound.Attenuation = 1f;
+
+SoundDynamic SoundBulletFlyWall = new(SoundBulletFlyWav);
+SoundBulletFlyWall.Sound.MinDistance = 20f;
+SoundBulletFlyWall.Sound.Attenuation = 2f;
+
+
+SoundDynamic SoundLampSwitch = new(SoundLampSwitchWav);
+SoundLampSwitch.Sound.MinDistance = 1f;
+SoundLampSwitch.Sound.Attenuation = 0.3f;
+
+SoundDynamic SoundOpenDoor = new(SoundOpenDoorWav);
+SoundOpenDoor.Sound.MinDistance = 30f;
+SoundOpenDoor.Sound.Attenuation = 2f;
+
+SoundDynamic SoundCloseDoor = new(SoundCloseDoorWav);
+SoundCloseDoor.Sound.MinDistance = 30f;
+SoundCloseDoor.Sound.Attenuation = 2f;
 #endregion
 
 
@@ -257,7 +288,7 @@ map.AddObstacle(11, 6, MainMapMisticBrickDoor);
 #region Create Unit
 
 #region Main Unit
-Unit unit = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
+Unitu unit = new Unitu(new ObstacleLib.SpriteLib.SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))), 100);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
@@ -415,7 +446,7 @@ TriggerAnd openEntranceDoorTrigger = new TriggerAnd(buttonOpenEntranceDoorTrigge
 openEntranceDoorTrigger.OnTriggered = (unit) =>
 {
     var npc = distanceOpenEntranceDoorDistancTrigger.GetTarget();
-    if (npc is null)
+    if (npc is null || npc.Value.TargetObject?.Map is null)
         return;
 
     if (blackSreenOpenDoor.Owner != unit)
@@ -426,6 +457,8 @@ openEntranceDoorTrigger.OnTriggered = (unit) =>
     EnsureHouseMapAndApply();
 
     EffectManager.CurrentEffect = effectLamp;
+    SoundOpenDoor.Play(null, new Vector3f((float)unit.X.Axis, (float)unit.Z.Axis, (float)unit.Y.Axis), ListenerType.Mono);
+
 };
 #region Func
 void EnsureHouseMapAndApply()
@@ -436,6 +469,7 @@ void EnsureHouseMapAndApply()
         {
             CreateHouseMap?.Invoke();
             ApplyHouseMapChanges();
+
         };
     }
     else
@@ -445,7 +479,9 @@ void EnsureHouseMapAndApply()
 }
 void ApplyHouseMapChanges()
 {
-    houseMap?.AddObstacle(safePositionOpenExitDoor.X, safePositionOpenExitDoor.Y, Camera.CurrentUnit);
+    if(Camera.CurrentUnit is not null)
+        houseMap?.AddObstacle(safePositionOpenExitDoor.X, safePositionOpenExitDoor.Y, Camera.CurrentUnit);
+
     GameManager.PartsWorld.UpPart = woodCeilingObject;
     GameManager.PartsWorld.DownPart = woodFloorObject;
     blackSreenOpenDoor.IsHide = true;
@@ -459,8 +495,9 @@ openExitDoorTrigger.OnTriggered = (unit) =>
 {
 
     var npc = distanceOpenExitDoorTrigger.GetTarget();
-    if (npc is null)
+    if (npc is null || npc.Value.TargetObject?.Map is null)
         return;
+
 
     if (blackSreenOpenDoor.Owner != unit)
         blackSreenOpenDoor.Owner = unit;
@@ -474,6 +511,8 @@ openExitDoorTrigger.OnTriggered = (unit) =>
     EffectManager.CurrentEffect = effectMainMap;
 
     blackSreenOpenDoor.IsHide = true;
+    SoundOpenDoor.Play(null, new Vector3f((float)unit.X.Axis, (float)unit.Z.Axis, (float)unit.Y.Axis), ListenerType.Mono);
+
 };
 TriggerHandler.AddTriger(unit, openExitDoorTrigger);
 
@@ -536,15 +575,36 @@ var distanceOpenBigLampe = new TriggerDistance
     (owner) => { fadingTextTouchBigLampe.SwapType(); fadingTextTouchBigLampe.Controller.FadingTextLife = FadingTextLife.OneShotDispose; }
 );
 
-
 TriggerAnd touchBigLampeTrigger = new TriggerAnd(buttonOpenBigLampe, distanceOpenBigLampe);
 touchBigLampeTrigger.OnTriggered = (unit) =>
 {
     var npc = distanceOpenBigLampe.GetTarget();
-
-    if (npc is null || npc is not IAnimatable animation)
+    if (npc is null || npc.Value.TargetObject?.Map is null || npc.Value.TargetObject is not IAnimatable animation)
         return;
+//    One or more errors occurred. (Object reference not set to an instance of an object.)
+//   at System.Threading.Tasks.TaskReplicator.Run[TState](ReplicatableUserAction`1 action, ParallelOptions options, Boolean stopOnFirstFailure)
+//   at System.Threading.Tasks.Parallel.ForWorker[TLocal, TInt](TInt fromInclusive, TInt toExclusive, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Func`4 bodyWithLocal, Func`1 localInit, Action`1 localFinally)
+//    -- - End of stack trace from previous location ---
+//   at System.Threading.Tasks.Parallel.ForWorker[TLocal, TInt](TInt fromInclusive, TInt toExclusive, ParallelOptions parallelOptions, Action`1 body, Action`2 bodyWithState, Func`4 bodyWithLocal, Func`1 localInit, Action`1 localFinally)
+//   at System.Threading.Tasks.Parallel.For(Int32 fromInclusive, Int32 toExclusive, ParallelOptions parallelOptions, Action`1 body)
+//   at RenderLib.Algorithm.RenderAlgorithm.CalculationAlgorithm(IUnit unit)
+//   at Gashrun.GameManager.Start() in D:\C++ проекты\Gashrun\Gashrun\GameManager.cs:line 113
+//AL lib: (EE)alc_cleanup: 1 device not closed
 
+//Invocation error: Object not found in cell(1000, 700)(UpdateCoordinatesObstacle)
+//Inner stack:    at ObjectFramework.Map.UpdateCoordinatesObstacle(IObject obstacle) in D:\C++ проекты\Gashrun\ObjectFramework\Map.cs:line 186
+//   at ObstacleLib.Obstacle.UpdateCoordinate()
+//   at HitBoxLib.PositionObject.Coordinate.SetAxis(Double value, HitBox hitBox)
+//   at HitBoxLib.PositionObject.Coordinate.set_Axis(Double value)
+//   at MoveLib.Move.Collision.TryMoveWithCollision(IObject subject, Double deltaX, Double deltaY, List`1 ignoreList, Boolean ignorePassability)
+//   at MoveLib.Move.MovePositions.Move(IUnit unit, Double directionX, Double directionY)
+//   at InvokeStub_Action`3.Invoke(Object, Span`1)
+//   at System.Reflection.MethodBaseInvoker.InvokeWithFewArgs(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+    var obj = npc.Value.TargetObject;
+    //Console.WriteLine($"X: {(float)obj.X.Axis} | Y:{(float)obj.Y.Axis} | Z: {(float)obj.Z.Axis}");
+    //Console.WriteLine(npc.Value.CoordinateTouch);
+
+    SoundLampSwitch.Play(obj.Map, new Vector3f((float)obj.X.Axis, (float)obj.Y.Axis, (float)obj.Z.Axis));
 
     int index = 0;
     var currentTexture = animation.Animation.CurrentFrame?.PathTexture;
@@ -699,7 +759,7 @@ u.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(10);
 u.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(10);
 u.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 u.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
-UnitBullet pistolBullet = new UnitBullet(20, 15, u, null) { SoundFly = SoundHitBrickWall };
+UnitBullet pistolBullet = new UnitBullet(20, 15, u, null) { SoundFly = SoundBulletFlyWall };
 Magazine pistolMagazine = new Magazine(20, 140, pistolBullet, VirtualKey.R, pistolBulletText);
 
 ControlLib.Buttons.ButtonBinding shootPistol = new ControlLib.Buttons.ButtonBinding(new ControlLib.Buttons.Button(VirtualKey.LeftButton), null, 100);
@@ -719,7 +779,6 @@ ControlLib.Buttons.Button H = new ControlLib.Buttons.Button(VirtualKey.H);
 ControlLib.Buttons.Button L = new ControlLib.Buttons.Button(VirtualKey.L);
 
 ControlLib.Buttons.Button LeftArrow = new ControlLib.Buttons.Button(VirtualKey.LeftArrow);
-Camera.CurrentUnit?.Control.AddBottomBind(shootPistol); //shootPistol
 ControlLib.Buttons.ButtonBinding forward = new ControlLib.Buttons.ButtonBinding(W, MoveLib.Move.MovePositions.Move, 0, new object[] { Camera.CurrentUnit, 1, 0 });
 ControlLib.Buttons.ButtonBinding backward = new ControlLib.Buttons.ButtonBinding(S, MoveLib.Move.MovePositions.Move, 0, new object[] { Camera.CurrentUnit, -1, 0 });
 ControlLib.Buttons.ButtonBinding left = new ControlLib.Buttons.ButtonBinding(A, MoveLib.Move.MovePositions.Move, 0, new object[] { Camera.CurrentUnit, 0, -1 });
@@ -734,6 +793,7 @@ ControlLib.Buttons.ButtonBinding jumb = new ButtonBinding(Space, devil.Jump);
 ControlLib.Buttons.ButtonBinding knock = new ButtonBinding(L, unit.Knockback, 300);
 
 Camera.CurrentUnit?.Control.AddBottomBind(knock);
+Camera.CurrentUnit?.Control.AddBottomBind(shootPistol);
 
 Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(new Button(VirtualKey.None), () => { FpsText.SetText($"Fps: {FPS.TextFPS}"); }));
 Camera.CurrentUnit?.Control.AddBottomBind(new ButtonBinding(F6, () => { FpsText.IsHide = !FpsText.IsHide; }, 500));

@@ -1,8 +1,11 @@
 ﻿
+using ProtoRender.Map;
+using System.Collections.Generic;
+
 namespace UIFramework.Weapon.Bullets;
 public static class BulletHandler
 {
-    private static readonly List<IBullet> Bullets = new();
+    private static readonly Dictionary<IMap, List<IBullet>> Bullets = new();
     private static readonly CancellationTokenSource _cts = new();
     private static readonly Thread _updateThread;
 
@@ -16,9 +19,16 @@ public static class BulletHandler
         _updateThread.Start();
     }
 
-    public static void Add(IBullet bullet)
+    public static void Add(IMap map, IBullet bullet)
     {
-        lock (Bullets) Bullets.Add(bullet);
+        lock (Bullets)
+        {
+            if (Bullets.TryGetValue(map, out var value))
+                value.Add(bullet);
+            else
+                Bullets[map] = new List<IBullet> { bullet };
+        }
+
     }
 
     public static void Stop()
@@ -40,16 +50,23 @@ public static class BulletHandler
     {
         lock (Bullets)
         {
-            for (int i = Bullets.Count - 1; i >= 0; i--)
+            foreach (var bulletsMap in Bullets)
             {
-                var bullet = Bullets[i];
-                if (!bullet.IsActive)
-                {
-                    Bullets.RemoveAt(i);
-                    continue;
-                }
+                if (bulletsMap.Key.ActiveAnchors.Count == 0)
+                    return;
 
-                bullet.Update();
+                var bulletList = bulletsMap.Value;
+                for (int i = bulletList.Count - 1; i >= 0; i--)
+                {
+                    var bullet = bulletList[i];
+                    if (!bullet.IsActive)
+                    {
+                        bulletList.RemoveAt(i);
+                        continue;
+                    }
+
+                    bullet.Update();
+                }
             }
         }
     }

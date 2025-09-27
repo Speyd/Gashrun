@@ -7,14 +7,6 @@ using RayTracingLib;
 using ObstacleLib.SpriteLib;
 using InteractionFramework.Audio.SoundType;
 using SFML.Audio;
-using HitBoxLib.HitBoxSegment;
-using MoveLib.Move.Result;
-using ScreenLib;
-using CollisionResult = MoveLib.Move.Result.CollisionResult;
-using HitBoxLib.PositionObject;
-using HitBoxLib.Segment.SignsTypeSide;
-using TextureLib.Textures.Pair;
-
 
 namespace UIFramework.Weapon.Bullets.Variants;
 public class UnitBullet : Bullet
@@ -189,7 +181,7 @@ public class UnitBullet : Bullet
         owner.IgnoreCollisionObjects.TryAdd(newUnit.Unit, 0);
 
         newUnit.InitializeUnit(owner);
-        BulletHandler.Add(newUnit);      
+        BulletHandler.Add(owner.Map, newUnit);      
     }
 
     public override IBullet GetCopy()

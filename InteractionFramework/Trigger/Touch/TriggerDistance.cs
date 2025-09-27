@@ -1,7 +1,9 @@
 ﻿using DataPipes;
 using DataPipes.Pool;
+using HitBoxLib.HitBoxSegment;
 using ProtoRender.Object;
 using RayTracingLib;
+using SFML.System;
 
 
 namespace InteractionFramework.Trigger.TriggerTouch;
@@ -16,7 +18,7 @@ public class TriggerDistance : ITrigger
     public DateTime LastCheckTime { get; set; } = DateTime.MinValue;
     public int CooldownMs { get; set; } = 0;
 
-    public IObject? CurrentTargetObject { get; private set; }
+    public (IObject? TargetObject, Vector3f CoordinateTouch, List<Box> TouchBox)? CurrentTargetResult { get; private set; }
     public double MinTriggerDistance { get; set; } = 1;
     public Predicate<IObject?>? DelegateDefinition { get; set; } = null;
 
@@ -40,7 +42,7 @@ public class TriggerDistance : ITrigger
         if (distance > 0 && distance <= MinTriggerDistance * ScreenLib.Screen.Setting.Tile &&
             (DelegateDefinition is null || DelegateDefinition.Invoke(result.Item1)))
         {
-            CurrentTargetObject = result.Item1;
+            CurrentTargetResult = result;
             OnTriggered?.Invoke(unit);
 
             isTriggered = true;
@@ -53,13 +55,13 @@ public class TriggerDistance : ITrigger
         }
     }
 
-    public IObject? GetTarget()
+    public (IObject? TargetObject, Vector3f CoordinateTouch, List<Box> TouchBox)? GetTarget()
     {
-        return CurrentTargetObject;
+        return CurrentTargetResult;
     }
 
     public void ResetTarget()
     {
-        CurrentTargetObject = null;
+        CurrentTargetResult = null;
     }
 }

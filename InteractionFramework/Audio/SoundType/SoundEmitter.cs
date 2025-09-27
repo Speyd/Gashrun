@@ -10,9 +10,12 @@ namespace InteractionFramework.Audio.SoundType;
 public abstract class SoundEmitter : ISound
 {
     public static readonly Vector3f BaseMonoPosition = new Vector3f(0, 0, 0);
-
-    public List<Sound> ActiveSounds { private get; init; } = new();
     private readonly object _lock = new object();
+
+
+    public Dictionary<IMap, List<Sound>> ActiveSounds { private get; init; } = new();
+    private readonly List<Sound> _excludedSounds = new();
+
 
     private string _soundBufferPath = "";
     public string SoundBufferPath
@@ -28,11 +31,12 @@ public abstract class SoundEmitter : ISound
         }
     }
     public Sound Sound { get; private set; }
-    public float HeightAttenuation { get; set; } = 1;
 
+    public float HeightAttenuation { get; set; } = 1;
     public bool RequireListeners { get; set; } = false;
-    public ConcurrentDictionary<IObject, byte> AllowedListeners { protected get; init; } = new();
-    public ConcurrentDictionary<IObject, byte> MonoListeners { protected get; init; } = new();
+
+    public ConcurrentDictionary<IObject, ListenerType> Listener { protected get; init; } = new();
+
 
 
     public SoundEmitter(string soundBufferPath)
@@ -46,81 +50,163 @@ public abstract class SoundEmitter : ISound
 
 
 
-    public abstract Sound Play(IMap map, Vector3f positionSound = new Vector3f());
-    protected static void StandartPlay(SoundEmitter ISoundObject, Sound sound, IMap map, Vector3f positionSound = new Vector3f())
+    public abstract Sound Play(IMap? map, Vector3f positionSound = new Vector3f(), ListenerType? listenerType = null);
+    protected static void StandartPlay(SoundEmitter ISoundObject, Sound sound, IMap? map,
+        Vector3f positionSound = new Vector3f(), ListenerType? listenerType = null)
     {
-        if (Camera.CurrentUnit is null || map != Camera.CurrentUnit.Map ||
-            ISoundObject.AllowedListeners.Count != 0 && !ISoundObject.AllowedListeners.Keys.Contains(Camera.CurrentUnit))
+        bool noCurrentUnit = Camera.CurrentUnit is null;
+        bool notCurrentMap = map is not null && map != Camera.CurrentUnit?.Map;
+
+        if (noCurrentUnit || notCurrentMap)
             return;
-        else if(ISoundObject.RequireListeners && ISoundObject.AllowedListeners.Count != 0 &&
-            !ISoundObject.AllowedListeners.Keys.Contains(Camera.CurrentUnit))
-        {
+
+        bool noListener = !ISoundObject.Listener.TryGetValue(Camera.CurrentUnit!, out var value);
+        bool requireListenerMissing = ISoundObject.RequireListeners && listenerType is null;
+
+        if (noListener && requireListenerMissing)
             return;
-        }
 
 
-        ISoundObject.SelectMethodPlay(sound, positionSound);
+        ISoundObject.SelectMethodPlay(map, sound, positionSound, listenerType ?? value);
     }
-    private void SelectMethodPlay(Sound sound, Vector3f positionSound)
+
+    private void SelectMethodPlay(IMap? map, Sound sound, Vector3f positionSound, ListenerType listenerType)
     {
-        if (Camera.CurrentUnit is null)
-            return;
-
-        if (MonoListeners.Keys.Contains(Camera.CurrentUnit))
+        switch (listenerType)
         {
-            sound.Position = BaseMonoPosition;
-            sound.RelativeToListener = true;
-            sound.Play();
+            case ListenerType.Mono:
+                StandartMonoPlay(map, sound);
+                break;
 
-            RegisterSound(sound);
-            return;
-        }
-        else
-        {
-            sound.RelativeToListener = false;
-        }
+            case ListenerType.Allowed:
+                StandartAllowedPlay(map, sound, positionSound);
+                break;
 
-        sound.Position = new Vector3f(positionSound.X, positionSound.Z, positionSound.Y);
+            default:
+                StandartAllowedPlay(map, sound, positionSound);
+                break;
+        }
+    }
+    private void StandartMonoPlay(IMap? map, Sound sound)
+    {
+        sound.Position = BaseMonoPosition;
+        sound.RelativeToListener = true;
         sound.Play();
+
+        RegisterSound(map, sound);
+    }
+    private void StandartAllowedPlay(IMap? map, Sound sound, Vector3f positionSound)
+    {
+        sound.Position = new Vector3f(positionSound.X, positionSound.Z, positionSound.Y);
+        sound.RelativeToListener = false;
+        sound.Play();
+
+        RegisterSound(map, sound);
     }
 
 
     public virtual void SubscribeListener(IObject listener)
     {
-        AllowedListeners.TryAdd(listener, 0);
+        Listener.TryAdd(listener, ListenerType.Allowed);
     }
     public virtual void UnsubscribeListener(IObject listener)
     {
-        AllowedListeners.TryRemove(listener, out _);
+        Listener.TryRemove(listener, out _);
     }
     public virtual void SubscribeMonoListener(IObject listener)
     {
-        SubscribeListener(listener);
-        MonoListeners.TryAdd(listener, 0);
+        Listener.TryAdd(listener, ListenerType.Mono);
     }
     public virtual void UnsubscribeMonoListener(IObject listener)
     {
-        UnsubscribeListener(listener);
-        MonoListeners.TryRemove(listener, out _);
+        Listener.TryRemove(listener, out _);
     }
 
 
+    private IMap? oldOwnerMap = null;
 
     public virtual void CleanupStoppedSounds()
     {
-        lock (_lock)
+        foreach (var kvp in ActiveSounds)
         {
-            ActiveSounds.RemoveAll(s =>
-                 s.Status == SoundStatus.Stopped || 
-                 s.CPointer == IntPtr.Zero
-            );
+            UpdateMapSounds(kvp.Key, kvp.Value);
+        }
+
+        CleanupExcludedSounds();
+        oldOwnerMap = Camera.CurrentUnit?.Map;
+    }
+
+    #region Cleanup Stopped Sounds Methods
+    private void UpdateMapSounds(IMap map, List<Sound> sounds)
+    {
+        if (map.ActiveAnchors.Count == 0)
+        {
+            PauseAllPlayingSounds(sounds);
+            return;
+        }
+
+        bool mapChanged = oldOwnerMap != Camera.CurrentUnit?.Map;
+        bool isCurrentMap = Camera.CurrentUnit?.Map == map;
+
+        for (int i = sounds.Count - 1; i >= 0; i--)
+        {
+            var s = sounds[i];
+
+            if (IsStoppedOrInvalid(s))
+            {
+                sounds.RemoveAt(i);
+                continue;
+            }
+
+            if (!mapChanged)
+                continue;
+
+            UpdateSoundForMap(s, isCurrentMap);
         }
     }
-    public void RegisterSound(Sound sound)
+    private void PauseAllPlayingSounds(List<Sound> sounds)
+    {
+        foreach (var s in sounds)
+        {
+            if (s.Status == SoundStatus.Playing)
+                s.Pause();
+        }
+    }
+
+    private void UpdateSoundForMap(Sound s, bool isCurrentMap)
+    {
+        s.Volume = isCurrentMap ? Sound.Volume : 0;
+
+        if (isCurrentMap && s.Status == SoundStatus.Paused)
+            s.Play();
+    }
+    private bool IsStoppedOrInvalid(Sound s)
+    {
+        return s.Status == SoundStatus.Stopped || s.CPointer == IntPtr.Zero;
+    }
+    private void CleanupExcludedSounds()
+    {
+        _excludedSounds.RemoveAll(IsStoppedOrInvalid);
+    }
+    #endregion
+
+    public void RegisterSound(IMap? map, Sound sound)
     {
         lock (_lock)
         {
-            ActiveSounds.Add(sound);
+            if(map is null && !_excludedSounds.Contains(sound))
+            {
+                _excludedSounds.Add(sound);
+                return;
+            }
+
+
+            if (!ActiveSounds.TryGetValue(map, out var list))
+            {
+                list = new List<Sound>();
+                ActiveSounds[map] = list;
+            }
+            list.Add(sound);
         }
     }
 }

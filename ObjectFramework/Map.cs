@@ -2,6 +2,7 @@
 using ProtoRender.Map;
 using ScreenLib;
 using System.Collections.Concurrent;
+using ObstacleLib;
 
 namespace ObjectFramework;
 /// <summary>
@@ -24,6 +25,9 @@ public class Map : IMap
     /// A concurrent dictionary storing obstacles grouped by their cell coordinates.
     /// </summary>
     public ConcurrentDictionary<(int, int), ConcurrentDictionary<IObject, byte>> Obstacles { get; init; }
+
+
+    public ConcurrentDictionary<IObject, byte> ActiveAnchors { get; init; } = new ConcurrentDictionary<IObject, byte>();
 
 
     /// <summary>
@@ -70,6 +74,9 @@ public class Map : IMap
         list.TryAdd(addObstacle, 0);
         addObstacle.OnPositionChanged -= UpdateCoordinatesObstacle;
         addObstacle.OnPositionChanged += UpdateCoordinatesObstacle;
+
+        if (addObstacle is IWorldAnchor)
+            ActiveAnchors.TryAdd(addObstacle, default);
     }
 
     /// <summary>
@@ -176,7 +183,8 @@ public class Map : IMap
                 throw new Exception($"Coordinates ({cellX},{cellY}) not found (UpdateCoordinatesObstacle)");
 
             if (!Obstacles[(cellX, cellY)].ContainsKey(obstacle))
-                throw new Exception($"Object not found in cell ({cellX},{cellY}) (UpdateCoordinatesObstacle)");
+                return;
+                //throw new Exception($"Object not found in cell ({cellX},{cellY}) (UpdateCoordinatesObstacle)");
 
             if (mappX != cellX || mappY != cellY)
             {
@@ -188,7 +196,6 @@ public class Map : IMap
                 var newList = Obstacles.GetOrAdd((mappX, mappY), _ => new ConcurrentDictionary<IObject, byte>());
                 newList.TryAdd(obstacle, 0);
 
-                // Обновление координат — только после перемещения
                 obstacle.CellX = mappX;
                 obstacle.CellY = mappY;
             }
@@ -196,8 +203,10 @@ public class Map : IMap
     }
     private void RemoveObstacle(IObject obstacle)
     {
-        Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].TryRemove(obstacle, out _);
+        if (ActiveAnchors.ContainsKey(obstacle))
+            ActiveAnchors.TryRemove(obstacle, out _);
 
+        Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].TryRemove(obstacle, out _);
         if (Obstacles[(Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY))].Count == 0)
             Obstacles.Remove((Screen.Mapping(obstacle.CellX), Screen.Mapping(obstacle.CellY)), out _);
     }
@@ -213,7 +222,16 @@ public class Map : IMap
         else if (!Obstacles.ContainsKey((x, y)))
             throw new Exception("There is nothing to delete in this cell(DeleteAllCellObstacle)");
 
-        Obstacles.TryRemove((x, y), out _);
+
+        if (Obstacles.TryRemove((x, y), out var value))
+        {
+            foreach(var obstacle in value)
+            {
+                if(ActiveAnchors.ContainsKey(obstacle.Key))
+                    ActiveAnchors.TryRemove(obstacle.Key, out _);
+            }
+        }
+
     }
 
     /// <summary>
