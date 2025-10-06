@@ -14,7 +14,7 @@ public class UnitBullet : Bullet
     public override IUnit? Owner
     {
         get => _owner;
-        protected set
+        set
         {
             if (value != _owner && _owner is not null)
                 ignoreCollisionList.TryRemove(_owner, out _);
@@ -44,15 +44,15 @@ public class UnitBullet : Bullet
     public UnitBullet(Unit unit, ButtonBinding? hitObject)
         : this(IBullet.BaseDamage, baseSpeed, unit, hitObject)
     { }
-    public UnitBullet(UnitBullet bullet)
+    public UnitBullet(UnitBullet bullet, bool resetIngoreList = false)
         : base(bullet)
     {
         Unit = new Unit(bullet.Unit);
+        SoundFly = bullet.SoundFly;
 
         Speed = bullet.Speed;
         Damage = bullet.Damage;
-        ignoreCollisionList = bullet.ignoreCollisionList;
-
+        ignoreCollisionList = !resetIngoreList? bullet.ignoreCollisionList : new();
     }
 
     private void MoveAngle(Unit newUnit, Vector3f? resultObject)
@@ -102,7 +102,7 @@ public class UnitBullet : Bullet
 
         if (tempFlySound is null || tempFlySound.Status == SoundStatus.Stopped)
             tempFlySound = SoundFly?.Play(Unit.Map, new Vector3f((float)Unit.X.Axis, (float)Unit.Z.Axis, (float)Unit.Y.Axis));
-        else if (tempFlySound is not null || tempFlySound.Status == SoundStatus.Playing)
+        else if (tempFlySound is not null && tempFlySound.Status == SoundStatus.Playing)
             tempFlySound.Position = new Vector3f((float)Unit.X.Axis, (float)Unit.Z.Axis, (float)Unit.Y.Axis);
     }
 
@@ -181,11 +181,11 @@ public class UnitBullet : Bullet
         owner.IgnoreCollisionObjects.TryAdd(newUnit.Unit, 0);
 
         newUnit.InitializeUnit(owner);
-        BulletHandler.Add(owner.Map, newUnit);      
+        BulletHandler.Add(owner.Map, newUnit);
     }
 
     public override IBullet GetCopy()
     {
-        return new UnitBullet(this);
+        return new UnitBullet(this, true);
     }
 }

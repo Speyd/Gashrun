@@ -124,6 +124,7 @@ public class UIText : UIElement
         HorizontalAlignment = uIText.HorizontalAlignment;
 
         RenderOrder = uIText.RenderOrder;
+        _isHide = uIText.IsHide;
 
         Drawables.Add(RenderText.Text);
     }

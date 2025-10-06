@@ -173,6 +173,35 @@ public class UIAnimation : AnimationState, IUIElement
     {
         SetPositionCenter();
     }
+
+    public UIAnimation(UIAnimation uIAnimation, bool loadAsync = true)
+        : base(uIAnimation, loadAsync)
+    {
+        BottomBinding = uIAnimation.BottomBinding;
+
+        PercentShiftX = uIAnimation._originPercentShiftX;
+        PercentShiftY = uIAnimation._originPercentShiftY;
+
+        PositionOnScreen = uIAnimation.GetResetSetting();
+
+
+        ScaleX = uIAnimation._originScaleX;
+        ScaleY = uIAnimation._originScaleY;
+
+
+        if (Screen.ScreenHeight != uIAnimation.PreviousScreenHeight || Screen.ScreenWidth != uIAnimation.PreviousScreenWidth)
+        {
+            UpdateWidth();
+            UpdateHeight();
+        }
+
+        IsAnimatingOnPress = uIAnimation.IsAnimatingOnPress;
+
+
+        Drawables.Add(RenderSprite);
+        Screen.WidthChangesFun += UpdateScreenInfo;
+        Screen.HeightChangesFun += UpdateScreenInfo;
+    }
     #endregion
 
     private void CheckAddTexture()
@@ -347,5 +376,14 @@ public class UIAnimation : AnimationState, IUIElement
     {
         PositionOnScreen = GetOriginalPositionOnScreen(PositionOnScreen, PreviousSize);
         PositionOnScreen = SetShiftCoordination(PositionOnScreen, GetFirstSizeFrame());
+    }
+
+    public Vector2f GetResetSetting()
+    {
+        var resetPosition = PositionOnScreen;
+        resetPosition = GetOriginalPositionOnScreen(resetPosition, PreviousSize);
+        resetPosition = SetShiftCoordination(resetPosition, GetFirstSizeFrame());
+
+        return resetPosition;
     }
 }

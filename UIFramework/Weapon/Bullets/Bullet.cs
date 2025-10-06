@@ -14,7 +14,7 @@ namespace UIFramework.Weapon.Bullets;
 public abstract class Bullet : IBullet
 {
     protected IUnit? _owner = null;
-    public virtual IUnit? Owner { get => _owner; protected set => _owner = value; }
+    public virtual IUnit? Owner { get => _owner; set => _owner = value; }
     protected Vector3f PositionOwner { get; set; } = new();
 
 

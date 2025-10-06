@@ -13,7 +13,7 @@ public abstract class SoundEmitter : ISound
     private readonly object _lock = new object();
 
 
-    public Dictionary<IMap, List<Sound>> ActiveSounds { private get; init; } = new();
+    public ConcurrentDictionary<IMap, List<Sound>> ActiveSounds { private get; init; } = new();
     private readonly List<Sound> _excludedSounds = new();
 
 
@@ -147,21 +147,23 @@ public abstract class SoundEmitter : ISound
 
         bool mapChanged = oldOwnerMap != Camera.CurrentUnit?.Map;
         bool isCurrentMap = Camera.CurrentUnit?.Map == map;
-
-        for (int i = sounds.Count - 1; i >= 0; i--)
+        lock (_lock)
         {
-            var s = sounds[i];
-
-            if (IsStoppedOrInvalid(s))
+            for (int i = sounds.Count - 1; i >= 0; i--)
             {
-                sounds.RemoveAt(i);
-                continue;
+                var s = sounds[i];
+
+                if (IsStoppedOrInvalid(s))
+                {
+                    sounds.RemoveAt(i);
+                    continue;
+                }
+
+                if (!mapChanged)
+                    continue;
+
+                UpdateSoundForMap(s, isCurrentMap);
             }
-
-            if (!mapChanged)
-                continue;
-
-            UpdateSoundForMap(s, isCurrentMap);
         }
     }
     private void PauseAllPlayingSounds(List<Sound> sounds)

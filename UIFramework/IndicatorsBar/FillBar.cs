@@ -144,6 +144,24 @@ public class FillBar : Bar
         :this(new RectangleShape(), forwardFillContent, backwardFillContent, stat, owner)
     {}
 
+    public FillBar(IBarContent forwardFillContent, IBarContent backwardFillContent)
+       : this(new RectangleShape(), forwardFillContent, backwardFillContent, new Stat(0), null)
+    { }
+
+    public FillBar(FillBar fillBar, Stat? stat = null, IUnit? owner = null)
+       : this(fillBar.Border, fillBar.Forward.Content, fillBar.Backward.Content, stat ?? fillBar.Stat, owner)
+    {
+        FillColor = fillBar.FillColor;
+
+        VerticalAlignment = fillBar.VerticalAlignment;
+        HorizontalAlignment = fillBar.HorizontalAlignment;
+
+        _width = fillBar.Width;
+        _height = fillBar.Height;
+
+        _positionOnScreen = fillBar.PositionOnScreen;
+    }
+
     private void SetStat()
     {
         Forward.ValueProgress.SetValue(Stat.Value, Stat.Max);
@@ -159,9 +177,6 @@ public class FillBar : Bar
     {
         Forward.SetPositionBar(this);
         Backward.SetPositionBar(this, Forward.Fill.Size.X);
-
-        //HorizontalAlignment = _horizontalAlignment;
-        //VerticalAlignment = _verticalAlignment;
     }
     public override void UpdateInfo()
     {

@@ -37,6 +37,12 @@ public class TriggerTouch : ITrigger
         OnUntriggered = onUntriggered;
     }
 
+    public TriggerTouch(TriggerTouch trigetTouch, Predicate<IObject?>? detect = null)
+        :this(detect is null ? trigetTouch.DelegateDefinition: detect, trigetTouch.OnTriggered, trigetTouch.OnUntriggered)
+    {
+        CooldownMs =  trigetTouch.CooldownMs;
+    }
+
     private (IObject? CollisionObject, bool IsCollided) ObjectDefinition(IUnit unit)
     {
         double distancePerFrame = unit.MoveSpeed * FPS.GetDeltaTime();

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace UIFramework.Weapon.Bullets;
 public interface IBullet
 {
-    IUnit? Owner { get; }
+    IUnit? Owner { get; set; }
     float Damage { get; set; }
 
     public static float InfinityFlightDistance { get; } = -1;

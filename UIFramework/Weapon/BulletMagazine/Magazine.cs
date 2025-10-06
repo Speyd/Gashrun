@@ -52,7 +52,6 @@ public class Magazine
 
                 _owner?.Control.AddBottomBind(ReloadBind);
                 _owner?.Control.AddBottomBind(UpdateInfoBinding);
-
             }
         }
     }
@@ -77,6 +76,16 @@ public class Magazine
         MagazineBullet = new MagazineState(maxTotalAmmo);
 
         UIText = new UIText(textMagazine);
+    }
+    public Magazine(Magazine magazine)
+    {
+        ReloadBind = new(magazine.ReloadBind.Buttons, Reload, magazine.ReloadBind.WaitingTimeMilliseconds);
+        UpdateInfoBinding = new ButtonBinding(new Button(VirtualKey.None), UpdateInfo);
+
+        ClipBullet = new MagazineState(magazine.ClipBullet.MaxCapacity, magazine.ClipBullet.Bullets);
+        MagazineBullet = new MagazineState(magazine.MagazineBullet.MaxCapacity, magazine.MagazineBullet.Bullets);
+
+        UIText = new UIText(magazine.UIText);
     }
 
     private bool IsReloadMagazine()
@@ -124,8 +133,7 @@ public class Magazine
 
         if (ClipBullet.Capacity > 0)
         {
-            ClipBullet.GetBullet()?.Flight(Owner);
-           
+            ClipBullet.GetBullet()?.Flight(Owner);       
         }
         if (ClipBullet.Capacity == 0)
             Reload();

@@ -1,4 +1,5 @@
 ﻿
+using ObjectFramework;
 using ProtoRender.Map;
 using System.Collections.Generic;
 
@@ -53,7 +54,7 @@ public static class BulletHandler
             foreach (var bulletsMap in Bullets)
             {
                 if (bulletsMap.Key.ActiveAnchors.Count == 0)
-                    return;
+                    continue;
 
                 var bulletList = bulletsMap.Value;
                 for (int i = bulletList.Count - 1; i >= 0; i--)

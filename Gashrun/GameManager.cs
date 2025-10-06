@@ -39,6 +39,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using MiniMapLib.Setting;
 using HitBoxLib.Operations;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Gashrun;
 public static class GameManager
@@ -136,3 +137,4 @@ public static class GameManager
         }
     }
 }
+

@@ -95,7 +95,10 @@ public class Map : IMap
         }
 
         if (list.ContainsKey(addObstacle))
-            throw new Exception("The object is already added (CheckTrueAddObstacle)");
+        {
+            Console.WriteLine("The object is already added (CheckTrueAddObstacle)");
+            return;
+        }
 
         if (addObstacle.IsSingleAddable)
             throw new Exception("This object cannot be added to a cell with other objects (CheckTrueAddObstacle)");

@@ -24,9 +24,9 @@ public class Gun
 
     public UIAnimation Animation { get; set; }
     public Magazine Magazine { get; set; }
-    public SoundEmitter? Sound { get; set; } = null;
+    public SoundEmitter? SoundShot { get; set; } = null;
 
-    public Gun(ProtoRender.Object.IUnit owner, UIAnimation animation, Magazine magazine, ButtonBinding bottomBinding)
+    public Gun(UIAnimation animation, Magazine magazine, ButtonBinding bottomBinding, ProtoRender.Object.IUnit? owner = null)
     {
         Animation = animation;
 
@@ -34,18 +34,29 @@ public class Gun
         Animation.BottomBinding = bottomBinding;
 
         Magazine = magazine;
-        Owner = owner;
+        if(owner is not null) 
+            Owner = owner;
     }
+    public Gun(Gun gun, ButtonBinding? bottomBinding = null, ProtoRender.Object.IUnit? owner = null)
+        :this(
+             new (gun.Animation),
+             new(gun.Magazine),
+             bottomBinding ?? new(gun.Animation.BottomBinding?.Buttons, null, gun.Animation.BottomBinding?.WaitingTimeMilliseconds ?? 0),
+             owner ?? gun.Owner)
+    {
+    }
+
     public void Shot()
     {
+
         if(Camera.CurrentUnit != Owner && Magazine.IsReload == true)
             Magazine.Reload();
 
         bool hasAmmo = Magazine.UseAmmo();
-        Console.WriteLine($"{hasAmmo} | {Magazine.MagazineBullet.Capacity} | {Magazine.IsReload}");
-        if (hasAmmo && Sound is not null && Owner?.Map is not null)
+
+        if (hasAmmo && SoundShot is not null && Owner?.Map is not null)
         {
-            Sound.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
+            SoundShot.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
         Animation.AnimationMode = hasAmmo? AnimationMode.Animated : AnimationMode.Static;
     }

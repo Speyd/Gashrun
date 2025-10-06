@@ -1,5 +1,6 @@
 ﻿using ControlLib.Buttons;
 using ProtoRender.Object;
+using static SFML.Window.Keyboard;
 
 
 namespace InteractionFramework.Trigger.Button;
@@ -14,15 +15,24 @@ public class TriggerButton : ITrigger
     public DateTime LastCheckTime { get; set; } = DateTime.MinValue;
     public int CooldownMs { get; set; } = 0;
 
-    private readonly ButtonBinding binding;
+    public ButtonBinding KeyBinding { get; set; }
 
 
     public TriggerButton(ButtonBinding key, Action<IUnit>? onTriggered, Action<IUnit>? onUntriggered)
     {
-        binding = key;
+        KeyBinding = key;
 
         OnTriggered = onTriggered;
         OnUntriggered = onUntriggered;
+    }
+    public TriggerButton(TriggerButton triggerButton)
+    {
+        KeyBinding = triggerButton.KeyBinding;
+
+        OnTriggered = triggerButton.OnTriggered;
+        OnUntriggered = triggerButton.OnUntriggered;
+
+        CooldownMs = triggerButton.CooldownMs;
     }
 
     public void CheckTrigger(IUnit unit)
@@ -30,8 +40,8 @@ public class TriggerButton : ITrigger
         if (IsBlocked || !ITrigger.CheckCooldown(this))
             return;
 
-        binding.Listen();
-        isTriggered = binding.IsPress;
+        KeyBinding.Listen();
+        isTriggered = KeyBinding.IsPress;
 
 
         if (isTriggered)

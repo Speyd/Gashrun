@@ -128,10 +128,11 @@ public class UIShape : UIElement, ITransformable2D
 
         Drawables.Add(RectangleShape);
     }
-    public UIShape(UIShape uIShape, IUnit? owner = null)
+    public UIShape(UIShape uIShape, bool createNewTextures = true, IUnit? owner = null)
         : base(owner)
     {
         RectangleShape = new RectangleShape(uIShape.RectangleShape);
+        AnimationState = createNewTextures ? new AnimationState(uIShape.AnimationState) : uIShape.AnimationState;
 
         RenderOrder = uIShape.RenderOrder;
         PreviousScreenHeight = uIShape.PreviousScreenHeight;

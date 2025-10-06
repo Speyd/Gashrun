@@ -22,7 +22,8 @@ public class MagazineState
     }
 
     public int Capacity {  get; private set; }
-    private List<IBullet> Bullets { get; set; } = new List<IBullet>();
+
+    public List<IBullet> Bullets { get; private set; } = new List<IBullet>();
 
     public MagazineState(int maxCapacity)
     {
@@ -76,7 +77,7 @@ public class MagazineState
     {
         for (int i = 0; i < count && Bullets.Count < MaxCapacity; i++)
         {
-            Bullets.Add(bullet);
+            Bullets.Add(bullet.GetCopy());
             Capacity++;
         }
     }
@@ -86,7 +87,7 @@ public class MagazineState
 
         for (int i = 0; i < count && Bullets.Count < MaxCapacity; i++)
         {
-            Bullets.Add(bullets[i]);
+            Bullets.Add(bullets[i].GetCopy());
             Capacity++;
         }
     }

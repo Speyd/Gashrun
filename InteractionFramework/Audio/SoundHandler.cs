@@ -43,6 +43,4 @@ public static class SoundHandler
         _cts.Cancel();
         CleanupThread.Join();
     }
-
-
 }

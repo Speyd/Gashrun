@@ -8,33 +8,40 @@ namespace UIFramework.Text.Fading;
 public class FadingText : UIText
 {
     public FadingController Controller;
-    public FadingText(UIText text, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
-       : base(text, owner)
-    {
-        Controller = new FadingController(fasingType, fadingTextLife, fadingTimeMilliseconds);
-        Controller.OnAlphaChanged = SetAlpha;
-        Controller.OnDispose = () => UIRender.RemoveFromPriority(Owner, RenderOrder, this);
-
-        Controller.Restart();
-    }
-    public FadingText(RenderText text, FadingType fasingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner)
+    public FadingText(UIText text, FadingType fadingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner = null)
         : base(text, owner)
     {
-        Controller = new FadingController(fasingType, fadingTextLife, fadingTimeMilliseconds);
-        Controller.OnAlphaChanged = SetAlpha;
-        Controller.OnDispose = () => UIRender.RemoveFromPriority(Owner, RenderOrder, this);
-
-        Controller.Restart();
+        InitController(new FadingController(fadingType, fadingTextLife, fadingTimeMilliseconds));
     }
-    public FadingText(RenderText text, FadingController controller, IUnit? owner)
-       : base(text, owner)
+
+    public FadingText(RenderText text, FadingType fadingType, FadingTextLife fadingTextLife, long fadingTimeMilliseconds, IUnit? owner = null)
+        : base(text, owner)
+    {
+        InitController(new FadingController(fadingType, fadingTextLife, fadingTimeMilliseconds));
+    }
+
+    public FadingText(RenderText text, FadingController controller, IUnit? owner = null)
+        : base(text, owner)
+    {
+        InitController(controller);
+    }
+
+    public FadingText(FadingText fadingText, IUnit? owner = null)
+        : base(fadingText, owner)
+    {
+        InitController(new FadingController(fadingText.Controller.FadingType,
+                                            fadingText.Controller.FadingTextLife,
+                                            fadingText.Controller.FadingTimeMilliseconds));
+    }
+
+    private void InitController(FadingController controller)
     {
         Controller = controller;
         Controller.OnAlphaChanged = SetAlpha;
         Controller.OnDispose = () => UIRender.RemoveFromPriority(Owner, RenderOrder, this);
-
         Controller.Restart();
     }
+
     private void SetAlpha(float normalizedAlpha)
     {
         byte alpha = (byte)Math.Clamp(normalizedAlpha * 255f, 0, 255);

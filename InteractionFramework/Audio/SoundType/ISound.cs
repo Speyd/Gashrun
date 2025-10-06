@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 namespace InteractionFramework.Audio.SoundType;
 public interface ISound
 {
-    Dictionary<IMap, List<Sound>> ActiveSounds { init; }
+    ConcurrentDictionary<IMap, List<Sound>> ActiveSounds { init; }
     /// <summary>
     /// Coefficient for sound attenuation based on the height (Z-axis difference) between the sound source and the listener.
     /// Higher values reduce the effect of height difference on the sound volume.
