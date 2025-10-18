@@ -11,22 +11,14 @@
     <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.9.2" />
     <PackageReference Include="EnginePseudo3D.Core" Version="2.2.3" />
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
-    <PackageReference Include="EnginePseudo3D.MiniMapLib" Version="2.3.1" />
-    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.3" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.8" />
-    <PackageReference Include="EnginePseudo3D.PartsWorldLib" Version="2.0.9" />
+    <PackageReference Include="EnginePseudo3D.MiniMapLib" Version="2.3.2" />
+    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.5" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.1.5" />
+    <PackageReference Include="EnginePseudo3D.PartsWorldLib" Version="2.1.0" />
  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\InteractionFramework\InteractionFramework.csproj" />
     <ProjectReference Include="..\UIFramework\UIFramework.csproj" />
-  </ItemGroup>
-
-    <ItemGroup>
-    <Content Include="..\Resources\**\*.*">
-     <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 </Project>

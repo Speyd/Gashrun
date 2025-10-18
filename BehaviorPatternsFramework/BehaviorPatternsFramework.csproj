@@ -7,9 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
+    <PackageReference Include="EnginePseudo3D.FpsLib" Version="1.6.0" />
     <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.5" />
     <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.1.5" />
+    <PackageReference Include="EnginePseudo3D.RayTracingLib" Version="2.4.9" />
   </ItemGroup>
 
   <ItemGroup>

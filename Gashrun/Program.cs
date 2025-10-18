@@ -41,12 +41,18 @@ using UIFramework.Shape;
 using ProtoRender.Object;
 using InteractionFramework.Trigger.Touch;
 using InteractionFramework.VisualImpact;
+using TextureLib.Textures.Pair;
+using UIFramework.Texture;
 using RenderLib.Algorithm;
 using EffectLib.EffectCore;
 using TextureLib.Textures;
 using ObstacleLib.SpriteLib;
 using SFML.Graphics.Glsl;
 using InteractionFramework.Audio;
+using UIFramework.Sights;
+using BehaviorPatternsFramework;
+using SFML.Window;
+using BehaviorPatternsFramework.Enum;
 
 
 Screen.Initialize(1000, 600);
@@ -55,12 +61,13 @@ Screen.Initialize(1000, 600);
 FPS.BufferSize = 50;
 
 RayTracingLib.Raycast.CoordinatesMoving = 3;
+Console.WriteLine(RayTracingLib.Raycast.CoordinatesMoving);
 SpriteObstacle.GlobalMinDistance = 0;
 RenderAlgorithm.UseHeightPerspective = false;
 RenderAlgorithm.UseVerticalPerspective = false;
 
 MoveLib.Move.Collision.RadiusCheckTouch = 3;
-PathResolver.RootDirectory = PathResolver.FindRoot("Resources");
+PathResolver.SearchPattern = "Resources";
 #endregion
 
 
@@ -208,8 +215,8 @@ SoundHitBorderWall.Sound.Attenuation = 1.5f;
 
 
 SoundDynamic SoundBulletFlyWall = new(SoundBulletFlyWav);
-SoundBulletFlyWall.Sound.MinDistance = 10f;
-SoundBulletFlyWall.Sound.Attenuation = 2f;
+SoundBulletFlyWall.Sound.MinDistance = 15f;
+SoundBulletFlyWall.Sound.Attenuation = 0.5f;
 
 SoundDynamic SoundLampSwitch = new(SoundLampSwitchWav);
 SoundLampSwitch.Sound.MinDistance = 10f;
@@ -315,8 +322,8 @@ unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
-unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
-unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
+unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(1000);
+unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(1000);
 unit.ShiftCubedX = 50;
 unit.ShiftCubedY = 50;
 
@@ -325,8 +332,29 @@ map?.AddObstacle(5, 5, unit);
 
 #region Devil
 Unit devil = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100);
+devil.MoveSpeed = 400;
+devil.behavioral = new AIController(devil);
+
+AIStateMachine machineVision = new();
+machineVision.AddBehavior(new PatrolBehavior());
+machineVision.SetBehavior<PatrolBehavior>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Vision, machineVision);
+
+AIStateMachine machineMovement = new();
+machineMovement.AddBehavior(new PersecutionBehavior());
+machineMovement.AddBehavior(new JumpBehavior() { MovementDurationMs = 400 });
+
+machineMovement.AddTransition<PersecutionBehavior, JumpBehavior>(PersecutionBehavior.SuccessfulUpdate);
+machineMovement.AddTransition<JumpBehavior, PersecutionBehavior>(JumpBehavior.SuccessfulUpdate);
+machineMovement.SetBehavior<PersecutionBehavior>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovement);
+
+devil.behavioral.Start();
+
+
+
 devil.Scale = 100;
-devil.Angle = 1.5f;
+devil.Angle = 0.7f;
 devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
 devil.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
@@ -353,11 +381,18 @@ devil.DisplayName.RenderOrder = RenderOrder.DialogItem;
 #region Create Structure
 
 #region Mistic House
+//Angleeeeeeee: X: 1000 | Y: 600
+//Angleeeeeeee: X: 900 | Y: 600
+//Angleeeeeeee: X: 800 | Y: 600
+//Angleeeeeeee: X: 800 | Y: 500
+//I see you! X: 800 | Y: 400
+//Angleeeeeeee: X: 400 | Y: 300
+
 TexturedWall MainMapMisticBrickWall = new TexturedWall(null, false, BrickWallPng);
 map.AddObstacle(8, 1, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(8, 3, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(8, 5, MainMapMisticBrickWall.GetDeepCopy());
-map.AddObstacle(8, 6, MainMapMisticBrickWall.GetDeepCopy());
+//map.AddObstacle(8, 6, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(9, 6, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(13, 6, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(14, 6, MainMapMisticBrickWall.GetDeepCopy());
@@ -368,7 +403,7 @@ map.AddObstacle(14, 1, MainMapMisticBrickWall.GetDeepCopy());
 TexturedWall MainMapMisticBrickWindow = new TexturedWall(null, false, BrickWindowPng);
 map.AddObstacle(8, 2, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(8, 4, MainMapMisticBrickWindow.GetDeepCopy());
-map.AddObstacle(10, 6, MainMapMisticBrickWindow.GetDeepCopy());
+//map.AddObstacle(10, 6, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(12, 6, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(14, 4, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(14, 2, MainMapMisticBrickWindow.GetDeepCopy());
@@ -734,7 +769,7 @@ var distanceOpenBigLampe = new TriggerDistance
     (owner) => { fadingTextTouchBigLampe.SwapType(); fadingTextTouchBigLampe.Controller.FadingTextLife = FadingTextLife.OneShotDispose; }
 );
 
-TriggerAnd touchBigLampeTrigger = new TriggerAnd(buttonTriggerE, distanceOpenBigLampe);
+TriggerAnd touchBigLampeTrigger = new TriggerAnd(new TriggerButton(buttonTriggerE) { CooldownMs = 300}, distanceOpenBigLampe);
 
 const string LampeOn = "on";
 touchBigLampeTrigger.OnTriggered = (unit) =>
@@ -764,6 +799,7 @@ touchBigLampeTrigger.OnTriggered = (unit) =>
     }
 };
 TriggerHandler.AddTriger(unit, touchBigLampeTrigger);
+
 #endregion
 #endregion
 
@@ -846,6 +882,7 @@ RectangleShape ShapeBackround = new RectangleShape(new SFML.System.Vector2f(Scre
     Position = new SFML.System.Vector2f(Screen.ScreenWidth / 2, Screen.ScreenHeight / 2),
     FillColor = new SFML.Graphics.Color(0, 0, 0, 100),
 };
+
 DialogueSession dialogManager = new DialogueSession(devil, unit, ShapeBackround);
 dialogManager.BackgroundShape.RenderOrder = RenderOrder.DialogBackground;
 dialogManager.BackgroundShape.HorizontalAlignment = HorizontalAlign.Center;
@@ -877,6 +914,12 @@ dialogManager.AddLevel(0, new Dictionary<int, DialogueStep>()
 {
     { 0, stepFirst }
 });
+
+
+
+
+
+
 
 
 FadingText fadingDialog = new FadingText(ArialBold_Cyan_20, FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);

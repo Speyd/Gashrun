@@ -37,6 +37,7 @@ using SFML.Graphics;
 using TextureLib.Loader.ImageProcessing;
 using TextureLib.Loader;
 using TextureLib.Textures;
+using BehaviorPatternsFramework;
 
 namespace UIFramework;
 public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, IKnockbackable
@@ -45,7 +46,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public ControlState ControlState { get; set; } = ControlState.Normal;
     public GroundState GroundState { get; set; } = GroundState.OnGround;
 
-
+    public AIController behavioral { get; set; }
     public float KnockbackPower { get; set; } = 10000;
     public float KnockbackAngle { get; set; }
     public Vector2f Velocity { get; set; }
@@ -283,6 +284,18 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     }
 
     #region IUnit
+    public override double GetDisplayAngle(double spriteAngle)
+    {
+        double angle = spriteAngle - this.Angle;
+
+        if (angle > Math.PI)
+            angle -= 2 * Math.PI;
+        else if (angle < -Math.PI)
+            angle += 2 * Math.PI;
+
+        return angle;
+    }
+
     public void ObserverSettingChangesFun()
     {
         float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfFov));

@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.9.1" />
+    <PackageReference Include="EnginePseudo3D.ControlLib" Version="1.9.2" />
     <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.0.8" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.1.5" />
   </ItemGroup>
 
 </Project>
