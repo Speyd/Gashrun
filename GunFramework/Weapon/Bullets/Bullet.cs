@@ -19,7 +19,6 @@ public abstract class Bullet : IBullet
 
 
     public virtual float Damage { get; set; }
-    public virtual float Speed { get; set; } = 0;
     public virtual bool IsActive { get; protected set; } = true;
     public float FlightDistance { get; set; } = IBullet.InfinityFlightDistance;
 

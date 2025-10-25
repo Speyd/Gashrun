@@ -8,13 +8,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BehaviorPatternsFramework;
+namespace BehaviorPatternsFramework.Behavior;
 public class AIContext
 {
-    public ConcurrentDictionary<AIBehaviorType, GameEventType> EventTypes { get; set; } = new();
-
+    public AIController? Controller { get; internal set; }
 
     public IUnit? Owner { get; set; } = null;
 
     public IObject? TargetObject { get; set; } = null;
+
+    public event Action<string>? OnEvent;
+    public void TriggerEvent(string evt) => OnEvent?.Invoke(evt);
 }

@@ -25,11 +25,6 @@ public class Gun
     public UIAnimation Animation { get; set; }
     public Magazine Magazine { get; set; }
     public SoundEmitter? SoundShot { get; set; } = null;
-    public ButtonBinding? ShootBinding 
-    {
-        get => Animation.BottomBinding;
-        set => Animation.BottomBinding = value;
-    }
 
     public Gun(UIAnimation animation, Magazine magazine, ButtonBinding bottomBinding, ProtoRender.Object.IUnit? owner = null)
     {

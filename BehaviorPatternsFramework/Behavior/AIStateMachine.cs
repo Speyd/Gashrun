@@ -1,0 +1,167 @@
+﻿using BehaviorPatternsFramework.Enum;
+using NGenerics.Extensions;
+
+namespace BehaviorPatternsFramework.Behavior;
+public class AIStateMachine
+{
+    private IAIBehavior? _currentState = null;
+    private readonly List<IAIBehavior> _behaviors = new();
+    private readonly Dictionary<(Type, BehaviorStatus), List<Type>> _transitions = new();
+    private AIContext? _context = null;
+
+    private int _currentIndex = 0;
+    public bool IsPassive { get; private set; } = false;
+    public bool IsCompleted { get; private set; } = false;
+    public bool IsSignaled { get; private set; } = false;
+    public bool IsRunning { get; private set; } = false;
+
+
+    public AIStateMachine(AIContext context, bool isPassive = false)
+    {
+        _context = context;
+        IsPassive = isPassive;
+    }
+    public AIStateMachine(bool isPassive = false)
+    {
+        IsPassive = isPassive;
+    }
+
+
+    public void SetAIContext(AIContext context) => _context = context;
+
+    public void AddBehavior(IAIBehavior state) => _behaviors.Add(state);
+
+
+    public void AddTransition<TFrom, TTo>(BehaviorStatus trigger)
+     where TFrom : IAIBehavior
+     where TTo : IAIBehavior
+    {
+        var key = (typeof(TFrom), trigger);
+        if (!_transitions.TryGetValue(key, out var list))
+            _transitions[key] = list = new List<Type>();
+
+        list.Add(typeof(TTo));
+    }
+
+    public void SetBehavior<T>() where T : IAIBehavior
+    {
+        if (_currentState is not null)
+            _currentState.Exit(_context);
+
+        _currentState = _behaviors.OfType<T>().FirstOrDefault();
+        _currentState?.Enter(_context);
+    }
+
+    public void Signal()
+    {
+        if (IsPassive)
+            IsSignaled = true;
+    }
+    public void Unsignal()
+    {
+        if (IsPassive && IsSignaled)
+        {
+            _currentState = _behaviors.FirstOrDefault();
+            _currentIndex = 0;
+            IsSignaled = false;
+        }
+    }
+
+    public void Update()
+    {
+        if (_currentState is null || _context is null)
+            return;
+
+        if (IsPassive && !IsSignaled)
+            return;
+
+        _currentState.Update(_context);
+        var key = (_currentState.GetType(), _currentState.Status);
+        IsRunning = _transitions.Count > 0? _transitions.ContainsKey(key): _currentState.Status != BehaviorStatus.Failure;
+
+        if (_behaviors.Count > 1)
+            ProcessTransitions(key);
+        else if(IsRunning)
+            SetBehavior(_currentState);
+
+        HandleCompletionIfNeeded();
+    }
+
+    private bool ProcessTransitions((Type, BehaviorStatus) key)
+    {
+        if (!_transitions.TryGetValue(key, out var nextTypes))
+            return false;
+
+        int currentIndex = _behaviors.IndexOf(_currentState!);
+        var candidatesWithDistance = new Dictionary<IAIBehavior, int>();
+
+        foreach (var nextType in nextTypes)
+        {
+            var candidates = _behaviors
+                .Select((b, i) => new { Behavior = b, Index = i })
+                .Where(x => nextType.IsInstanceOfType(x.Behavior))
+                .ToList();
+
+            var closest = candidates
+                .OrderBy(x => GetIndex(candidates.Count, currentIndex, x.Index))
+                .FirstOrDefault();
+
+            if (closest is not null && closest.Behavior != _currentState)
+                candidatesWithDistance[closest.Behavior] = GetIndex(candidates.Count, currentIndex, closest.Index);
+        }
+
+        var best = candidatesWithDistance
+            .OrderBy(c => c.Value)
+            .FirstOrDefault();
+
+
+        if (best.Key is not null)
+        {
+            SetBehavior(best.Key);
+            return true;
+        }
+
+        return false;
+    }
+
+    private int GetIndex(int maxIndex, int currentIndex, int x)
+    {
+        if(currentIndex == maxIndex)
+            return Math.Abs(currentIndex - (currentIndex - x));
+        else
+            return Math.Abs(currentIndex < maxIndex ? x - 1 - currentIndex : currentIndex - maxIndex);
+    }
+
+    private void HandleCompletionIfNeeded()
+    {
+        if (_currentIndex < _behaviors.Count)
+            return;
+
+        IsCompleted = true;
+
+        if (IsPassive)
+        {
+            IsSignaled = false;
+            _currentIndex = 0;
+        }
+        else
+        {
+            _currentIndex = 0;
+            IsCompleted = false;
+        }
+    }
+
+    private void SetBehavior(IAIBehavior? nextState)
+    {
+        if (_context is null || nextState is null)
+        {
+            return;
+        }
+
+        _currentIndex++;
+        _currentState?.Exit(_context);
+        _currentState = nextState;
+        _currentState?.Enter(_context);
+    }
+
+}

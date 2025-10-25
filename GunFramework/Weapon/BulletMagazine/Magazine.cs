@@ -87,13 +87,7 @@ public class Magazine
 
         UIText = new UIText(magazine.UIText);
     }
-    public bool UpdateReloadStatus()
-    {
-        if (Stopwatch.IsRunning && Stopwatch.ElapsedMilliseconds >= TimeToReloadMls)
-            Reload();
 
-        return IsReload;
-    }
     private bool IsReloadMagazine()
     {
         if (!Stopwatch.IsRunning && MagazineBullet.Capacity != 0)
@@ -106,7 +100,6 @@ public class Magazine
         else if (Stopwatch.IsRunning && Stopwatch.ElapsedMilliseconds >= TimeToReloadMls)
         {
             IsReload = false;
-
             Stopwatch.Stop();
             Stopwatch.Reset();
 
@@ -148,7 +141,6 @@ public class Magazine
         return true;
     }
 
-    public IBullet? GetNextBullet() => ClipBullet.Bullets.FirstOrDefault();
     public void UpdateInfo()
     {
         if (IsReload == true)

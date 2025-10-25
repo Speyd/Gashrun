@@ -1,50 +1,48 @@
-﻿using BehaviorPatternsFramework.Enum;
+﻿using BehaviorPatternsFramework.Behavior;
+using BehaviorPatternsFramework.Enum;
 using ObjectFramework;
 using ProtoRender.Object;
 using RayTracingLib;
+using ScreenLib;
 using SFML.System;
 using SFML.Window;
+using System.Collections.Concurrent;
 
-namespace BehaviorPatternsFramework;
+namespace BehaviorPatternsFramework.PatternDetection;
 public class PatrolBehavior : IAIBehavior
 {
-    public static GameEventType SuccessfulUpdate { get; } = GameEventType.PlayerSeen;
-    public static GameEventType ErrorUpdate { get; } = GameEventType.PlayerLost;
+    public BehaviorStatus Status { get; private set; } = BehaviorStatus.Failure;
+    public Func<AIContext, bool>? IsBlocked { get; set; }
 
-
-    public AIBehaviorType AIBehaviorType { get; } = AIBehaviorType.Vision;
-    public GameEventType CurrentEventType { get; private set; } = GameEventType.PlayerLost;
-
+    public int UpdateIntervalMs { get; set; } = 50;
 
     private static DateTime _lastUpdate = DateTime.Now;
 
-
-    public void Update(AIContext aIContext)
+    public void Update(AIContext context)
     {
-        if ((DateTime.Now - _lastUpdate).TotalMilliseconds < 50)
+        if (context.Owner is null || (IsBlocked?.Invoke(context) ?? false))
         {
-            SetError(aIContext);
+            Status = BehaviorStatus.Failure;
+            return;
+        }
+        if ((DateTime.Now - _lastUpdate).TotalMilliseconds < UpdateIntervalMs)
+        {
+            Status = BehaviorStatus.Running;
             return;
         }
 
         _lastUpdate = DateTime.Now;
-        if (aIContext.Owner is null)
+        foreach (var item in GetObjectsInFOV(context.Owner, 8))
         {
-            SetError(aIContext);
-            return;
-        }
-   
-        foreach (var item in GetObjectsInFOV(aIContext.Owner, 8))
-        {
-            if (IsObjectInFovByHitbox(aIContext.Owner, item) && item.UUID == Camera.CurrentUnit?.UUID)
+            if (IsObjectInFovByHitbox(context.Owner, item) && item.UUID == Camera.CurrentUnit?.UUID)
             {
-                aIContext.TargetObject = item;
-                SetSuccess(aIContext);
+                context.TargetObject = item;
                 return;
             }
         }
 
-        aIContext.TargetObject = null;
+        context.TargetObject = null;
+        Status = BehaviorStatus.Success;
     }
 
     public bool IsObjectInFovByHitbox(IUnit observer, IObject obj)
@@ -74,6 +72,9 @@ public class PatrolBehavior : IAIBehavior
 
     List<IObject> GetObjectsInFOV(IUnit unit, int rayCount)
     {
+        if (unit is null || unit.Map is null)
+            return new();
+
         HashSet<IObject> visibleObjects = new();
 
         double startAngle = unit.Angle - unit.Fov / 2.0;
@@ -83,6 +84,8 @@ public class PatrolBehavior : IAIBehavior
         for (int i = 0; i < rayCount; i++)
         {
             double angle = startAngle + i * step;
+            if (unit is null || unit.Map is null)
+                return new();
 
             var hit = Raycast.RaycastAtAngle(unit, angle, true, RayLimitType.MaxRenderTiles);
             if (hit != null)
@@ -93,27 +96,16 @@ public class PatrolBehavior : IAIBehavior
 
     public void Enter(AIContext context)
     {
-       // Console.WriteLine("Entering Patrol");
+        // Console.WriteLine("Entering Patrol");
     }
 
     public void Exit(AIContext context)
     {
-       // Console.WriteLine("Exiting Patrol");
+        // Console.WriteLine("Exiting Patrol");
     }
 
-    public GameEventType GetNextEvent(AIContext context)
+    public BehaviorStatus GetNextEvent(AIContext context)
     {
-        return CurrentEventType;
-    }
-
-    private void SetSuccess(AIContext context)
-    {
-        context.EventTypes[AIBehaviorType] = SuccessfulUpdate;
-        CurrentEventType = SuccessfulUpdate;
-    }
-    private void SetError(AIContext context)
-    {
-        context.EventTypes[AIBehaviorType] = ErrorUpdate;
-        CurrentEventType = ErrorUpdate;
+        return Status;
     }
 }

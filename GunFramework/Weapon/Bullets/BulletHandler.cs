@@ -10,8 +10,6 @@ public static class BulletHandler
     private static readonly CancellationTokenSource _cts = new();
     private static readonly Thread _updateThread;
 
-    public static int SleepMs { get; set; } = 16;
-
     static BulletHandler()
     {
         _updateThread = new Thread(UpdateLoop)
@@ -45,7 +43,7 @@ public static class BulletHandler
         while (!_cts.Token.IsCancellationRequested)
         {
             Update();
-            Thread.Sleep(SleepMs);
+            Thread.Sleep(16);
         }
     }
 

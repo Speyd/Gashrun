@@ -50,9 +50,15 @@ using ObstacleLib.SpriteLib;
 using SFML.Graphics.Glsl;
 using InteractionFramework.Audio;
 using UIFramework.Sights;
-using BehaviorPatternsFramework;
 using SFML.Window;
 using BehaviorPatternsFramework.Enum;
+using BehaviorPatternsFramework.Behavior;
+using BehaviorPatternsFramework.Move;
+using BehaviorPatternsFramework.PatternAttack;
+using BehaviorPatternsFramework.PatternMove;
+using BehaviorPatternsFramework.PatternDetection;
+using BehaviorPatternsFramework.PatternObservations;
+using UIFramework.Weapon.Bullets;
 
 
 Screen.Initialize(1000, 600);
@@ -316,7 +322,7 @@ EffectManager.CurrentEffect = effectMainMap;
 #region Unit
 
 #region Main Unit
-Unitu unit = new Unitu(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100);
+Unitu unit = new Unitu(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100000);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
@@ -332,24 +338,7 @@ map?.AddObstacle(5, 5, unit);
 
 #region Devil
 Unit devil = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100);
-devil.MoveSpeed = 400;
-devil.behavioral = new AIController(devil);
-
-AIStateMachine machineVision = new();
-machineVision.AddBehavior(new PatrolBehavior());
-machineVision.SetBehavior<PatrolBehavior>();
-devil.behavioral.AddStateMachine(AIBehaviorType.Vision, machineVision);
-
-AIStateMachine machineMovement = new();
-machineMovement.AddBehavior(new PersecutionBehavior());
-machineMovement.AddBehavior(new JumpBehavior() { MovementDurationMs = 400 });
-
-machineMovement.AddTransition<PersecutionBehavior, JumpBehavior>(PersecutionBehavior.SuccessfulUpdate);
-machineMovement.AddTransition<JumpBehavior, PersecutionBehavior>(JumpBehavior.SuccessfulUpdate);
-machineMovement.SetBehavior<PersecutionBehavior>();
-devil.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovement);
-
-devil.behavioral.Start();
+devil.MoveSpeed = 300;
 
 
 
@@ -983,6 +972,66 @@ unit?.Control.AddBottomBind(closeWindow);
 unit?.Control.AddBottomBind(pistolDevil.Animation.BottomBinding);
 #endregion
 
+#region Devil
+devil.behavioral = new AIController(devil);
+
+
+
+AIStateMachine machineVision = new();
+machineVision.AddBehavior(new PatrolBehavior());
+machineVision.SetBehavior<PatrolBehavior>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Vision, machineVision);
+
+AIStateMachine machineEmotion = new(true);
+machineEmotion.AddBehavior(new PingPongMovement() { MovementDurationMs = 300 });
+machineEmotion.AddTransition<PingPongMovement, PingPongMovement>(BehaviorStatus.Success);
+machineEmotion.SetBehavior<PingPongMovement>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Emotion, machineEmotion);
+
+AIStateMachine machinePursuit = new();
+var blockedPursuit = (AIContext ctx) =>
+    ctx.Controller?.GetMachine(AIBehaviorType.Emotion)?.IsSignaled == true;
+machinePursuit.AddBehavior(new PersecutionBehavior() { IsBlocked = blockedPursuit });
+machinePursuit.SetBehavior<PersecutionBehavior>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Pursuit, machinePursuit);
+
+AIStateMachine machineCombat = new();
+machineCombat.AddBehavior(new AttackBehavior(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, () => pistol.Magazine.GetNextBullet()?.Speed ?? 0f, BulletHandler.SleepMs));
+machineCombat.SetBehavior<AttackBehavior>();
+devil.behavioral.Context.OnEvent += evt =>
+{
+    if (evt == AttackBehavior.ReloadTriggerEvent)
+    {
+        devil.behavioral.GetMachine(AIBehaviorType.Emotion)?.Signal();
+    }
+};
+//devil.behavioral.Context.OnEvent += evt =>
+//{
+//    if (evt == AttackBehavior.ReloadCompletedEvent)
+//        devil.behavioral.GetMachine(AIBehaviorType.Emotion)?.Unsignal();
+//};
+devil.behavioral.AddStateMachine(AIBehaviorType.Combat, machineCombat);
+
+
+AIStateMachine machineMovement = new();
+var blockedMovement = (AIContext ctx) => 
+    ctx.Controller?.GetMachine(AIBehaviorType.Emotion)?.IsSignaled == true ||
+    ctx.Controller?.GetMachine(AIBehaviorType.Combat)?.IsRunning == true ||
+    ctx.Controller?.GetMachine(AIBehaviorType.Pursuit)?.IsRunning == true;
+
+machineMovement.AddBehavior(new CircularMovement() { RotationDirection = 1, IsBlocked = blockedMovement });
+machineMovement.AddBehavior(new PingPongMovement() { MovementDurationMs = 500, IsBlocked = blockedMovement });
+machineMovement.AddBehavior(new CircularMovement() { RotationDirection = -1, IsBlocked = blockedMovement });
+
+machineMovement.AddTransition<CircularMovement, PingPongMovement>(BehaviorStatus.Success);
+machineMovement.AddTransition<PingPongMovement, CircularMovement>(BehaviorStatus.Success);
+machineMovement.AddTransition<CircularMovement, CircularMovement>(BehaviorStatus.Success);
+
+machineMovement.SetBehavior<PingPongMovement>();
+devil.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovement);
+
+devil.behavioral.Start();
+#endregion
 #endregion
 
 #region Triggers

@@ -1,4 +1,5 @@
-﻿using ProtoRender.Map;
+﻿using BehaviorPatternsFramework.Behavior;
+using ProtoRender.Map;
 using System;
 using System.Collections.Generic;
 using System.Linq;

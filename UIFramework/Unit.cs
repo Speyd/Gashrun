@@ -37,7 +37,8 @@ using SFML.Graphics;
 using TextureLib.Loader.ImageProcessing;
 using TextureLib.Loader;
 using TextureLib.Textures;
-using BehaviorPatternsFramework;
+using BehaviorPatternsFramework.Behavior;
+using System;
 
 namespace UIFramework;
 public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, IKnockbackable
@@ -86,6 +87,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float MinDistanceFromWall { get; set; } = 0;
     public float MouseSensitivity { get; set; } = 0.001f;
     public bool IsMouseCaptured { get; set; } = true;
+    public Vector2f MoveDirection { get; set; } = new Vector2f();
 
     public double MinVerticalAngle { get; set; } = -Math.PI / 2;
     public double MaxVerticalAngle { get; set; } = Math.PI / 2;
@@ -95,7 +97,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     #region IUnit
     //-----------------------Angle-----------------------
     /// <summary>X - Cos(Angle); Y - Sin(Angle)</summary>
-    public Vector2f Direction { get; protected set; }
+    public Vector2f LookDirection { get; protected set; }
     /// <summary>X - -Sin(Angle); Y - Cos(Angle)</summary>
     public Vector2f Plane { get; protected set; }
 
@@ -112,11 +114,13 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
 
                 float cos = (float)Math.Cos(_angle);
                 float sin = (float)Math.Sin(_angle);
-                Direction = new Vector2f(cos, sin);
+                LookDirection = new Vector2f(cos, sin);
                 Plane = new Vector2f(-sin, cos);
             }
         }
     }
+
+
     /// <summary>Vertical Angle Entity(Vertical axis)</summary>
     public double VerticalAngle { get; set; }
     public Vector2f OriginPosition
@@ -174,6 +178,8 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     #region IControlHandler
     public ControlLib.Control Control { get; init; } = new ControlLib.Control();
     #endregion
+
+
     public Unit(SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
        : base(obstacle, createNewTexture)
     {
