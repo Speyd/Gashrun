@@ -17,7 +17,7 @@ public class CircularMovement : IAIBehavior
     public Func<AIContext, bool>? IsBlocked { get; set; }
 
 
-    public long MovementDurationMs { get; set; } = 1000;
+    public int MovementDurationMs { get; set; } = 1000;
 
 
     public float Diametr { get; set; } = 1;

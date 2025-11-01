@@ -7,9 +7,10 @@ public class AIStateMachine
     private IAIBehavior? _currentState = null;
     private readonly List<IAIBehavior> _behaviors = new();
     private readonly Dictionary<(Type, BehaviorStatus), List<Type>> _transitions = new();
-    private AIContext? _context = null;
-
     private int _currentIndex = 0;
+
+    public AIContext? Context { get; private set; } = null;
+
     public bool IsPassive { get; private set; } = false;
     public bool IsCompleted { get; private set; } = false;
     public bool IsSignaled { get; private set; } = false;
@@ -18,7 +19,7 @@ public class AIStateMachine
 
     public AIStateMachine(AIContext context, bool isPassive = false)
     {
-        _context = context;
+        Context = context;
         IsPassive = isPassive;
     }
     public AIStateMachine(bool isPassive = false)
@@ -27,7 +28,7 @@ public class AIStateMachine
     }
 
 
-    public void SetAIContext(AIContext context) => _context = context;
+    public void SetAIContext(AIContext context) => Context = context;
 
     public void AddBehavior(IAIBehavior state) => _behaviors.Add(state);
 
@@ -46,10 +47,10 @@ public class AIStateMachine
     public void SetBehavior<T>() where T : IAIBehavior
     {
         if (_currentState is not null)
-            _currentState.Exit(_context);
+            _currentState.Exit(Context);
 
         _currentState = _behaviors.OfType<T>().FirstOrDefault();
-        _currentState?.Enter(_context);
+        _currentState?.Enter(Context);
     }
 
     public void Signal()
@@ -69,13 +70,13 @@ public class AIStateMachine
 
     public void Update()
     {
-        if (_currentState is null || _context is null)
+        if (_currentState is null || Context is null)
             return;
 
         if (IsPassive && !IsSignaled)
             return;
 
-        _currentState.Update(_context);
+        _currentState.Update(Context);
         var key = (_currentState.GetType(), _currentState.Status);
         IsRunning = _transitions.Count > 0? _transitions.ContainsKey(key): _currentState.Status != BehaviorStatus.Failure;
 
@@ -153,15 +154,15 @@ public class AIStateMachine
 
     private void SetBehavior(IAIBehavior? nextState)
     {
-        if (_context is null || nextState is null)
+        if (Context is null || nextState is null)
         {
             return;
         }
 
         _currentIndex++;
-        _currentState?.Exit(_context);
+        _currentState?.Exit(Context);
         _currentState = nextState;
-        _currentState?.Enter(_context);
+        _currentState?.Enter(Context);
     }
 
 }

@@ -27,7 +27,7 @@ public class JumpBehavior : IAIBehavior
         // var deltaTimeMs = FPS.GetDeltaTime();
         //_elapsedMs += deltaTimeMs;
 
-        //if(_elapsedMs >= MovementDurationMs / 1000)
+        //if(_elapsedMs >= MovementDurationMs / 1000f)
         // {
         // _elapsedMs = 0;
 

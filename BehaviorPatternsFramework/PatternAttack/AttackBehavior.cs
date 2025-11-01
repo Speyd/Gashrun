@@ -1,11 +1,6 @@
 ﻿using BehaviorPatternsFramework.Enum;
-using ControlLib.Buttons;
-using DataPipes;
-using FpsLib;
-using SFML.System;
-using ProtoRender.Object;
 using BehaviorPatternsFramework.Behavior;
-using ControlLib.Mouse;
+using BehaviorPatternsFramework.PatternAttack.Strategy;
 
 namespace BehaviorPatternsFramework.PatternAttack;
 public class AttackBehavior : IAIBehavior
@@ -17,22 +12,21 @@ public class AttackBehavior : IAIBehavior
     public Func<AIContext, bool>? IsBlocked { get; set; }
 
 
-    public ButtonBinding attackBind;
+    InfoGun InfoGun { get; set; }
+
     private bool lastReloading = false;
-    public Func<bool> isReloading;
-    public Func<float> getbulletSpeed;
-    int sleepBulletHandler;
 
     private bool hasSignaledReload = false;
     public float MaxDistanceAttack { get; set; } = -1;
 
+    public List<IAimStrategy> AimStrategies { get; private set; } = new();
+    private readonly Random random = new();
 
-    public AttackBehavior(ButtonBinding attackBind, Func<bool> isReloading, Func<float> getbulletSpeed, int sleepBulletHandler)
+    public AttackBehavior(InfoGun infoGun, List<IAimStrategy>? aimStrategies = null)
     {
-        this.attackBind = attackBind;
-        this.isReloading = isReloading;
-        this.getbulletSpeed = getbulletSpeed;
-        this.sleepBulletHandler = sleepBulletHandler;
+        InfoGun = infoGun;
+        if (aimStrategies is not null)
+            AimStrategies.AddRange(aimStrategies);
     }
 
     public void Update(AIContext context)
@@ -69,7 +63,7 @@ public class AttackBehavior : IAIBehavior
     }
     private bool HandleReload(AIContext context)
     {
-        if (!isReloading.Invoke())
+        if (!InfoGun.IsReloading.Invoke())
         {
             hasSignaledReload = false;
             return false;
@@ -88,52 +82,15 @@ public class AttackBehavior : IAIBehavior
 
     private void PerformAttack(AIContext context)
     {
-        float deltaTimeMs = FPS.GetDeltaTime();
-        var targetObject = context.TargetObject!;
-
-        var obs = targetObject as IObserver;
-        var move = targetObject as IMovable;
-        if (obs == null || move == null)
-        {
-            Status = BehaviorStatus.Failure;
+        if (AimStrategies.Count == 0)
             return;
-        }
 
+        var strategy = AimStrategies[random.Next(AimStrategies.Count)];
 
+        float angle = strategy.GetAimAngle(context, InfoGun);
+        context.Owner!.Angle = angle;
 
-
-
-        var targetPos = new Vector2f((float)targetObject.X.Axis, (float)targetObject.Y.Axis);
-        var targetVelocity = move.MoveDirection * move.MoveSpeed * deltaTimeMs;
-        targetVelocity = new Vector2f((float)(targetVelocity.X + targetObject.X.Axis), (float)(targetVelocity.Y + targetObject.Y.Axis));
-
-        var dist = MathUtils.CalculateDistance(
-            targetVelocity.X,
-            targetVelocity.Y,
-            context.Owner.X.Axis,
-            context.Owner.Y.Axis
-        );
-
-        if (dist > MaxDistanceAttack && MaxDistanceAttack > 0)
-        {
-            Status = BehaviorStatus.Success;
-            return;
-        }
- 
-        var timeToHit = dist / Math.Ceiling(getbulletSpeed.Invoke() / (sleepBulletHandler / 2));
-        targetVelocity = move.MoveDirection * move.MoveSpeed * deltaTimeMs;
-
-
-        var newPosition = new Vector2f(
-        (float)(targetPos.X + targetVelocity.X * timeToHit),
-        (float)(targetPos.Y + targetVelocity.Y * timeToHit)
-    );
-
-
-
-        context.Owner.Angle = MathUtils.CalculateAngleToTarget(newPosition, context.Owner!.OriginPosition);
-
-        attackBind.SimulatePress();
+        InfoGun.AttackBind.SimulatePress();
         Status = BehaviorStatus.Success;
     }
 

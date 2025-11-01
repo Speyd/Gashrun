@@ -12,5 +12,6 @@ public enum AIBehaviorType
     Vision,     // отвечает за обзор, поиск врагов
     Emotion,    // отвечает за состояние (страх, агрессия, настороженность)
     Pursuit,
+    ZoneControl,
     Idle,       // базовое бездействие
 }

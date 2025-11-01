@@ -52,7 +52,10 @@ public static class BehaviorHandler
         lock (Machines)
         {
             foreach (var behavioral in Machines)
-                behavioral.Update();
+            {
+                if(behavioral.Context?.Owner?.Map?.ActiveAnchors.Count > 0)
+                    behavioral.Update();
+            }
         }
     }
 }

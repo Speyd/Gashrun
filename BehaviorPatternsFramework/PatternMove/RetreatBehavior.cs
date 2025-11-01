@@ -42,7 +42,7 @@ public class RetreatBehavior : IAIBehavior
             context.Owner.IgnoreCollisionObjects.Keys.ToList()
         );
 
-        if (_elapsedMs >= MovementDurationMs / 1000.0)
+        if (_elapsedMs >= MovementDurationMs / 1000f)
         {
             Reset();
             Status = BehaviorStatus.Success;

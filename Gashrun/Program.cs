@@ -59,6 +59,9 @@ using BehaviorPatternsFramework.PatternMove;
 using BehaviorPatternsFramework.PatternDetection;
 using BehaviorPatternsFramework.PatternObservations;
 using UIFramework.Weapon.Bullets;
+using BehaviorPatternsFramework;
+using BehaviorPatternsFramework.PatternMove.Dodge;
+using BehaviorPatternsFramework.PatternAttack.Strategy;
 
 
 Screen.Initialize(1000, 600);
@@ -332,6 +335,7 @@ unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(1000);
 unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(1000);
 unit.ShiftCubedX = 50;
 unit.ShiftCubedY = 50;
+unit.MoveSpeed = 400;
 
 map?.AddObstacle(5, 5, unit);
 #endregion
@@ -344,10 +348,10 @@ devil.MoveSpeed = 300;
 
 devil.Scale = 100;
 devil.Angle = 0.7f;
-devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
-devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
-devil.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
-devil.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
+devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
+devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
+devil.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
+devil.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
 devil.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(800);
 devil.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(400);
 map?.AddObstacle(4, 3, devil);
@@ -758,7 +762,7 @@ var distanceOpenBigLampe = new TriggerDistance
     (owner) => { fadingTextTouchBigLampe.SwapType(); fadingTextTouchBigLampe.Controller.FadingTextLife = FadingTextLife.OneShotDispose; }
 );
 
-TriggerAnd touchBigLampeTrigger = new TriggerAnd(new TriggerButton(buttonTriggerE) { CooldownMs = 300}, distanceOpenBigLampe);
+TriggerAnd touchBigLampeTrigger = new TriggerAnd(new TriggerButton(buttonTriggerE), distanceOpenBigLampe) { CooldownMs = 300};
 
 const string LampeOn = "on";
 touchBigLampeTrigger.OnTriggered = (unit) =>
@@ -976,27 +980,52 @@ unit?.Control.AddBottomBind(pistolDevil.Animation.BottomBinding);
 devil.behavioral = new AIController(devil);
 
 
-
 AIStateMachine machineVision = new();
 machineVision.AddBehavior(new PatrolBehavior());
 machineVision.SetBehavior<PatrolBehavior>();
 devil.behavioral.AddStateMachine(AIBehaviorType.Vision, machineVision);
 
+var blockedFromZone = (AIContext ctx) =>  ctx.Controller?.GetMachine(AIBehaviorType.ZoneControl)?.IsRunning == true;
+AIStateMachine machineZone = new();
+machineZone.AddBehavior(new ZoneRestrictionBehavior(new(devil.CellX, devil.CellY)) { Radius = 300 });
+//machineZone.AddTransition<ZoneRestrictionBehavior, ZoneRestrictionBehavior>(BehaviorStatus.Success);
+//machineZone.SetBehavior<ZoneRestrictionBehavior>();
+//devil.behavioral.AddStateMachine(AIBehaviorType.ZoneControl, machineZone);
+
 AIStateMachine machineEmotion = new(true);
-machineEmotion.AddBehavior(new PingPongMovement() { MovementDurationMs = 300 });
+machineEmotion.AddBehavior(new PingPongMovement() { MovementDurationMs = 400, IsBlocked = blockedFromZone });
 machineEmotion.AddTransition<PingPongMovement, PingPongMovement>(BehaviorStatus.Success);
 machineEmotion.SetBehavior<PingPongMovement>();
 devil.behavioral.AddStateMachine(AIBehaviorType.Emotion, machineEmotion);
 
 AIStateMachine machinePursuit = new();
 var blockedPursuit = (AIContext ctx) =>
+    blockedFromZone.Invoke(ctx) == true ||
     ctx.Controller?.GetMachine(AIBehaviorType.Emotion)?.IsSignaled == true;
 machinePursuit.AddBehavior(new PersecutionBehavior() { IsBlocked = blockedPursuit });
 machinePursuit.SetBehavior<PersecutionBehavior>();
 devil.behavioral.AddStateMachine(AIBehaviorType.Pursuit, machinePursuit);
 
 AIStateMachine machineCombat = new();
-machineCombat.AddBehavior(new AttackBehavior(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, () => pistol.Magazine.GetNextBullet()?.Speed ?? 0f, BulletHandler.SleepMs));
+InfoGun infoGunMachineCombatDevil = new(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, () => pistol.Magazine.GetNextBullet()?.Speed ?? 0f, BulletHandler.SleepMs);
+List<IAimStrategy> aimStrategiesMachineCombatDevil = new List<IAimStrategy>()
+{
+    new DirectAimStrategy(),
+    new PredictiveAimStrategy(),
+};
+machineCombat.AddBehavior(new AttackBehavior(infoGunMachineCombatDevil, aimStrategiesMachineCombatDevil) { IsBlocked = blockedFromZone });
+var dodgeStepsDevil = new List<DodgeStep>()
+{ 
+    new(DodgeDirection.Left, 100),
+     new(DodgeDirection.Right, 200),
+     new(DodgeDirection.Left, 200),
+     new(DodgeDirection.Right, 200),
+     new(DodgeDirection.Left, 100),
+     new(DodgeDirection.Right, 300),
+};
+machineCombat.AddBehavior(new DodgeBehavior(dodgeStepsDevil) { IsBlocked = blockedFromZone });
+machineCombat.AddTransition<AttackBehavior, DodgeBehavior>(BehaviorStatus.Success);
+machineCombat.AddTransition<DodgeBehavior, AttackBehavior>(BehaviorStatus.Success);
 machineCombat.SetBehavior<AttackBehavior>();
 devil.behavioral.Context.OnEvent += evt =>
 {
@@ -1014,7 +1043,8 @@ devil.behavioral.AddStateMachine(AIBehaviorType.Combat, machineCombat);
 
 
 AIStateMachine machineMovement = new();
-var blockedMovement = (AIContext ctx) => 
+var blockedMovement = (AIContext ctx) =>
+    blockedFromZone.Invoke(ctx) == true ||
     ctx.Controller?.GetMachine(AIBehaviorType.Emotion)?.IsSignaled == true ||
     ctx.Controller?.GetMachine(AIBehaviorType.Combat)?.IsRunning == true ||
     ctx.Controller?.GetMachine(AIBehaviorType.Pursuit)?.IsRunning == true;

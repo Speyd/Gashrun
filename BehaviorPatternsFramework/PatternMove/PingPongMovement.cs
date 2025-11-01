@@ -33,8 +33,8 @@ public class PingPongMovement : IAIBehavior
     }
 
     public int HalfMovementDurationMs => MovementDurationMs / 2;
-    private double MovementCycleSeconds => MovementDurationMs / 1000.0;
-    private double HalfMovementCycleSeconds => HalfMovementDurationMs / 1000.0;
+    private double MovementCycleSeconds => MovementDurationMs / 1000f;
+    private double HalfMovementCycleSeconds => HalfMovementDurationMs / 1000f;
 
     public bool IsReturnPhase { get; private set; } = false;
     public bool IsHalfTurnDone { get; private set; } = false;
