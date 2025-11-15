@@ -135,7 +135,7 @@ public class Magazine
     }
     public bool UseAmmo()
     {
-        if (IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
+        if (Owner is null || IsReload == true || (MagazineBullet.Capacity == 0 && ClipBullet.Capacity == 0))
             return false;
 
         if (ClipBullet.Capacity > 0)

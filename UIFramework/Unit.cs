@@ -39,6 +39,7 @@ using TextureLib.Loader;
 using TextureLib.Textures;
 using BehaviorPatternsFramework.Behavior;
 using System;
+using AnimationLib.Core;
 
 namespace UIFramework;
 public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, IKnockbackable
@@ -56,7 +57,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float GroundLevel { get; set; } = 0;
     public float JumpElapsed { get; set; } = 0;
     public float JumpDuration { get; set; } = 0.2f;
-    public float JumpHeight { get; set; } = 1500;
+    public float JumpHeight { get; set; } = 200;
     public float CurrentJumpForce { get; set; } = 1000;
     public float InitialJumpHeight { get; set; } = 0;
     public float Gravity { get; } = 100000;
@@ -179,11 +180,9 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public ControlLib.Control Control { get; init; } = new ControlLib.Control();
     #endregion
 
-
-    public Unit(SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
-       : base(obstacle, createNewTexture)
+    public Unit(Animator animator, int maxHp, ImageLoadOptions? option = null)
+       : base(animator, option)
     {
-        Animation = obstacle.Animation;
         Hp = new Stat(maxHp);
 
         Hp.OnDepleted += ClearingDataAfteDeath;
@@ -204,8 +203,31 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         };
         PhysicsHandler.Register(this);
     }
-    public Unit(IMap map, SpriteObstacle obstacle, int maxHp, bool createNewTexture = true)
-       : base(obstacle, createNewTexture)
+    public Unit(SpriteObstacle obstacle, int maxHp, ImageLoadOptions? option = null)
+       : base(obstacle, option)
+    {
+        Hp = new Stat(maxHp);
+
+        Hp.OnDepleted += ClearingDataAfteDeath;
+
+        Fov = Math.PI / 3;
+        HalfFov = (float)Fov / 2;
+
+        Angle = 0;
+        Angle -= 0.000001;
+        VerticalAngle -= 0.000001;
+        MaxRenderTile = 1200;
+        ObserverSettingChangesFun();
+        Screen.WidthChangesFun += ObserverSettingChangesFun;
+        physicsStrategies = new List<IPhysicsUpdateStrategy>
+        {
+            new JumpStrategy(),
+            new KnockbackStrategy(),
+        };
+        PhysicsHandler.Register(this);
+    }
+    public Unit(IMap map, SpriteObstacle obstacle, int maxHp, ImageLoadOptions? option = null)
+       : base(obstacle, option)
     {
         Map = map;
         Animation = obstacle.Animation;
@@ -229,8 +251,8 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         };
         PhysicsHandler.Register(this);
     }
-    public Unit(Unit unit, bool updateTexture = true)
-       : base(unit, false)
+    public Unit(Unit unit, ImageLoadOptions? option = null)
+       : base(unit, option)
     {
         physicsStrategies = new List<IPhysicsUpdateStrategy>
         {

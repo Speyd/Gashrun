@@ -1,8 +1,10 @@
 ﻿using AnimationLib;
+using AnimationLib.Core.Elements;
 using ProtoRender.Object;
 using ScreenLib;
 using SFML.Graphics;
 using SFML.System;
+using TextureLib.Loader;
 using TextureLib.Textures;
 using UIFramework.Border;
 using UIFramework.Render;
@@ -79,7 +81,7 @@ public class UIShape : UIElement, ITransformable2D
         }
     }
     public RectangleShape RectangleShape { get; set; }
-    public AnimationState AnimationState { get; set; } = new();
+    public Frame Animation{ get; set; } = new();
 
     public IBorder? Border { get; set; }
     public Vector2f Origin
@@ -128,11 +130,11 @@ public class UIShape : UIElement, ITransformable2D
 
         Drawables.Add(RectangleShape);
     }
-    public UIShape(UIShape uIShape, bool createNewTextures = true, IUnit? owner = null)
+    public UIShape(UIShape uIShape, ImageLoadOptions options = null, IUnit? owner = null)
         : base(owner)
     {
         RectangleShape = new RectangleShape(uIShape.RectangleShape);
-        AnimationState = createNewTextures ? new AnimationState(uIShape.AnimationState) : uIShape.AnimationState;
+        Animation = options is not null && options.CreateNew ? new Frame(uIShape.Animation, options) : uIShape.Animation;
 
         RenderOrder = uIShape.RenderOrder;
         PreviousScreenHeight = uIShape.PreviousScreenHeight;
@@ -149,10 +151,11 @@ public class UIShape : UIElement, ITransformable2D
     public override void UpdateInfo()
     {
         Border?.Update(this);
-        AnimationManager.DefiningDesiredSprite(AnimationState, Owner?.Angle ?? 0);
-        RectangleShape.Texture = AnimationState.CurrentFrame?.Texture ?? TextureWrapper.Placeholder.Texture;
-        if (RectangleShape.TextureRect != AnimationState.MaxFrameRect)
-            RectangleShape.TextureRect = AnimationState.MaxFrameRect;
+        Animation.Update((float)(Owner?.Angle ?? 0));
+
+        RectangleShape.Texture = Animation.CurrentElement?.Texture ?? TextureWrapper.Placeholder.Texture;
+        if (RectangleShape.TextureRect != Animation.MaxFrameRect)
+            RectangleShape.TextureRect = Animation.MaxFrameRect;
     }
     public override void ToggleVisibilityObject()
     {

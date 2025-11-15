@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.0" />
-    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.4.7" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.1.9" />
+    <PackageReference Include="EnginePseudo3D.HitBoxLib" Version="1.7.2" />
+    <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.5.1" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.3.5" />
   </ItemGroup>
 
   <ItemGroup>

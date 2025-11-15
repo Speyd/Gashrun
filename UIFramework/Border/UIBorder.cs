@@ -21,8 +21,8 @@ public class UIBorder : UIAnimation, IBorder
     public float ExtraScaleY { get; set; } = 1.4f;
 
 
-    public UIBorder(ImageLoadOptions? options = null, bool loadAsync = true, ButtonBinding? bottomBinding = null, params string[] paths)
-        : base(options, loadAsync, bottomBinding, paths)
+    public UIBorder(ImageLoadOptions? options = null, ButtonBinding? bottomBinding = null, params string[] paths)
+        : base(options, bottomBinding, paths)
     {}
 
     public Vector2f GetScaledOrigin(Vector2u baseOrigin, Vector2f targetScaleOrigin)
@@ -62,7 +62,7 @@ public class UIBorder : UIAnimation, IBorder
     }
 
 
-    public void UpdateWidth()
+    public override void UpdateWidth()
     {
         float widthScale = Screen.ScreenWidth / PreviousScreenWidth;
         ExtraScaleX /= widthScale;
@@ -70,7 +70,7 @@ public class UIBorder : UIAnimation, IBorder
 
         PreviousScreenWidth = Screen.ScreenWidth;
     }
-    public void UpdateHeight()
+    public override void UpdateHeight()
     {
         float heightScale = Screen.ScreenHeight / PreviousScreenHeight;
         ExtraScaleY /= heightScale;

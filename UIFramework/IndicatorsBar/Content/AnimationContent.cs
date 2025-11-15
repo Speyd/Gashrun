@@ -1,35 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
-using AnimationLib;
+﻿using AnimationLib.Core.Elements;
 using SFML.Graphics;
-using TextureLib.Loader.ImageProcessing;
-using UIFramework.Animation;
+using TextureLib.Loader;
 
 namespace UIFramework.IndicatorsBar.Content;
-public class AnimationContent : AnimationState, IBarContent
+public class AnimationContent : Frame, IBarContent
 {
+    public AnimationContent(params string[] paths)
+        : base(null, paths)
+    { this.SpeedAnimation = 20; }
     public AnimationContent(ImageLoadOptions? options = null, params string[] paths)
-        : base(options, true, paths)
-    { }
-    public AnimationContent(AnimationState state)
-       : base(state)
+        : base(options, paths)
+    { this.SpeedAnimation = 20; }
+
+    public AnimationContent(Frame state, ImageLoadOptions? options = null)
+       : base(state, options)
     {
+        this.SpeedAnimation = state.SpeedAnimation;
     }
 
     public void UpdateContent(RectangleShape bar)
     {
-        if (CurrentFrame is not null && AnimationMode != AnimationMode.Animated)
+        if (CurrentElement is not null)
             return;
 
-        AnimationManager.DefiningDesiredSprite(this, 0);
-        if (CurrentFrame?.Texture is null)
+        Update();
+        if (CurrentElement?.Texture is null)
             return;
 
-        UpdateTexture(bar, CurrentFrame.Texture);
+        UpdateTexture(bar, CurrentElement.Texture);
     }
     public void UpdateTexture(RectangleShape bar, SFML.Graphics.Texture? texture)
     {

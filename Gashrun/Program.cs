@@ -62,6 +62,16 @@ using UIFramework.Weapon.Bullets;
 using BehaviorPatternsFramework;
 using BehaviorPatternsFramework.PatternMove.Dodge;
 using BehaviorPatternsFramework.PatternAttack.Strategy;
+using MoveLib;
+using MoveLib.Angle;
+using MoveLib.Move;
+using AnimationLib.Core.Elements;
+using AnimationLib.Core;
+using AnimationLib.Selector;
+using AnimationLib.Enum;
+using AnimationLib.Core.Utils;
+using System.Diagnostics;
+using InteractionFramework.Death;
 
 
 Screen.Initialize(1000, 600);
@@ -74,6 +84,7 @@ Console.WriteLine(RayTracingLib.Raycast.CoordinatesMoving);
 SpriteObstacle.GlobalMinDistance = 0;
 RenderAlgorithm.UseHeightPerspective = false;
 RenderAlgorithm.UseVerticalPerspective = false;
+PhysicsHandler.delayMs = 2;
 
 MoveLib.Move.Collision.RadiusCheckTouch = 3;
 PathResolver.SearchPattern = "Resources";
@@ -129,6 +140,7 @@ string BrickBloodWallPng = PathResolver.GetPath(Path.Combine("Resources", "Image
 string BrickDoorPng = PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "BrickDoor.png"));
 string BigLampePng = PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "BigLampe"));
 string HumanPng = PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Human"));
+string RabbitGif = PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Rabbit"));
 string DevilPng = PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Devil"));
 string RotatingNewspaperGif = PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "RotatingNewspaper"));
 #endregion
@@ -244,10 +256,11 @@ SoundCloseDoor.Sound.Attenuation = 1.5f;
 #region VisualImpactData
 
 #region Falling Particles
-ObstacleLib.SpriteLib.SpriteObstacle spriteEffectFallingParticlesHit = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, VisualEffectBulletGlassGif));
-spriteEffectFallingParticlesHit.Animation.AnimationMode = AnimationMode.Animated;
+Frame spriteEffectFallingParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, VisualEffectBulletGlassGif);
+spriteEffectFallingParticlesHitFrame.BaseSelector = new AnimationSelector();
+spriteEffectFallingParticlesHitFrame.SpeedAnimation = 80;
 
-spriteEffectFallingParticlesHit.Animation.Speed = 80;
+SpriteObstacle spriteEffectFallingParticlesHit = new SpriteObstacle(spriteEffectFallingParticlesHitFrame);
 spriteEffectFallingParticlesHit.IsPassability = true;
 spriteEffectFallingParticlesHit.Scale = 120;
 
@@ -255,21 +268,23 @@ VisualImpactData visualImpactEffectFallingParticles = new(spriteEffectFallingPar
 #endregion
 
 #region Explosion Particles
-ObstacleLib.SpriteLib.SpriteObstacle spriteEffectExplosionParticlesHit = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, VisualEffectBulletBrickGif));
-spriteEffectExplosionParticlesHit.Animation.AnimationMode = AnimationMode.Animated;
+Frame spriteEffectExplosionParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, VisualEffectBulletBrickGif);
+spriteEffectExplosionParticlesHitFrame.BaseSelector = new AnimationSelector();
+spriteEffectExplosionParticlesHitFrame.SpeedAnimation = 65;
 
-spriteEffectExplosionParticlesHit.Animation.Speed = 80;
+SpriteObstacle spriteEffectExplosionParticlesHit = new SpriteObstacle(spriteEffectExplosionParticlesHitFrame);
 spriteEffectExplosionParticlesHit.IsPassability = true;
 spriteEffectExplosionParticlesHit.Scale = 30;
 
-VisualImpactData visualImpactEffectExplosionParticles = new(spriteEffectExplosionParticlesHit, 500, false);
+VisualImpactData visualImpactEffectExplosionParticles = new(spriteEffectExplosionParticlesHit, 300, false);
 #endregion
 
 #region Red Wave
-ObstacleLib.SpriteLib.SpriteObstacle spriteEffectRedWaveHit = new(new AnimationState(new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false, VisualEffectBulletBorderGif));
-spriteEffectRedWaveHit.Animation.AnimationMode = AnimationMode.Animated;
+Frame spriteEffectRedWaveHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, VisualEffectBulletBorderGif);
+spriteEffectRedWaveHitFrame.BaseSelector = new AnimationSelector();
+spriteEffectRedWaveHitFrame.SpeedAnimation = 20;
 
-spriteEffectRedWaveHit.Animation.Speed = 20;
+SpriteObstacle spriteEffectRedWaveHit = new SpriteObstacle(spriteEffectRedWaveHitFrame);
 spriteEffectRedWaveHit.IsPassability = true;
 spriteEffectRedWaveHit.Scale = 30;
 
@@ -285,17 +300,17 @@ HitEffect borderWallHitEffect = new HitEffect(visualImpactEffectRedWave, null, S
 #endregion
 
 #region BrickWallWithGlass
-HitDrawableBatch brickWallWithGlassHitDrawableBatch = new(null, true, GlassHitDrawableBatchDir);
+HitDrawableBatch brickWallWithGlassHitDrawableBatch = new(null, GlassHitDrawableBatchDir);
 HitEffect brickWallWithGlassHitEffect = new HitEffect(visualImpactEffectFallingParticles, brickWallWithGlassHitDrawableBatch, SoundHitGlass);
 #endregion
 
 #region BrickWall
-HitDrawableBatch brickWallHitDrawableBatch = new(null, true, OrangeBrickHitDrawableBatchDir);
+HitDrawableBatch brickWallHitDrawableBatch = new(null, OrangeBrickHitDrawableBatchDir);
 HitEffect brickWallHitEffect = new HitEffect(visualImpactEffectExplosionParticles, brickWallHitDrawableBatch, SoundHitBrickWall);
 #endregion
 
 #region BrickDoor
-HitDrawableBatch wallDoorHitDrawableBatch = new(null, true, WoodHitDrawableBatchDir);
+HitDrawableBatch wallDoorHitDrawableBatch = new(null, WoodHitDrawableBatchDir);
 HitEffect wallDoorHitEffect = new HitEffect(visualImpactEffectFallingParticles, wallDoorHitDrawableBatch, SoundHitWood);
 #endregion
 
@@ -314,7 +329,7 @@ HitDataCache.Load(RedBarrierPng, borderWallHitEffect);
 #region Create Main Map
 
 #region Map
-TexturedWall boundaryWall = new TexturedWall(null, false, RedBarrierPng);
+TexturedWall boundaryWall = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, RedBarrierPng);
 boundaryWall.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100000);
 boundaryWall.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100000);
 
@@ -325,14 +340,17 @@ EffectManager.CurrentEffect = effectMainMap;
 #region Unit
 
 #region Main Unit
-Unitu unit = new Unitu(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100000);
+Frame unitFrame = new Frame(HumanPng);
+unitFrame.BaseSelector = new ViewAngleSelector();
+
+Unitu unit = new Unitu(new SpriteObstacle(unitFrame), 100000);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
-unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(1000);
-unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(1000);
+unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(300);
+unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(300);
 unit.ShiftCubedX = 50;
 unit.ShiftCubedY = 50;
 unit.MoveSpeed = 400;
@@ -341,10 +359,62 @@ map?.AddObstacle(5, 5, unit);
 #endregion
 
 #region Devil
-Unit devil = new Unit(new ObstacleLib.SpriteLib.SpriteObstacle(HumanPng), 100);
+
+Frame t1 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "1")));
+Frame t2 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "2")));
+Frame t3 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "3")));
+Frame t4 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "4")));
+
+
+AnimationClip animation = new AnimationClip(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "1")));
+//animation.AddElement(t1);
+animation.AddElement(t2);
+animation.AddElement(t3);
+animation.AddElement(t4);
+Console.WriteLine(animation.CountElements);
+animation.BaseSelector = new AnimationSelector();
+animation.FrameSelector = new ViewAngleSelector();
+animation.PlayMode = PlayMode.Loop;
+
+AnimationClip animation2 = new AnimationClip(t1);
+animation2.AddElement(t1);
+animation2.FrameSelector = new ViewAngleSelector();
+
+
+Frame t5 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "5")));
+t5.RectMode = FrameRectMode.UseCurrentFrameRect;
+Frame t6 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "6")));
+t6.RectMode = FrameRectMode.UseCurrentFrameRect;
+
+Frame t7 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "7")));
+t7.RectMode = FrameRectMode.UseCurrentFrameRect;
+
+Frame t8 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "8")));
+t8.RectMode = FrameRectMode.UseCurrentFrameRect;
+
+AnimationClip animation3 = new AnimationClip();
+animation3.AddElement(t5);
+animation3.AddElement(t6);
+animation3.AddElement(t7);
+animation3.AddElement(t8);
+animation3.BaseSelector = new AnimationSelector();
+animation3.FrameSelector = new ViewAngleSelector();
+animation3.PlayMode = PlayMode.Once;
+
+Animator animationController = new Animator(animation2);
+animationController.AddAnimation("MoveHorizontal", animation, 1);
+animationController.AddAnimation("Attack", animation3, 2);
+
+Unit devil = new Unit(new SpriteObstacle(animationController), 100);
+
+
 devil.MoveSpeed = 300;
+devil.X.OnStartMove = () => { animationController.Play("MoveHorizontal"); };
+devil.Y.OnStartMove = () => { animationController.Play("MoveHorizontal"); };
 
-
+devil.X.OnStopMove = () => { if (!devil.Y.IsMoving) animationController.Stop("MoveHorizontal"); };
+devil.Y.OnStopMove = () => { if (!devil.X.IsMoving) animationController.Stop("MoveHorizontal"); };
+devil.GroundLevel = -150;
 
 devil.Scale = 100;
 devil.Angle = 0.7f;
@@ -352,9 +422,11 @@ devil.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
 devil.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
 devil.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
 devil.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
-devil.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(800);
-devil.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(400);
+devil.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(300);
+devil.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(300);
 map?.AddObstacle(4, 3, devil);
+
+
 devil.DialogSprite = new UISprite(PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Devil", "3.png")));
 devil.DialogSprite.Scale = new Vector2f(0.5f, 0.5f);
 devil.DialogSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(10), Screen.GetPercentHeight(40));
@@ -367,6 +439,31 @@ devil.DisplayName.SetText("Monster");
 devil.DisplayName.VerticalAlignment = VerticalAlign.Center;
 devil.DisplayName.HorizontalAlignment = HorizontalAlign.Center;
 devil.DisplayName.RenderOrder = RenderOrder.DialogItem;
+
+
+Frame devilDeathFrame = new Frame(new ImageLoadOptions() { LoadAsync = true }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "9")));
+devilDeathFrame.BaseSelector = new AnimationSelector();
+devil.DeathAnimation = new DeathEffect(devilDeathFrame, DeathPhase.FrozenFinalFrame, 5500);
+#endregion
+
+#region Rebbit
+Frame rabbitFrame = new(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, RabbitGif);
+rabbitFrame.BaseSelector = new AnimationSelector();
+rabbitFrame.PlayMode = PlayMode.Once;
+rabbitFrame.SpeedAnimation = 7;
+
+Unit rabbit = new Unit(new SpriteObstacle(rabbitFrame), 100);
+rabbit.MoveSpeed = 300;
+rabbit.Z.Axis = -400;
+
+rabbit.Scale = 60;
+rabbit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
+rabbit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
+rabbit.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
+rabbit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
+rabbit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(200);
+rabbit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(200);
+map?.AddObstacle(14, 12, rabbit);
 #endregion
 
 #endregion
@@ -381,7 +478,7 @@ devil.DisplayName.RenderOrder = RenderOrder.DialogItem;
 //I see you! X: 800 | Y: 400
 //Angleeeeeeee: X: 400 | Y: 300
 
-TexturedWall MainMapMisticBrickWall = new TexturedWall(null, false, BrickWallPng);
+TexturedWall MainMapMisticBrickWall = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickWallPng);
 map.AddObstacle(8, 1, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(8, 3, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(8, 5, MainMapMisticBrickWall.GetDeepCopy());
@@ -393,7 +490,7 @@ map.AddObstacle(14, 5, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(14, 3, MainMapMisticBrickWall.GetDeepCopy());
 map.AddObstacle(14, 1, MainMapMisticBrickWall.GetDeepCopy());
 
-TexturedWall MainMapMisticBrickWindow = new TexturedWall(null, false, BrickWindowPng);
+TexturedWall MainMapMisticBrickWindow = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickWindowPng);
 map.AddObstacle(8, 2, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(8, 4, MainMapMisticBrickWindow.GetDeepCopy());
 //map.AddObstacle(10, 6, MainMapMisticBrickWindow.GetDeepCopy());
@@ -401,7 +498,7 @@ map.AddObstacle(12, 6, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(14, 4, MainMapMisticBrickWindow.GetDeepCopy());
 map.AddObstacle(14, 2, MainMapMisticBrickWindow.GetDeepCopy());
 
-TexturedWall MainMapMisticBrickDoor = new TexturedWall(null, false, BrickDoorPng);
+TexturedWall MainMapMisticBrickDoor = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickDoorPng);
 map.AddObstacle(11, 6, MainMapMisticBrickDoor);
 #endregion
 
@@ -423,10 +520,10 @@ Action CreateHouseMap = () =>
 {
     houseMap = new Map(8, 7);
 
-    TexturedWall MisticHouseBrickDoor = new TexturedWall(null, false, BrickDoorPng);
+    TexturedWall MisticHouseBrickDoor = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickDoorPng);
     houseMap.AddObstacle(positionMisticHouseBrickDoor.X, positionMisticHouseBrickDoor.Y, MisticHouseBrickDoor);
 
-    TexturedWall MisticHouseBrickWall = new TexturedWall(null, false, BrickWallPng);
+    TexturedWall MisticHouseBrickWall = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickWallPng);
     houseMap.AddObstacle(0, 0, MisticHouseBrickWall.GetDeepCopy());
     houseMap.AddObstacle(0, 1, MisticHouseBrickWall.GetDeepCopy());
     houseMap.AddObstacle(0, 6, MisticHouseBrickWall.GetDeepCopy());
@@ -444,10 +541,10 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(7, 5, MisticHouseBrickWall.GetDeepCopy());
     houseMap.AddObstacle(7, 1, MisticHouseBrickWall.GetDeepCopy());
 
-    TexturedWall MisticHouseBrickBloodWall = new TexturedWall(null, false, BrickBloodWallPng);
+    TexturedWall MisticHouseBrickBloodWall = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickBloodWallPng);
     houseMap.AddObstacle(7, 3, MisticHouseBrickBloodWall.GetDeepCopy());
 
-    TexturedWall MisticHouseBrickWindow = new TexturedWall(null, false, BrickWindowPng);
+    TexturedWall MisticHouseBrickWindow = new TexturedWall(new ImageLoadOptions() { LoadAsync = false, CreateNew = false }, BrickWindowPng);
     houseMap.AddObstacle(0, 4, MisticHouseBrickWindow.GetDeepCopy());
     houseMap.AddObstacle(0, 2, MisticHouseBrickWindow.GetDeepCopy());
     houseMap.AddObstacle(2, 0, MisticHouseBrickWindow.GetDeepCopy());
@@ -458,20 +555,21 @@ Action CreateHouseMap = () =>
     houseMap.AddObstacle(7, 2, MisticHouseBrickWindow.GetDeepCopy());
 
     #region Unit
-    Unit? newspaperHint = new Unit(new SpriteObstacle(RotatingNewspaperGif, new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false), 100, false);
-    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(10);
-    newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(10);
-    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(10);
-    newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(10);
-    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(150);
-    newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(150);
+    Frame newspaperHintFrame = new(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, RotatingNewspaperGif);
+    newspaperHintFrame.BaseSelector = new AnimationSelector();
+    newspaperHintFrame.SpeedAnimation = 20;
 
-    newspaperHint.Scale = 64;
-    newspaperHint.ShiftCubedX = 50;
-    newspaperHint.ShiftCubedY = 50;
+    //Unit? newspaperHint = new Unit(new SpriteObstacle(newspaperHintFrame), 100);
+    //newspaperHint.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(10);
+    //newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(150);
+    //newspaperHint.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(150);
 
-    newspaperHint.Animation.Speed = 20;
-    newspaperHint.Animation.AnimationMode = AnimationMode.Animated;
+    //newspaperHint.Scale = 64;
+    //newspaperHint.ShiftCubedX = 50;
+    //newspaperHint.ShiftCubedY = 50;
 
 
     //SpriteObstacle? woodTable = new SpriteObstacle(PathResolver.GetMainPath(Path.Combine("Resources", "WoodTable.gif")), new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame }, false);
@@ -481,24 +579,26 @@ Action CreateHouseMap = () =>
     //woodTable.Z.Axis = -370;
     //woodTable.Animation.IsAnimation = false;
 
-    SpriteObstacle? lampeMisticHouse = new SpriteObstacle(BigLampePng, null, false);
+    Frame lampeMisticHouseFrame = new(BigLampePng);
+    lampeMisticHouseFrame.PlayMode = PlayMode.Pause;
+    SpriteObstacle? lampeMisticHouse = new SpriteObstacle(lampeMisticHouseFrame);
     lampeMisticHouse.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(20);
     lampeMisticHouse.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(20);
     lampeMisticHouse.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
     lampeMisticHouse.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
     lampeMisticHouse.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(350);
     lampeMisticHouse.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(350);
-    lampeMisticHouse.Animation.AnimationMode = AnimationMode.Static;
     lampeMisticHouse.Scale = 150;
     lampeMisticHouse.Z.Axis = -100;
+    lampeMisticHouse.ShiftCubedX = 20;
+    lampeMisticHouse.ShiftCubedY = 80;
+    houseMap?.AddObstacle(6, 1, new SpriteObstacle(lampeMisticHouse, new ImageLoadOptions(){ CreateNew = true }) { ShiftCubedX = 80, ShiftCubedY = 20 });
+    houseMap?.AddObstacle(1, 1, new SpriteObstacle(lampeMisticHouse, new ImageLoadOptions() { CreateNew = true }) { ShiftCubedX = 20, ShiftCubedY = 20 });
+    houseMap?.AddObstacle(6, 5, new SpriteObstacle(lampeMisticHouse, new ImageLoadOptions() { CreateNew = true }) { ShiftCubedX = 80, ShiftCubedY = 80 });
+    houseMap?.AddObstacle(1, 5, lampeMisticHouse);
 
-    houseMap?.AddObstacle(6, 1, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 80, ShiftCubedY = 20 });
-    houseMap?.AddObstacle(1, 1, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 20, ShiftCubedY = 20 });
-    houseMap?.AddObstacle(6, 5, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 80, ShiftCubedY = 80 });
-    houseMap?.AddObstacle(1, 5, new SpriteObstacle(lampeMisticHouse, true) { ShiftCubedX = 20, ShiftCubedY = 80 });
 
-
-    houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, newspaperHint);
+    //houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, newspaperHint);
     // houseMap?.AddObstacle(positionMisticHouseNewspaperHint.X, positionMisticHouseNewspaperHint.Y, woodTable);
     #endregion
 };
@@ -521,28 +621,28 @@ fadingTextOpenButton.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(65),
 #endregion
 
 #region Animation State
-AnimationState hpBarAnimation = new AnimationState(null, true, PathResolver.GetPath(Path.Combine("Resources", "UI", "small.gif")))
+Frame hpBarAnimation = new Frame(PathResolver.GetPath(Path.Combine("Resources", "UI", "small.gif")))
 {
-    AnimationMode = AnimationMode.Animated,
-    Speed = 30
+    BaseSelector = new AnimationSelector(),
+    SpeedAnimation = 30
 };
 #endregion
 
 #region Shape
 UIShape LoadShape = new UIShape(new RectangleShape(new Vector2f(Screen.ScreenWidth, Screen.ScreenHeight)));
-LoadShape.AnimationState.AddFrame(ImageLoader.Load(null, true, LoadingPng).FirstOrDefault() ?? TextureWrapper.Placeholder);
+LoadShape.Animation.AddElement(ImageLoader.Load(null, LoadingPng).FirstOrDefault() ?? TextureWrapper.Placeholder);
 LoadShape.RenderOrder = RenderOrder.SystemNotification;
 #endregion
 
 #region FillBar
-FillBar HpBar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent(SFML.Graphics.Color.Red), unit.Hp, unit)
-{
-    BorderThickness = 10,
-    Width = 400,
-    Height = 100,
-    PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
-    BorderFillColor = SFML.Graphics.Color.Black,
-};
+//FillBar HpBar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent(SFML.Graphics.Color.Red), unit.Hp, unit)
+//{
+//    BorderThickness = 10,
+//    Width = 400,
+//    Height = 100,
+//    PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
+//    BorderFillColor = SFML.Graphics.Color.Black,
+//};
 #endregion
 
 #endregion
@@ -775,10 +875,13 @@ touchBigLampeTrigger.OnTriggered = (unit) =>
     SoundLampSwitch.Play(obj.Map, new Vector3f((float)obj.X.Axis, (float)obj.Y.Axis, (float)obj.Z.Axis));
 
     int index = 0;
-    var currentTexture = animation.Animation.CurrentFrame?.PathTexture;
-    for (; index != animation.Animation.CountFrame; index++)
+    var currentTexture = animation.Animation.CurrentTexture?.PathTexture;
+    if (animation.Animation.CurrentFrame is null)
+        return;
+
+    for (; index != animation.Animation.CurrentFrame.CountElements; index++)
     {
-        var frame = animation.Animation.GetFrame(index);
+        var frame = animation.Animation.CurrentFrame.GetElement(index);
         if (currentTexture is not null && frame?.PathTexture != currentTexture)
         {
             if (frame?.PathTexture.Contains(LampeOn) == true)
@@ -786,7 +889,7 @@ touchBigLampeTrigger.OnTriggered = (unit) =>
             else
                 effectLamp.EffectEnd -= multLampEffect;
 
-            animation.Animation.SetCurrentFrame(index);
+            animation.Animation.CurrentFrame.SetCurrentElement(index);
             break;
         }
     }
@@ -799,9 +902,13 @@ TriggerHandler.AddTriger(unit, touchBigLampeTrigger);
 
 
 #region Bullets
-var devilBulletUnit = new Unit(new SpriteObstacle(DevilPng), 0, false);
-devilBulletUnit.Animation.AnimationMode = AnimationMode.Animated;
-devilBulletUnit.Animation.Speed = 30;
+Frame devilBulletUnitFrame = new Frame(DevilPng)
+{
+    SpeedAnimation = 30,
+    BaseSelector = new AnimationSelector(),
+};
+
+var devilBulletUnit = new Unit(new SpriteObstacle(new Frame(DevilPng)), 0);
 devilBulletUnit.Scale = 15;
 devilBulletUnit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(10);
 devilBulletUnit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(10);
@@ -820,11 +927,11 @@ var shootPistol = new ControlLib.Buttons.ButtonBinding(LeftButton, null, 100);
 #endregion
 
 #region Pistol
-ImageLoadOptions pistolImageLoadOptions = new ImageLoadOptions() { FrameLoadMode = FrameLoadMode.FullFrame };
-UIAnimation pistolAnimation = new UIAnimation(pistolImageLoadOptions, false, PistolGif)
+ImageLoadOptions pistolImageLoadOptions = new ImageLoadOptions() { LoadAsync = false, ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } };
+UIAnimation pistolAnimation = new UIAnimation(pistolImageLoadOptions, PistolGif)
 {
-    AnimationMode = AnimationMode.Animated,
-    Speed = 35,
+    BaseSelector = new AnimationSelector(),
+    SpeedAnimation = 35,
     PercentShiftX = 6f,
     PercentShiftY = -38,
     ScaleY = 1.3f,
@@ -947,9 +1054,10 @@ var pistolUnit = new Gun(pistol, null, unit);
 
 #region devil
 
-var pistolDevil = new Gun(pistol, new(RightButton, null, 100), devil);
-
+var pistolDevil = new Gun(pistol, new(RightButton, null, 2500), devil);
+pistolDevil.SpriteAnimationName = "Attack";
 #endregion
+
 
 #endregion
 
@@ -970,10 +1078,46 @@ unit?.Control.AddBottomBind(new ButtonBinding(F6, () => { fpsUnt.IsHide = !fpsUn
 
 unit?.Control.AddBottomBind(new ButtonBinding(jumb, devil.Jump));
 
+
+
 unit?.Control.AddBottomBind(closeWindow);
 
 
-unit?.Control.AddBottomBind(pistolDevil.Animation.BottomBinding);
+unit?.Control.AddBottomBind(pistolDevil.UIAnimation.BottomBinding);
+#endregion
+
+#region Rabbit
+rabbit.behavioral = new AIController(rabbit);
+
+AIStateMachine machineMovementRabbit = new();
+var blockedMovementRabbit = (AIContext ctx) =>
+    ctx.Controller?.GetMachine(AIBehaviorType.Emotion)?.IsSignaled == true ||
+    ctx.Controller?.GetMachine(AIBehaviorType.Pursuit)?.IsRunning == true;
+
+machineMovementRabbit.AddBehavior(new MoveBehavior());
+machineMovementRabbit.AddBehavior(new JumpBehavior() { IsBlocked = blockedMovementRabbit, 
+FuncSuccess = (cxt) =>
+{
+    if (rabbit.Animation.CurrentFrame is not null)
+    {
+        rabbit.Animation.CurrentFrame.IsFinishMode = false;
+
+    }
+},
+});
+machineMovementRabbit.AddBehavior(new WaitBehavior() { WaitDurationMs = 200 });
+machineMovementRabbit.AddBehavior(new MoveCamera() { AngleStrategy = new RandomAngleStrategy() });
+
+
+machineMovementRabbit.AddTransition<JumpBehavior, MoveBehavior>(BehaviorStatus.Success);
+machineMovementRabbit.AddTransition<MoveBehavior, MoveCamera>(BehaviorStatus.Success);
+machineMovementRabbit.AddTransition<MoveCamera, WaitBehavior>(BehaviorStatus.Success);
+machineMovementRabbit.AddTransition<WaitBehavior, JumpBehavior>(BehaviorStatus.Success);
+
+machineMovementRabbit.SetBehavior<JumpBehavior>();
+rabbit.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit);
+
+rabbit.behavioral.Start();
 #endregion
 
 #region Devil
@@ -1005,6 +1149,8 @@ var blockedPursuit = (AIContext ctx) =>
 machinePursuit.AddBehavior(new PersecutionBehavior() { IsBlocked = blockedPursuit });
 machinePursuit.SetBehavior<PersecutionBehavior>();
 devil.behavioral.AddStateMachine(AIBehaviorType.Pursuit, machinePursuit);
+
+
 
 AIStateMachine machineCombat = new();
 InfoGun infoGunMachineCombatDevil = new(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, () => pistol.Magazine.GetNextBullet()?.Speed ?? 0f, BulletHandler.SleepMs);

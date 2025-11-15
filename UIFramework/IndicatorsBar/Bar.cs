@@ -14,6 +14,7 @@ using NGenerics.DataStructures.General;
 using UIFramework.Text.AlignEnums;
 using AnimationLib;
 using TextureLib.Textures;
+using AnimationLib.Core.Elements;
 
 
 namespace UIFramework.IndicatorsBar;
@@ -87,8 +88,8 @@ public class Bar: UIElement
         }
     }
 
-    private AnimationState? _fillTexture = null;
-    public AnimationState? FillTexture
+    private Frame? _fillTexture = null;
+    public Frame? FillTexture
     {
         get => _fillTexture;
         set
@@ -201,7 +202,7 @@ public class Bar: UIElement
         if (FillTexture is null)
             return;
 
-        AnimationManager.DefiningDesiredSprite(FillTexture, Owner?.Angle ?? 0);
-        Border.Texture = FillTexture.CurrentFrame?.Texture ?? TextureWrapper.Placeholder.Texture;
+        FillTexture.Update((float)(Owner?.Angle ?? 0));
+        Border.Texture = FillTexture.CurrentElement?.Texture ?? TextureWrapper.Placeholder.Texture;
     }
 }

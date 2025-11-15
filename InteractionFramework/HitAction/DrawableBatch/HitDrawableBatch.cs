@@ -1,16 +1,8 @@
-﻿using NGenerics.Extensions;
-using ObstacleLib.SpriteLib.Add;
-using ObstacleLib.TexturedWallLib;
-using SFML.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using SFML.Graphics;
 using TextureLib.Loader;
 using TextureLib.DataCache;
 using TextureLib.Textures;
-using System.Xml.Linq;
-using TextureLib.Loader.ImageProcessing;
+
 
 
 namespace InteractionFramework.HitAction.DrawableBatch;
@@ -27,14 +19,12 @@ public class HitDrawableBatch
 
         IsLoaded = true;
     }
-    public HitDrawableBatch(ImageLoadOptions? options = null, bool loadAsync = true, params string[] paths)
+    public HitDrawableBatch(ImageLoadOptions? options = null, params string[] paths)
     {
-        options = options ?? new ImageLoadOptions();
-
-        if (loadAsync)
-            _ = LoadAsync(ImageLoader.LoadAsync(options, true, paths));
+        if (options is not null && options.LoadAsync)
+            _ = LoadAsync(ImageLoader.LoadAsync(options, paths));
         else
-            LoadList(ImageLoader.Load(options, true, paths));
+            LoadList(ImageLoader.Load(options, paths));
     }
     public HitDrawableBatch(List<Drawable> drawList)
     {

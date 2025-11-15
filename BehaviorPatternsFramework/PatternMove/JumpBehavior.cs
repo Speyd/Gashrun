@@ -1,6 +1,7 @@
 ﻿using BehaviorPatternsFramework.Behavior;
 using BehaviorPatternsFramework.Enum;
 using ProtoRender.Physics;
+using System.Net.Quic;
 
 
 namespace BehaviorPatternsFramework.PatternMove;
@@ -8,7 +9,8 @@ public class JumpBehavior : IAIBehavior
 {
     public BehaviorStatus Status { get; private set; } = BehaviorStatus.Failure;
     public Func<AIContext, bool>? IsBlocked { get; set; }
-
+    public Action<AIContext>? FuncSuccess { get; set; }
+    public Action<AIContext>? FuncError { get; set; }
 
     private double _elapsedMs = 0;
     public long MovementDurationMs { get; set; }
@@ -22,8 +24,16 @@ public class JumpBehavior : IAIBehavior
             return;
         }
 
-        if (context.Owner is IJumper jumper)
-            _ = Task.Run(() => { jumper.Jump(); });
+        if (context.Owner is IJumper jumper && jumper.GroundState == GroundState.OnGround)
+        {
+            Status = BehaviorStatus.Success;
+            FuncSuccess?.Invoke(context);
+            jumper.Jump();
+        }
+
+        FuncError?.Invoke(context);
+        Status = BehaviorStatus.Success;
+
         // var deltaTimeMs = FPS.GetDeltaTime();
         //_elapsedMs += deltaTimeMs;
 
@@ -31,9 +41,7 @@ public class JumpBehavior : IAIBehavior
         // {
         // _elapsedMs = 0;
 
-        //}
-
-        Status = BehaviorStatus.Success;
+        //}     
     }
 
     public void Enter(AIContext context)

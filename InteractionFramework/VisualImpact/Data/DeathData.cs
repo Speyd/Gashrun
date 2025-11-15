@@ -5,7 +5,10 @@ using InteractionFramework.Death;
 using InteractionFramework.Audio.SoundType;
 using ProtoRender.Map;
 using TextureLib.Textures;
-using AnimationLib;
+using AnimationLib.Core;
+using AnimationLib.Core.Elements;
+using AnimationLib.Enum;
+using SFML.Graphics;
 
 
 namespace InteractionFramework.VisualImpact.Data;
@@ -26,7 +29,7 @@ public class DeathData : IBeyoundData
         DeathEffect = deathEffect;
         SoundEmitter = soundEmitter;
 
-        Sprite.Animation = DeathEffect.Animation;
+        Sprite.Animation = new Animator(DeathEffect.Animation);
         //Sprite.Animation.Index = 0;
     }
     public DeathData(DeathData deathData)
@@ -35,7 +38,7 @@ public class DeathData : IBeyoundData
         Sprite = deathData.Sprite;
         DeathEffect = deathData.DeathEffect;
 
-        Sprite.Animation = DeathEffect.Animation;
+        Sprite.Animation = new Animator(DeathEffect.Animation);
         //Sprite.Animation.Index = 0;
     }
 
@@ -70,8 +73,10 @@ public class DeathData : IBeyoundData
             case DeathPhase.AfterAnimation:
                 break;
             case DeathPhase.FrozenFinalFrame:
-                Sprite.Animation = new AnimationLib.AnimationState(Sprite.Animation.GetFrame(Sprite.Animation.CountFrame - 1) ?? TextureWrapper.Placeholder);
-                Sprite.Animation.AnimationMode = AnimationMode.Static;                                                                                                          //            Sprite.Animation.IsAnimation = false;
+                if (Sprite.Animation.CurrentFrame is null)
+                    return;
+
+                Sprite.Animation.CurrentFrame.PlayMode = PlayMode.Pause;                                                                       
                 break;
         }
     }
@@ -95,7 +100,7 @@ public class DeathData : IBeyoundData
     }
     public void UpdateCheckRemove(ConcurrentDictionary<int, IBeyoundData> toRemove)
     {
-        if (Sprite.Animation.Index == Sprite.Animation.CountFrame - 1)
+        if (Sprite.Animation.CurrentFrame?.Index == Sprite.Animation.CurrentFrame?.CountElements - 1)
         {
             DeathEffect.LastFrame = true;
             ActionBeforeLastFrame();

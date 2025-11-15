@@ -1,6 +1,11 @@
 ﻿using BehaviorPatternsFramework.Enum;
 using BehaviorPatternsFramework.Behavior;
 using BehaviorPatternsFramework.PatternAttack.Strategy;
+using SFML.System;
+using HitBoxLib.PositionObject;
+using HitBoxLib.Segment.SignsTypeSide;
+using ImageMagick;
+using ProtoRender.Object;
 
 namespace BehaviorPatternsFramework.PatternAttack;
 public class AttackBehavior : IAIBehavior
@@ -89,9 +94,48 @@ public class AttackBehavior : IAIBehavior
 
         float angle = strategy.GetAimAngle(context, InfoGun);
         context.Owner!.Angle = angle;
+        context.Owner!.VerticalAngle = GetVerticalAimAngle(context);
+
 
         InfoGun.AttackBind.SimulatePress();
         Status = BehaviorStatus.Success;
+    }
+
+    public float GetVerticalAimAngle(AIContext context)
+    {
+        var owner = context.Owner!;
+        var target = context.TargetObject!;
+
+        // Центры хитбоксов
+        var ownerCenter = GetHitboxCenter(owner);
+
+        var targetCenter = GetHitboxCenter(target);
+        // Δ между центрами
+        float dx = targetCenter.X - ownerCenter.X;
+        float dy = targetCenter.Y - ownerCenter.Y;
+        float dz = targetCenter.Z - ownerCenter.Z;
+
+        // Горизонтальная дистанция
+        float horizontalDist = MathF.Sqrt(dx * dx + dy * dy);
+
+        // Угол наклона (pitch)
+        return -MathF.Atan2(dz, horizontalDist);
+    }
+    Vector3f GetHitboxCenter(IObject obj)
+    {
+        float cx = (float)(obj.X.Axis +
+            (obj.HitBox[CoordinatePlane.X, SideSize.Smaller].Side +
+             obj.HitBox[CoordinatePlane.X, SideSize.Larger].Side) * 0.5);
+
+        float cy = (float)(obj.Y.Axis +
+            (obj.HitBox[CoordinatePlane.Y, SideSize.Smaller].Side +
+             obj.HitBox[CoordinatePlane.Y, SideSize.Larger].Side) * 0.5);
+
+        float cz = (float)(obj.Z.Axis +
+            (obj.HitBox[CoordinatePlane.Z, SideSize.Smaller].Side +
+             obj.HitBox[CoordinatePlane.Z, SideSize.Larger].Side) * 0.5);
+
+        return new Vector3f(cx, cy, cz);
     }
 
     public void Enter(AIContext context)
@@ -109,3 +153,4 @@ public class AttackBehavior : IAIBehavior
         return Status;
     }
 }
+
