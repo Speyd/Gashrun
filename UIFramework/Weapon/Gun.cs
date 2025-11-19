@@ -6,6 +6,8 @@ using AnimationLib;
 using ObjectFramework;
 using ProtoRender.Object;
 using AnimationLib.Core;
+using UIFramework.Weapon.Enum;
+using UIFramework.Weapon.AnimationPolicy;
 
 
 namespace UIFramework.Weapon;
@@ -18,14 +20,17 @@ public class Gun
         set
         {
             _owner = value;
+            animatable = value as IAnimatable;
             Magazine.Owner = value;
             UIAnimation.Owner = value;
             UIAnimation.BottomBinding = UIAnimation.BottomBinding;
         }
     }
+    private IAnimatable? animatable = null;
 
+    public IGunAnimationPolicy AnimationPolicy { get; set; } = new NoWaitAnimationPolicy();
     public UIAnimation UIAnimation { get; set; }
-    public string? SpriteAnimationName { get; set; }
+    public string SpriteAnimationName { get; set; } = string.Empty;
 
 
     public Magazine Magazine { get; set; }
@@ -36,8 +41,7 @@ public class Gun
         set => UIAnimation.BottomBinding = value;
     }
 
-    public Predicate<IUnit> Predicate { get; set; }
-    public bool IsRunning { get; private set; } = false;
+
 
     public Gun(UIAnimation animation, Magazine magazine, ButtonBinding bottomBinding, ProtoRender.Object.IUnit? owner = null)
     {
@@ -59,61 +63,30 @@ public class Gun
     {
     }
 
-
-    public async Task WaitAnimation(Animator? animator)
-    {
-        if (Owner is null || animator is null || SpriteAnimationName is null)
-            return;
-
-        var animation = animator.GetAnimation(SpriteAnimationName);
-        if(animation is null)
-            return;
-
-        animation.IsFinishMode = false;
-        animator.Play(SpriteAnimationName);
-        while (!animation.IsFinishMode)
-        {
-            await Task.Yield();
-        }
-
-        animator.Stop(SpriteAnimationName);
-    }
-
-
+   
     public async Task ShotAsync()
     {
-        if (Owner is null || IsRunning || ShootBinding?.IsWaiting == false)
+        if (!CanShoot())
             return;
 
-        IsRunning = true;
-        if (TryGetAnimator(out var animator))
-            await WaitAnimation(animator);
+        await AnimationPolicy.PlayAnimationAsync(animatable, SpriteAnimationName);
 
         if (Camera.CurrentUnit != Owner && Magazine.IsReload == true)
             Magazine.Reload();
 
         bool hasAmmo = Magazine.UseAmmo();
-
         if (hasAmmo && SoundShot is not null && Owner?.Map is not null)
         {
             SoundShot.Play(Owner.Map, new SFML.System.Vector3f((float)Owner.X.Axis, (float)Owner.Y.Axis, (float)Owner.Z.Axis));
         }
 
         UIAnimation.IsFinishMode = !hasAmmo;
-        IsRunning = false;
     }
 
-    public bool TryGetAnimator(out Animator? animator)
+    private bool CanShoot()
     {
-        if (Owner is IAnimatable anim)
-        {
-            animator = anim.Animation;
-            return animator != null;
-        }
-
-        animator = null;
-        return false;
+        return Owner is not null
+            && ShootBinding?.IsWaiting != false
+            && !AnimationPolicy.IsAnimationBlocking(animatable, SpriteAnimationName);
     }
-
-
 }

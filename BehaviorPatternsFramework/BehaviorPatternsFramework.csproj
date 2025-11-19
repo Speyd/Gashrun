@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="EnginePseudo3D.FpsLib" Version="1.6.0" />
     <PackageReference Include="EnginePseudo3D.MoveLib" Version="2.5.1" />
-    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.3.5" />
+    <PackageReference Include="EnginePseudo3D.ObstacleLib" Version="3.3.6" />
     <PackageReference Include="EnginePseudo3D.RayTracingLib" Version="2.5.7" />
   </ItemGroup>
 

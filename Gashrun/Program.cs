@@ -401,9 +401,11 @@ animation3.BaseSelector = new AnimationSelector();
 animation3.FrameSelector = new ViewAngleSelector();
 animation3.PlayMode = PlayMode.Once;
 
+
 Animator animationController = new Animator(animation2);
 animationController.AddAnimation("MoveHorizontal", animation, 1);
 animationController.AddAnimation("Attack", animation3, 2);
+animationController.GetAnimationEntry("Attack").UpdateMode = UpdateMode.Conditional;
 
 Unit devil = new Unit(new SpriteObstacle(animationController), 100);
 
@@ -1054,7 +1056,7 @@ var pistolUnit = new Gun(pistol, null, unit);
 
 #region devil
 
-var pistolDevil = new Gun(pistol, new(RightButton, null, 2500), devil);
+var pistolDevil = new Gun(pistol, new(RightButton, null, 100), devil);
 pistolDevil.SpriteAnimationName = "Attack";
 #endregion
 
