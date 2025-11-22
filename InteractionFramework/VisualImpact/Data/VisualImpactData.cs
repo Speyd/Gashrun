@@ -33,7 +33,7 @@ public class VisualImpactData : IBeyoundData
         Map = visualImpactData.Map;
 
         if (isCreate)
-            VisualImpact = new SpriteObstacle(visualImpactData.VisualImpact);
+            VisualImpact = new SpriteObstacle(visualImpactData.VisualImpact, new TextureLib.Loader.ImageLoadOptions() { CreateNew = true});
         else
             VisualImpact = visualImpactData.VisualImpact;
 

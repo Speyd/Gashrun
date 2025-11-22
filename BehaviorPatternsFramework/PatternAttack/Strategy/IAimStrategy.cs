@@ -3,5 +3,6 @@
 namespace BehaviorPatternsFramework.PatternAttack.Strategy;
 public interface IAimStrategy
 {
-    float GetAimAngle(AIContext context, InfoGun infoGun);
+    float GetAimHorizontalAngle(AIContext context, InfoGun infoGun);
+    float GetAimVerticalAngle(AIContext context, InfoGun infoGun);
 }

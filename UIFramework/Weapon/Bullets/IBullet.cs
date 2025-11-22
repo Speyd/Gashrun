@@ -12,7 +12,8 @@ public interface IBullet
 {
     IUnit? Owner { get; set; }
     float Damage { get; set; }
-    float Speed { get; set; }
+    float HorizontalSpeed { get; set; }
+    float VerticalSpeed { get; set; }
 
     public static float InfinityFlightDistance { get; } = -1;
     public static float BaseDamage { get; } = 1;

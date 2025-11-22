@@ -11,6 +11,8 @@ using SFML.Audio;
 namespace UIFramework.Weapon.Bullets.Variants;
 public class UnitBullet : Bullet
 {
+    private const float baseSpeed = 10;
+
     public override IUnit? Owner
     {
         get => _owner;
@@ -26,11 +28,8 @@ public class UnitBullet : Bullet
     public ISound? SoundFly { get; set; }
     private Sound? tempFlySound = null;
 
-    public override float Speed { get; set; }
-    public float VerticalSpeed { get; set; } = 35;
+    public override float VerticalSpeed { get; set; } = 35;
 
-
-    private const float baseSpeed = 10;
 
     private ConcurrentDictionary<IObject, byte> ignoreCollisionList = new();
 
@@ -39,7 +38,7 @@ public class UnitBullet : Bullet
         : base(damage, hitObject)
     {
         Unit = new Unit(unit);
-        Speed = speed;
+        HorizontalSpeed = speed;
     }
     public UnitBullet(float damage, Unit unit, ButtonBinding? hitObject)
        : this(damage, baseSpeed, unit, hitObject)
@@ -53,9 +52,6 @@ public class UnitBullet : Bullet
         Unit = new Unit(bullet.Unit);
         SoundFly = bullet.SoundFly;
 
-        Speed = bullet.Speed;
-        VerticalSpeed= bullet.VerticalSpeed;
-        Damage = bullet.Damage;
         ignoreCollisionList = !resetIngoreList? bullet.ignoreCollisionList : new();
     }
 
@@ -114,8 +110,8 @@ public class UnitBullet : Bullet
     {
         PlaySound();
 
-        double deltaX = Unit.LookDirection.X * Speed;
-        double deltaY = Unit.LookDirection.Y * Speed;
+        double deltaX = Unit.LookDirection.X * HorizontalSpeed;
+        double deltaY = Unit.LookDirection.Y * HorizontalSpeed;
 
         double deltaZ = Math.Sin(-Unit.VerticalAngle) * VerticalSpeed;
         Unit.Z.Axis += deltaZ;

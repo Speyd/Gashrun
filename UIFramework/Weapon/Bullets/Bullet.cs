@@ -9,6 +9,7 @@ using SFML.Graphics;
 using System.Collections.Concurrent;
 using RayTracingLib;
 using DrawLib;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace UIFramework.Weapon.Bullets;
 public abstract class Bullet : IBullet
@@ -19,7 +20,8 @@ public abstract class Bullet : IBullet
 
 
     public virtual float Damage { get; set; }
-    public virtual float Speed { get; set; } = 0;
+    public virtual float HorizontalSpeed { get; set; } = 0;
+    public virtual float VerticalSpeed { get; set; } = 0;
     public virtual bool IsActive { get; protected set; } = true;
     public float FlightDistance { get; set; } = IBullet.InfinityFlightDistance;
 
@@ -30,15 +32,21 @@ public abstract class Bullet : IBullet
     public Bullet(float damage, ButtonBinding? hitObject) 
     {
         Damage = damage;
-
         HitObject = hitObject;
     }
     public Bullet(ButtonBinding? hitObject)
         :this(1, hitObject)
     {}
     public Bullet(Bullet bullet)
-        :this(bullet.Damage,  bullet.HitObject)
-    {}
+    {
+        HorizontalSpeed = bullet.HorizontalSpeed;
+        VerticalSpeed = bullet.VerticalSpeed;
+
+        Damage = bullet.Damage;
+        HitObject = bullet.HitObject;
+
+        FlightDistance = bullet.FlightDistance;
+    }
 
     public abstract void Flight(IUnit owner);
     public abstract void Update();

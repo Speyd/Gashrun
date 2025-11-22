@@ -3,10 +3,8 @@ using BehaviorPatternsFramework.Enum;
 using ObjectFramework;
 using ProtoRender.Object;
 using RayTracingLib;
-using ScreenLib;
 using SFML.System;
-using SFML.Window;
-using System.Collections.Concurrent;
+
 
 namespace BehaviorPatternsFramework.PatternDetection;
 public class PatrolBehavior : IAIBehavior
@@ -15,8 +13,21 @@ public class PatrolBehavior : IAIBehavior
     public Func<AIContext, bool>? IsBlocked { get; set; }
 
     public int UpdateIntervalMs { get; set; } = 50;
+    public RaycastOptions RaycastOptions { get; set; }
 
     private static DateTime _lastUpdate = DateTime.Now;
+
+
+    public PatrolBehavior()
+    {
+        RaycastOptions = new()
+        {
+            UseIgnoreList = true,
+            RaycastMode = RaycastMode.AllHits,
+            LimitType = RayLimitType.MaxRenderTiles,
+        };
+    }
+
 
     public void Update(AIContext context)
     {
@@ -63,7 +74,7 @@ public class PatrolBehavior : IAIBehavior
         {
             double angleToCorner = DataPipes.MathUtils.CalculateAngleToTarget(corner, posObs);
             double delta = DataPipes.MathUtils.NormalizeAngleDifference(observer.Angle, angleToCorner);
-            if (Math.Abs(delta) <= observer.HalfFov)
+            if (Math.Abs(delta) <= observer.HalfHorizontalFov)
                 return true;
         }
 
@@ -77,8 +88,8 @@ public class PatrolBehavior : IAIBehavior
 
         HashSet<IObject> visibleObjects = new();
 
-        double startAngle = unit.Angle - unit.Fov / 2.0;
-        double endAngle = unit.Angle + unit.Fov / 2.0;
+        double startAngle = unit.Angle - unit.HorizontalFov / 2.0;
+        double endAngle = unit.Angle + unit.HorizontalFov / 2.0;
         double step = (endAngle - startAngle) / (rayCount - 1);
 
         for (int i = 0; i < rayCount; i++)
@@ -87,7 +98,8 @@ public class PatrolBehavior : IAIBehavior
             if (unit is null || unit.Map is null)
                 return new();
 
-            var hit = Raycast.RaycastAtAngle(unit, angle, true, RayLimitType.MaxRenderTiles);
+            var hit = Raycast.RaycastAtAngle(unit, angle, RaycastOptions);
+
             if (hit != null)
                 visibleObjects.Add(hit);
         }

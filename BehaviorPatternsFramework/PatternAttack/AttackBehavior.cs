@@ -13,6 +13,8 @@ public class AttackBehavior : IAIBehavior
     public const string ReloadTriggerEvent = "ReloadStarted";
     public const string ReloadCompletedEvent = "ReloadCompleted";
 
+    private readonly Random random = new();
+
     public BehaviorStatus Status { get; private set; } = BehaviorStatus.Failure;
     public Func<AIContext, bool>? IsBlocked { get; set; }
 
@@ -24,14 +26,13 @@ public class AttackBehavior : IAIBehavior
     private bool hasSignaledReload = false;
     public float MaxDistanceAttack { get; set; } = -1;
 
-    public List<IAimStrategy> AimStrategies { get; private set; } = new();
-    private readonly Random random = new();
+    public List<IAimStrategy> AimHorizontalStrategies { get; set; } = new();
+    public List<IAimStrategy> AimVerticalStrategies { get; set; } = new();
 
-    public AttackBehavior(InfoGun infoGun, List<IAimStrategy>? aimStrategies = null)
+
+    public AttackBehavior(InfoGun infoGun)
     {
         InfoGun = infoGun;
-        if (aimStrategies is not null)
-            AimStrategies.AddRange(aimStrategies);
     }
 
     public void Update(AIContext context)
@@ -87,57 +88,24 @@ public class AttackBehavior : IAIBehavior
 
     private void PerformAttack(AIContext context)
     {
-        if (AimStrategies.Count == 0)
+        if (AimHorizontalStrategies.Count == 0 || AimVerticalStrategies.Count == 0)
             return;
 
-        var strategy = AimStrategies[random.Next(AimStrategies.Count)];
+        var horizontalStrategy = AimHorizontalStrategies[random.Next(AimHorizontalStrategies.Count)];
+        var verticalStrategy = AimVerticalStrategies[random.Next(AimVerticalStrategies.Count)];
 
-        float angle = strategy.GetAimAngle(context, InfoGun);
-        context.Owner!.Angle = angle;
-        context.Owner!.VerticalAngle = GetVerticalAimAngle(context);
+        var tempAngle = context.Owner!.Angle;
+        var tempVerticalAngle = context.Owner!.VerticalAngle;
 
+        context.Owner!.Angle = horizontalStrategy.GetAimHorizontalAngle(context, InfoGun);
+        context.Owner!.VerticalAngle = verticalStrategy.GetAimVerticalAngle(context, InfoGun);
 
         InfoGun.AttackBind.SimulatePress();
+
+        context.Owner!.Angle = tempAngle;
+        context.Owner!.VerticalAngle = tempVerticalAngle;
         Status = BehaviorStatus.Success;
     }
-
-    public float GetVerticalAimAngle(AIContext context)
-    {
-        var owner = context.Owner!;
-        var target = context.TargetObject!;
-
-        // Центры хитбоксов
-        var ownerCenter = GetHitboxCenter(owner);
-
-        var targetCenter = GetHitboxCenter(target);
-        // Δ между центрами
-        float dx = targetCenter.X - ownerCenter.X;
-        float dy = targetCenter.Y - ownerCenter.Y;
-        float dz = targetCenter.Z - ownerCenter.Z;
-
-        // Горизонтальная дистанция
-        float horizontalDist = MathF.Sqrt(dx * dx + dy * dy);
-
-        // Угол наклона (pitch)
-        return -MathF.Atan2(dz, horizontalDist);
-    }
-    Vector3f GetHitboxCenter(IObject obj)
-    {
-        float cx = (float)(obj.X.Axis +
-            (obj.HitBox[CoordinatePlane.X, SideSize.Smaller].Side +
-             obj.HitBox[CoordinatePlane.X, SideSize.Larger].Side) * 0.5);
-
-        float cy = (float)(obj.Y.Axis +
-            (obj.HitBox[CoordinatePlane.Y, SideSize.Smaller].Side +
-             obj.HitBox[CoordinatePlane.Y, SideSize.Larger].Side) * 0.5);
-
-        float cz = (float)(obj.Z.Axis +
-            (obj.HitBox[CoordinatePlane.Z, SideSize.Smaller].Side +
-             obj.HitBox[CoordinatePlane.Z, SideSize.Larger].Side) * 0.5);
-
-        return new Vector3f(cx, cy, cz);
-    }
-
     public void Enter(AIContext context)
     {
         // Console.WriteLine("Entering JumpBehavior");

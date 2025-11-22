@@ -41,7 +41,10 @@ using BehaviorPatternsFramework.Behavior;
 using System;
 using AnimationLib.Core;
 
+
+
 namespace UIFramework;
+
 public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, IKnockbackable
 {
     public Vector2f Vector2 { get; set; } = new Vector2f();
@@ -57,10 +60,10 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float GroundLevel { get; set; } = 0;
     public float JumpElapsed { get; set; } = 0;
     public float JumpDuration { get; set; } = 0.2f;
-    public float JumpHeight { get; set; } = 200;
-    public float CurrentJumpForce { get; set; } = 1000;
+    public float JumpHeight { get; set; } = 400;
+    public float CurrentJumpForce { get; set; } 
     public float InitialJumpHeight { get; set; } = 0;
-    public float Gravity { get; } = 100000;
+    public float Gravity { get; } = 15000;
     public float Friction { get; } = 0.6f;
 
     /// <summary>
@@ -88,7 +91,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float MinDistanceFromWall { get; set; } = 0;
     public float MouseSensitivity { get; set; } = 0.001f;
     public bool IsMouseCaptured { get; set; } = true;
-    public Vector2f MoveDirection { get; set; } = new Vector2f();
+    public Vector3f MoveDirection { get; set; } = new Vector3f();
 
     public double MinVerticalAngle { get; set; } = -Math.PI / 2;
     public double MaxVerticalAngle { get; set; } = Math.PI / 2;
@@ -131,18 +134,32 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
             return new Vector2f((float)X.Axis, (float)Y.Axis);
         }
     }
-    private double _fov;
-    public double Fov
+
+    private double _horizontalFov;
+    public double HorizontalFov
     {
-        get => _fov;
+        get => _horizontalFov;
         set
         {
-            _fov = value;
-            HalfFov = value / 2;
+            _horizontalFov = value;
+            HalfHorizontalFov = value / 2;
         }
     }
     /// <summary>Half Fov Entity</summary>
-    public double HalfFov { get; private set; }
+    public double HalfHorizontalFov { get; private set; }
+
+    private double _verticalFov;
+    public double VerticalFov
+    {
+        get => _horizontalFov;
+        set
+        {
+            _verticalFov = value;
+            HalfVerticalFov = value / 2;
+        }
+    }
+    /// <summary>Half Fov Entity</summary>
+    public double HalfVerticalFov { get; private set; }
 
 
     //---------------------Ray Setting----------------------
@@ -184,11 +201,10 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
        : base(animator, option)
     {
         Hp = new Stat(maxHp);
-
         Hp.OnDepleted += ClearingDataAfteDeath;
 
-        Fov = Math.PI / 3;
-        HalfFov = (float)Fov / 2;
+        HorizontalFov = Math.PI / 3;
+        VerticalFov = Math.PI;
 
         Angle = 0;
         Angle -= 0.000001;
@@ -207,11 +223,10 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
        : base(obstacle, option)
     {
         Hp = new Stat(maxHp);
-
         Hp.OnDepleted += ClearingDataAfteDeath;
 
-        Fov = Math.PI / 3;
-        HalfFov = (float)Fov / 2;
+        HorizontalFov = Math.PI / 3;
+        VerticalFov = Math.PI;
 
         Angle = 0;
         Angle -= 0.000001;
@@ -232,11 +247,11 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         Map = map;
         Animation = obstacle.Animation;
         Hp = new Stat(maxHp);
-
         Hp.OnDepleted += ClearingDataAfteDeath;
 
-        Fov = Math.PI / 3;
-        HalfFov = (float)Fov / 2;
+
+        HorizontalFov = Math.PI / 3;
+        VerticalFov = Math.PI;
 
         Angle = 0;
         Angle -= 0.000001;
@@ -263,8 +278,8 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         Map = unit.Map;
         Hp = unit.Hp;
 
-        Fov = unit.Fov;
-        HalfFov = unit.HalfFov;
+        HorizontalFov = unit.HorizontalFov;
+        VerticalFov = unit.VerticalFov;
 
         Angle = unit.Angle;
         TempAngle = unit.TempAngle;
@@ -294,6 +309,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         GroundState = GroundState.Jumping;
         JumpElapsed = 0f;
         InitialJumpHeight = (float)Z.Axis;
+       // CurrentJumpForce = MathF.Sqrt(2 * Gravity * JumpHeight);
     }
     public void Knockback()
     {
@@ -326,15 +342,15 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
 
     public void ObserverSettingChangesFun()
     {
-        float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfFov));
+        float dist = Screen.Setting.AmountRays / (2 * (float)Math.Tan(HalfHorizontalFov));
         ProjCoeff = dist * Screen.Setting.Tile;
 
-        DeltaAngle = (float)Fov / Screen.Setting.AmountRays;
+        DeltaAngle = (float)HorizontalFov / Screen.Setting.AmountRays;
     }
     public ObserverInfo GetObserverInfo()
     {
         ObserverInfo observerInfo = new ObserverInfo();
-        observerInfo.fov = Fov;
+        observerInfo.fov = HorizontalFov;
         observerInfo.verticalAngle = VerticalAngle;
         observerInfo.angle = Angle;
         observerInfo.deltaAngle = DeltaAngle;

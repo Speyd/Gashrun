@@ -82,7 +82,7 @@ public static class GameManager
         
         try
         {
-            VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeAll;
+            VisualizerHitBox.VisualizerType = VisualizerHitBoxType.VisualizeSelfRenderable;
             while (Screen.Window.IsOpen)
             {
                 if (DeferredAction is not null)

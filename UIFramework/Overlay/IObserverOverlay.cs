@@ -16,7 +16,8 @@ public static class IObserverOverlay
         return
             $"Angle: {observer.Angle:0.00}\n" +
             $"Vertical Angle: {observer.VerticalAngle:0.00}\n" +
-            $"Fov: {observer.Fov:0.00}\n" +
+            $"Fov Horizontal: {observer.HorizontalFov:0.00}\n" +
+            $"Fov Vertical: {observer.VerticalFov:0.00}\n" +
             $"Direction: {observer.LookDirection.X:0.00} | {observer.LookDirection.Y:0.00}";
     }
 }

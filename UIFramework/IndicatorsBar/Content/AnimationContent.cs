@@ -20,7 +20,7 @@ public class AnimationContent : Frame, IBarContent
 
     public void UpdateContent(RectangleShape bar)
     {
-        if (CurrentElement is not null)
+        if (!IsLoaded)
             return;
 
         Update();

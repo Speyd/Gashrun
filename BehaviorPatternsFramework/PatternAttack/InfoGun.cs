@@ -5,14 +5,15 @@ public class InfoGun
 {
     public ButtonBinding AttackBind { get; set; }
     public Func<bool> IsReloading { get; set; }
-    public Func<float> GetBulletSpeed { get; set; }
-    public int SleepBulletHandler { get; set; }
+    public Func<float> GetBulletHorizontalSpeed { get; set; } = () => 0;
+    public Func<float> GetBulletVerticalSpeed { get; set; } = () => 0;
 
-    public InfoGun(ButtonBinding attackBind, Func<bool> isReloading, Func<float> getbulletSpeed, int sleepBulletHandler)
+    public int SleepBulletHandler { get; set; } = 1;
+
+    public InfoGun(ButtonBinding attackBind, Func<bool> isReloading, int sleepBulletHandler)
     {
         AttackBind = attackBind;
         IsReloading = isReloading;
-        GetBulletSpeed = getbulletSpeed;
         SleepBulletHandler = sleepBulletHandler;
     }
 }

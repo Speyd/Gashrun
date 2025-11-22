@@ -118,7 +118,7 @@ EffectManager.CurrentEffect.EffectEnd = 5;
 
 CustomEffect effectMainMap = new CustomEffect(DefaultPresets.DarkEffect);
 effectMainMap.EffectColor = new Vec4(0f, 0f, 0f, 1f);
-effectMainMap.EffectEnd = 5;
+effectMainMap.EffectEnd = 10;
 effectMainMap.EffectStrength = 1.2f;
 
 CustomEffect effectBorderWall = new CustomEffect();
@@ -256,9 +256,9 @@ SoundCloseDoor.Sound.Attenuation = 1.5f;
 #region VisualImpactData
 
 #region Falling Particles
-Frame spriteEffectFallingParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, VisualEffectBulletGlassGif);
+Frame spriteEffectFallingParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame, ColorChannelFilter = ColorChannelFilter.RGB, StartFilterRGBA = new Color(0, 0, 0), EndFilterRGBA = new Color(80, 80, 80) } }, VisualEffectBulletGlassGif);
 spriteEffectFallingParticlesHitFrame.BaseSelector = new AnimationSelector();
-spriteEffectFallingParticlesHitFrame.SpeedAnimation = 80;
+spriteEffectFallingParticlesHitFrame.SpeedAnimation = 40;
 
 SpriteObstacle spriteEffectFallingParticlesHit = new SpriteObstacle(spriteEffectFallingParticlesHitFrame);
 spriteEffectFallingParticlesHit.IsPassability = true;
@@ -268,15 +268,22 @@ VisualImpactData visualImpactEffectFallingParticles = new(spriteEffectFallingPar
 #endregion
 
 #region Explosion Particles
-Frame spriteEffectExplosionParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame } }, VisualEffectBulletBrickGif);
+Frame spriteEffectExplosionParticlesHitFrame = new Frame( new ImageLoadOptions() { ProcessorOptions = new() 
+{ 
+    FrameLoadMode = FrameLoadMode.FullFrame,
+    ColorChannelFilter = ColorChannelFilter.RGB, 
+    StartFilterRGBA = new Color(0, 0, 0), EndFilterRGBA = new Color(10, 10, 10) }
+}, 
+VisualEffectBulletBrickGif);
+
 spriteEffectExplosionParticlesHitFrame.BaseSelector = new AnimationSelector();
-spriteEffectExplosionParticlesHitFrame.SpeedAnimation = 65;
+spriteEffectExplosionParticlesHitFrame.SpeedAnimation = 40;
 
 SpriteObstacle spriteEffectExplosionParticlesHit = new SpriteObstacle(spriteEffectExplosionParticlesHitFrame);
 spriteEffectExplosionParticlesHit.IsPassability = true;
-spriteEffectExplosionParticlesHit.Scale = 30;
+spriteEffectExplosionParticlesHit.Scale = 40;
 
-VisualImpactData visualImpactEffectExplosionParticles = new(spriteEffectExplosionParticlesHit, 300, false);
+VisualImpactData visualImpactEffectExplosionParticles = new(spriteEffectExplosionParticlesHit, 500, false);
 #endregion
 
 #region Red Wave
@@ -343,14 +350,14 @@ EffectManager.CurrentEffect = effectMainMap;
 Frame unitFrame = new Frame(HumanPng);
 unitFrame.BaseSelector = new ViewAngleSelector();
 
-Unitu unit = new Unitu(new SpriteObstacle(unitFrame), 100000);
+Unitu unit = new Unitu(new SpriteObstacle(unitFrame), 1000);
 Camera.CurrentUnit = unit;
 unit.HitBox[CoordinatePlane.X, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.X, SideSize.Larger]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(50);
 unit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(50);
-unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(300);
-unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(300);
+unit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(200);
+unit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(200);
 unit.ShiftCubedX = 50;
 unit.ShiftCubedY = 50;
 unit.MoveSpeed = 400;
@@ -623,11 +630,12 @@ fadingTextOpenButton.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(65),
 #endregion
 
 #region Animation State
-Frame hpBarAnimation = new Frame(PathResolver.GetPath(Path.Combine("Resources", "UI", "small.gif")))
+Frame hpBarAnimation = new Frame(new ImageLoadOptions() {LoadAsync = true,  ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.Accumulate } }, PathResolver.GetPath(Path.Combine("Resources", "UI", "small.gif")))
 {
     BaseSelector = new AnimationSelector(),
     SpeedAnimation = 30
 };
+//Console.WriteLine(hpBarAnimation.CountElements);
 #endregion
 
 #region Shape
@@ -637,14 +645,14 @@ LoadShape.RenderOrder = RenderOrder.SystemNotification;
 #endregion
 
 #region FillBar
-//FillBar HpBar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent(SFML.Graphics.Color.Red), unit.Hp, unit)
-//{
-//    BorderThickness = 10,
-//    Width = 400,
-//    Height = 100,
-//    PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
-//    BorderFillColor = SFML.Graphics.Color.Black,
-//};
+FillBar HpBar = new FillBar(new AnimationContent(hpBarAnimation), new ColorContent(SFML.Graphics.Color.Red), unit.Hp, unit)
+{
+    BorderThickness = 10,
+    Width = 400,
+    Height = 100,
+    PositionOnScreen = new Vector2f(0, Screen.ScreenHeight),
+    BorderFillColor = SFML.Graphics.Color.Black,
+};
 #endregion
 
 #endregion
@@ -1056,7 +1064,7 @@ var pistolUnit = new Gun(pistol, null, unit);
 
 #region devil
 
-var pistolDevil = new Gun(pistol, new(RightButton, null, 100), devil);
+var pistolDevil = new Gun(pistol, new(RightButton, null, 1000), devil);
 pistolDevil.SpriteAnimationName = "Attack";
 #endregion
 
@@ -1078,7 +1086,7 @@ var fpsUnt = new UIText(FpsText, unit);
 unit?.Control.AddBottomBind(new ButtonBinding(new Button(VirtualKey.None), () => { fpsUnt.SetText($"Fps: {FPS.TextFPS}"); }));
 unit?.Control.AddBottomBind(new ButtonBinding(F6, () => { fpsUnt.IsHide = !fpsUnt.IsHide; }, 500));
 
-unit?.Control.AddBottomBind(new ButtonBinding(jumb, devil.Jump));
+unit?.Control.AddBottomBind(new ButtonBinding(jumb, unit.Jump));
 
 
 
@@ -1155,13 +1163,29 @@ devil.behavioral.AddStateMachine(AIBehaviorType.Pursuit, machinePursuit);
 
 
 AIStateMachine machineCombat = new();
-InfoGun infoGunMachineCombatDevil = new(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, () => pistol.Magazine.GetNextBullet()?.Speed ?? 0f, BulletHandler.SleepMs);
+InfoGun infoGunMachineCombatDevil = new(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, BulletHandler.SleepMs)
+{
+    GetBulletHorizontalSpeed = () => pistol.Magazine.GetNextBullet()?.HorizontalSpeed ?? 0f,
+    GetBulletVerticalSpeed = () => pistol.Magazine.GetNextBullet()?.VerticalSpeed ?? 0f
+};
 List<IAimStrategy> aimStrategiesMachineCombatDevil = new List<IAimStrategy>()
 {
     new DirectAimStrategy(),
     new PredictiveAimStrategy(),
 };
-machineCombat.AddBehavior(new AttackBehavior(infoGunMachineCombatDevil, aimStrategiesMachineCombatDevil) { IsBlocked = blockedFromZone });
+List<IAimStrategy> aimStrategiesMachineCombatDevil1 = new List<IAimStrategy>()
+{
+    //new DirectAimStrategy(),
+    new PredictiveAimStrategy(),
+};
+
+
+machineCombat.AddBehavior(new AttackBehavior(infoGunMachineCombatDevil) 
+{ 
+    AimHorizontalStrategies = aimStrategiesMachineCombatDevil, 
+    AimVerticalStrategies = aimStrategiesMachineCombatDevil1,
+    IsBlocked = blockedFromZone }
+);
 var dodgeStepsDevil = new List<DodgeStep>()
 { 
     new(DodgeDirection.Left, 100),

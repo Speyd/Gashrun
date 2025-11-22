@@ -35,7 +35,7 @@ public class TriggerRay : ITrigger
             return;
 
 
-        var result = Raycast.RaycastFun(unit, false);
+        var result = Raycast.RaycastFun(unit);
         CurrentTargetObject = result.Item1;
         isTriggered = result.Item1 is not null ? true : false;
 
