@@ -28,8 +28,6 @@ public class UnitBullet : Bullet
     public ISound? SoundFly { get; set; }
     private Sound? tempFlySound = null;
 
-    public override float VerticalSpeed { get; set; } = 35;
-
 
     private ConcurrentDictionary<IObject, byte> ignoreCollisionList = new();
 
@@ -38,7 +36,7 @@ public class UnitBullet : Bullet
         : base(damage, hitObject)
     {
         Unit = new Unit(unit);
-        HorizontalSpeed = speed;
+        SpeedHorizontal = speed;
     }
     public UnitBullet(float damage, Unit unit, ButtonBinding? hitObject)
        : this(damage, baseSpeed, unit, hitObject)
@@ -110,10 +108,10 @@ public class UnitBullet : Bullet
     {
         PlaySound();
 
-        double deltaX = Unit.LookDirection.X * HorizontalSpeed;
-        double deltaY = Unit.LookDirection.Y * HorizontalSpeed;
+        double deltaX = Unit.LookDirection.X * SpeedHorizontal;
+        double deltaY = Unit.LookDirection.Y * SpeedHorizontal;
 
-        double deltaZ = Math.Sin(-Unit.VerticalAngle) * VerticalSpeed;
+        double deltaZ = -Unit.VerticalAngle * SpeedVertical;
         Unit.Z.Axis += deltaZ;
 
         return MoveLib.Move.Collision.TryMoveWithCollision(Unit, deltaX, deltaY, System.Linq.Enumerable.ToList(ignoreCollisionList.Keys));

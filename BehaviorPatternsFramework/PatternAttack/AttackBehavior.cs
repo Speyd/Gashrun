@@ -24,7 +24,6 @@ public class AttackBehavior : IAIBehavior
     private bool lastReloading = false;
 
     private bool hasSignaledReload = false;
-    public float MaxDistanceAttack { get; set; } = -1;
 
     public List<IAimStrategy> AimHorizontalStrategies { get; set; } = new();
     public List<IAimStrategy> AimVerticalStrategies { get; set; } = new();
@@ -110,7 +109,6 @@ public class AttackBehavior : IAIBehavior
     {
         // Console.WriteLine("Entering JumpBehavior");
     }
-
     public void Exit(AIContext context)
     {
         //Console.WriteLine("Exiting JumpBehavior");
@@ -119,6 +117,15 @@ public class AttackBehavior : IAIBehavior
     public BehaviorStatus GetNextEvent(AIContext context)
     {
         return Status;
+    }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempAttackBehavior = new AttackBehavior(InfoGun);
+        tempAttackBehavior.AimHorizontalStrategies = AimHorizontalStrategies;
+        tempAttackBehavior.AimVerticalStrategies = AimVerticalStrategies;
+
+        return tempAttackBehavior;
     }
 }
 

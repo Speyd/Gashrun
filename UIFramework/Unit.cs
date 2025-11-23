@@ -40,6 +40,7 @@ using TextureLib.Textures;
 using BehaviorPatternsFramework.Behavior;
 using System;
 using AnimationLib.Core;
+using InteractionFramework.Audio.SoundType;
 
 
 
@@ -60,7 +61,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     public float GroundLevel { get; set; } = 0;
     public float JumpElapsed { get; set; } = 0;
     public float JumpDuration { get; set; } = 0.2f;
-    public float JumpHeight { get; set; } = 400;
+    public float JumpHeight { get; set; } = 1000;
     public float CurrentJumpForce { get; set; } 
     public float InitialJumpHeight { get; set; } = 0;
     public float Gravity { get; } = 15000;
@@ -176,15 +177,15 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
     #region IDamageable
     public Stat Hp { get; set; }
     public DeathEffect? DeathAnimation { get; set; } = null;
+    public SoundEmitter? DeathSound {  get; set; } = null;
     private void ClearingDataAfteDeath()
     {
-
         RemoveObstacle(this);
         Map = null;
         IsAdded = false;
 
         if (DeathAnimation is not null)
-         BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation));
+         BeyondRenderManager.Create(this, new DeathData(this, DeathAnimation, DeathSound));
     }
     #endregion
 
@@ -276,7 +277,7 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
         };
         PhysicsHandler.Register(this);
         Map = unit.Map;
-        Hp = unit.Hp;
+        Hp = new Stat(unit.Hp);
 
         HorizontalFov = unit.HorizontalFov;
         VerticalFov = unit.VerticalFov;
@@ -358,9 +359,13 @@ public class Unit : SpriteObstacle, IUnit, IDamageable, IDialogObject, IJumper, 
 
         return observerInfo;
     }
-    public new IUnit GetCopy()
+    public override IUnit GetCopy()
     {
-        return new Unit(this);
+        return new Unit(this, new ImageLoadOptions() { CreateNew = false });
+    }
+    public new Unit GetDeepCopy()
+    {
+        return new Unit(this, new ImageLoadOptions() { CreateNew = true });
     }
     #endregion
 }

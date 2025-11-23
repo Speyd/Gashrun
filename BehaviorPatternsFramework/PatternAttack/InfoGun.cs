@@ -5,8 +5,8 @@ public class InfoGun
 {
     public ButtonBinding AttackBind { get; set; }
     public Func<bool> IsReloading { get; set; }
-    public Func<float> GetBulletHorizontalSpeed { get; set; } = () => 0;
-    public Func<float> GetBulletVerticalSpeed { get; set; } = () => 0;
+    public Func<float> GetHorizontalBulletSpeed { get; set; } = () => 0;
+    public Func<float> GetVerticalBulletSpeed { get; set; } = () => 0;
 
     public int SleepBulletHandler { get; set; } = 1;
 

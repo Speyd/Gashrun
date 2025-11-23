@@ -30,16 +30,15 @@ public class DeathData : IBeyoundData
         SoundEmitter = soundEmitter;
 
         Sprite.Animation = new Animator(DeathEffect.Animation);
-        //Sprite.Animation.Index = 0;
     }
     public DeathData(DeathData deathData)
     {
         Map = deathData.Map;
         Sprite = deathData.Sprite;
         DeathEffect = deathData.DeathEffect;
+        SoundEmitter = deathData.SoundEmitter;
 
         Sprite.Animation = new Animator(DeathEffect.Animation);
-        //Sprite.Animation.Index = 0;
     }
 
 
@@ -57,11 +56,7 @@ public class DeathData : IBeyoundData
     }
     public void UpdateBeforeAdd()
     {
-        if (Map is null)
-            return;
-
-        SoundEmitter?.Play(Map, new SFML.System.Vector3f((float)Sprite.X.Axis, (float)Sprite.Y.Axis, (float)Sprite.Z.Axis));
-        DeathEffect.Stopwatch.Restart();
+        UpdateBeforeAdd((float)Sprite.X.Axis, (float)Sprite.Y.Axis, (float)Sprite.Z.Axis);
     }
 
     private void ActionBeforeLastFrame()

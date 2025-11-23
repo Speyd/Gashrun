@@ -1,5 +1,6 @@
 ﻿using BehaviorPatternsFramework.Enum;
 using NGenerics.Extensions;
+using System.Linq;
 
 namespace BehaviorPatternsFramework.Behavior;
 public class AIStateMachine
@@ -44,6 +45,21 @@ public class AIStateMachine
         list.Add(typeof(TTo));
     }
 
+    public void AddTransition(Type from, Type to, BehaviorStatus trigger)
+    {
+        if (!typeof(IAIBehavior).IsAssignableFrom(from))
+            throw new ArgumentException("Type must implement IAIBehavior", nameof(from));
+        if (!typeof(IAIBehavior).IsAssignableFrom(to))
+            throw new ArgumentException("Type must implement IAIBehavior", nameof(to));
+
+        var key = (from, trigger);
+        if (!_transitions.TryGetValue(key, out var list))
+            _transitions[key] = list = new List<Type>();
+
+        list.Add(to);
+    }
+
+
     public void SetBehavior<T>() where T : IAIBehavior
     {
         if (_currentState is not null)
@@ -52,6 +68,19 @@ public class AIStateMachine
         _currentState = _behaviors.OfType<T>().FirstOrDefault();
         _currentState?.Enter(Context);
     }
+    public void SetBehavior(Type behaviorType)
+    {
+        if (!typeof(IAIBehavior).IsAssignableFrom(behaviorType))
+            throw new ArgumentException("Type must implement IAIBehavior", nameof(behaviorType));
+
+        if (_currentState is not null)
+            _currentState.Exit(Context);
+
+        _currentState = _behaviors.FirstOrDefault(b => b.GetType() == behaviorType);
+        _currentState?.Enter(Context);
+    }
+
+
 
     public void Signal()
     {
@@ -164,5 +193,27 @@ public class AIStateMachine
         _currentState = nextState;
         _currentState?.Enter(Context);
     }
+
+    public AIStateMachine GetDeepCopy()
+    {
+        var newStateMachine = new AIStateMachine();
+        newStateMachine.IsPassive = IsPassive;
+
+        _behaviors.ForEach(b => newStateMachine.AddBehavior(b.GetDeepCopy()));
+
+        foreach (var kvp in _transitions)
+        {
+            foreach (var toType in kvp.Value)
+            {
+                newStateMachine.AddTransition(kvp.Key.Item1, toType, kvp.Key.Item2);
+            }
+        }
+
+        if(_currentState is not null)
+            newStateMachine.SetBehavior(_currentState.GetType());
+
+        return newStateMachine;
+    }
+
 
 }

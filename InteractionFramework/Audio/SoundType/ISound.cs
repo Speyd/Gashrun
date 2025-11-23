@@ -27,6 +27,8 @@ public interface ISound
 
 
     void CleanupStoppedSounds();
+
     Sound Play(IMap? map, Vector3f positionSound = new Vector3f(), ListenerType? listenerType = null);
+    Sound Play(IMap? map, IObject obj, ListenerType? listenerType = null);
 
 }

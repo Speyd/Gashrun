@@ -1,6 +1,8 @@
 ﻿using BehaviorPatternsFramework.Behavior;
 using BehaviorPatternsFramework.Enum;
+using BehaviorPatternsFramework.PatternDetection;
 using ProtoRender.Physics;
+using RayTracingLib;
 
 namespace BehaviorPatternsFramework.PatternMove.Dodge;
 public class DodgeBehavior : IAIBehavior
@@ -76,5 +78,12 @@ public class DodgeBehavior : IAIBehavior
     public BehaviorStatus GetNextEvent(AIContext context)
     {
         return Status;
+    }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempDodgeBehavior = new DodgeBehavior(Steps);
+
+        return tempDodgeBehavior;
     }
 }

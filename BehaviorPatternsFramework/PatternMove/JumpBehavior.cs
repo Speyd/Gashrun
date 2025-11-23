@@ -58,4 +58,13 @@ public class JumpBehavior : IAIBehavior
     {
         return Status;
     }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempJumpBehavior = new JumpBehavior();
+        tempJumpBehavior.MovementDurationMs = MovementDurationMs;
+        tempJumpBehavior.IsBlocked = IsBlocked;
+
+        return tempJumpBehavior;
+    }
 }

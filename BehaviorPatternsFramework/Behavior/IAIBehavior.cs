@@ -17,5 +17,6 @@ public interface IAIBehavior
     void Exit(AIContext context);
 
     BehaviorStatus GetNextEvent(AIContext context);
+    IAIBehavior GetDeepCopy ();
 
 }

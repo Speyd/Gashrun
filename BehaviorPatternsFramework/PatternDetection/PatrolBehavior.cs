@@ -110,7 +110,6 @@ public class PatrolBehavior : IAIBehavior
     {
         // Console.WriteLine("Entering Patrol");
     }
-
     public void Exit(AIContext context)
     {
         // Console.WriteLine("Exiting Patrol");
@@ -119,5 +118,14 @@ public class PatrolBehavior : IAIBehavior
     public BehaviorStatus GetNextEvent(AIContext context)
     {
         return Status;
+    }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempPatrolBehavior = new PatrolBehavior();
+        tempPatrolBehavior.UpdateIntervalMs = UpdateIntervalMs;
+        tempPatrolBehavior.RaycastOptions = RaycastOptions;
+
+        return tempPatrolBehavior;
     }
 }

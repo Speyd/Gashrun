@@ -33,7 +33,7 @@ public class PredictiveAimStrategy : IAimStrategy
             owner.Y.Axis
         );
 
-        var timeToHit = dist / Math.Ceiling(infoGun.GetBulletHorizontalSpeed.Invoke() / (infoGun.SleepBulletHandler / 2));
+        var timeToHit = dist / Math.Ceiling(infoGun.GetHorizontalBulletSpeed.Invoke() / (infoGun.SleepBulletHandler / 2));
 
         var predictedPos = new Vector2f(
             (float)(targetPos.X + targetVelocity.X * timeToHit),
@@ -44,7 +44,6 @@ public class PredictiveAimStrategy : IAimStrategy
     }
     public float GetAimVerticalAngle(AIContext context, InfoGun infoGun)
     {
-
         float deltaTime = FPS.GetDeltaTime();
         var owner = context.Owner!;
         var target = context.TargetObject!;
@@ -52,21 +51,30 @@ public class PredictiveAimStrategy : IAimStrategy
         var ownerCenter = owner.GetHitboxCenter();
         var targetCenter = target.GetHitboxCenter();
 
-        float dx = (float)(target.X.Axis - owner.X.Axis);
-        float dy = (float)(target.Y.Axis - owner.Y.Axis);
         float dz = targetCenter.Z - ownerCenter.Z;
 
-        float horizontalDistance = MathF.Sqrt(dx * dx + dy * dy);
-
-        float travelTime = horizontalDistance / MathF.Ceiling(
-            (infoGun.GetBulletHorizontalSpeed.Invoke() + infoGun.GetBulletVerticalSpeed.Invoke()) /
-            (infoGun.SleepBulletHandler / 2)
+        float horizontalDistance = (float)MathUtils.CalculateDistance(
+            target.X.Axis,
+            target.Y.Axis,
+            owner.X.Axis,
+            owner.Y.Axis
         );
+
+        var timeToHit = horizontalDistance / Math.Ceiling(infoGun.GetVerticalBulletSpeed.Invoke() / infoGun.SleepBulletHandler / 2);
 
         if (target is IJumper jumper && jumper.CurrentJumpForce != 0)
         {
             float verticalVelocity = jumper.CurrentJumpForce - (jumper.Gravity * deltaTime);
-            dz = targetCenter.Z + verticalVelocity * deltaTime - travelTime * 2;
+            dz = targetCenter.Z + verticalVelocity * (float)timeToHit * deltaTime - ownerCenter.Z;
+
+            if (dz < jumper.GroundLevel)
+                dz = jumper.GroundLevel;
+
+            var maxHeight = (jumper.CurrentJumpForce * jumper.CurrentJumpForce) / (2 * jumper.Gravity);
+            float maxJumpZ = (float)target.Z.Axis + maxHeight;
+
+            if (target is IMovable move && move.MoveDirection.Z > 0 && dz > maxJumpZ)
+                dz = targetCenter.Z;
         }
 
         return -MathF.Atan2(dz, horizontalDistance);

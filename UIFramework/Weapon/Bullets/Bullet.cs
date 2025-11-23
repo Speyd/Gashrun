@@ -4,12 +4,7 @@ using ControlLib.Buttons;
 using InteractionFramework.Death;
 using InteractionFramework.VisualImpact;
 using InteractionFramework.HitAction;
-using RayTracingLib.Detection;
-using SFML.Graphics;
-using System.Collections.Concurrent;
-using RayTracingLib;
 using DrawLib;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace UIFramework.Weapon.Bullets;
 public abstract class Bullet : IBullet
@@ -20,8 +15,13 @@ public abstract class Bullet : IBullet
 
 
     public virtual float Damage { get; set; }
-    public virtual float HorizontalSpeed { get; set; } = 0;
-    public virtual float VerticalSpeed { get; set; } = 0;
+
+
+    public virtual float SpeedHorizontal { get; set; } = 10;
+    public virtual float SpeedVertical { get => SpeedHorizontal * MultiplierVerticalSpeed; }
+    public virtual float MultiplierVerticalSpeed { get; set; } = 2;
+
+
     public virtual bool IsActive { get; protected set; } = true;
     public float FlightDistance { get; set; } = IBullet.InfinityFlightDistance;
 
@@ -39,8 +39,8 @@ public abstract class Bullet : IBullet
     {}
     public Bullet(Bullet bullet)
     {
-        HorizontalSpeed = bullet.HorizontalSpeed;
-        VerticalSpeed = bullet.VerticalSpeed;
+        SpeedHorizontal = bullet.SpeedHorizontal;
+        MultiplierVerticalSpeed = bullet.MultiplierVerticalSpeed;
 
         Damage = bullet.Damage;
         HitObject = bullet.HitObject;

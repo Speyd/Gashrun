@@ -11,7 +11,7 @@ public abstract class SoundEmitter : ISound
 {
     public static readonly Vector3f BaseMonoPosition = new Vector3f(0, 0, 0);
     private readonly object _lock = new object();
-
+    private IMap? oldOwnerMap = null;
 
     public ConcurrentDictionary<IMap, List<Sound>> ActiveSounds { private get; init; } = new();
     private readonly List<Sound> _excludedSounds = new();
@@ -49,8 +49,10 @@ public abstract class SoundEmitter : ISound
     }
 
 
-
+    #region Play Methods
     public abstract Sound Play(IMap? map, Vector3f positionSound = new Vector3f(), ListenerType? listenerType = null);
+    public abstract Sound Play(IMap? map, IObject obj, ListenerType? listenerType = null);
+
     protected static void StandartPlay(SoundEmitter ISoundObject, Sound sound, IMap? map,
         Vector3f positionSound = new Vector3f(), ListenerType? listenerType = null)
     {
@@ -69,6 +71,7 @@ public abstract class SoundEmitter : ISound
 
         ISoundObject.SelectMethodPlay(map, sound, positionSound, listenerType ?? value);
     }
+
 
     private void SelectMethodPlay(IMap? map, Sound sound, Vector3f positionSound, ListenerType listenerType)
     {
@@ -104,7 +107,25 @@ public abstract class SoundEmitter : ISound
         RegisterSound(map, sound);
     }
 
+    #endregion
 
+    #region Object Tracking
+    public async Task TrackObjectPosition(IObject obj, Sound sound)
+    {
+        while (sound.Status != SoundStatus.Stopped)
+        {
+            if (obj.Map is null)
+            {
+                sound.Stop();
+                return;
+            }
+            sound.Position = new Vector3f((float)obj.X.Axis, (float)obj.Z.Axis, (float)obj.Y.Axis);
+            await Task.Delay(16);
+        }
+    }
+    #endregion
+
+    #region Listener Management
     public virtual void SubscribeListener(IObject listener)
     {
         Listener.TryAdd(listener, ListenerType.Allowed);
@@ -121,10 +142,10 @@ public abstract class SoundEmitter : ISound
     {
         Listener.TryRemove(listener, out _);
     }
+    #endregion
 
 
-    private IMap? oldOwnerMap = null;
-
+    #region Cleanup Stopped Sounds Methods
     public virtual void CleanupStoppedSounds()
     {
         foreach (var kvp in ActiveSounds)
@@ -136,7 +157,6 @@ public abstract class SoundEmitter : ISound
         oldOwnerMap = Camera.CurrentUnit?.Map;
     }
 
-    #region Cleanup Stopped Sounds Methods
     private void UpdateMapSounds(IMap map, List<Sound> sounds)
     {
         if (map.ActiveAnchors.Count == 0)
@@ -192,6 +212,7 @@ public abstract class SoundEmitter : ISound
     }
     #endregion
 
+    #region Sound Registration
     public void RegisterSound(IMap? map, Sound sound)
     {
         lock (_lock)
@@ -211,4 +232,5 @@ public abstract class SoundEmitter : ISound
             list.Add(sound);
         }
     }
+    #endregion
 }

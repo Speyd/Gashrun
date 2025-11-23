@@ -1,5 +1,6 @@
 ﻿using BehaviorPatternsFramework.Behavior;
 using BehaviorPatternsFramework.Enum;
+using BehaviorPatternsFramework.PatternMove.Dodge;
 using FpsLib;
 using ProtoRender.Object;
 using SFML.System;
@@ -100,6 +101,16 @@ public class CircularMovement : IAIBehavior
     public BehaviorStatus GetNextEvent(AIContext context)
     {
         return Status;
+    }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempCircularMovement = new CircularMovement();
+        tempCircularMovement.MovementDurationMs = MovementDurationMs;
+        tempCircularMovement.Diametr = Diametr;
+        tempCircularMovement.RotationDirection = RotationDirection;
+
+        return tempCircularMovement;
     }
 }
 

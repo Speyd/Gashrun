@@ -45,6 +45,7 @@ public class PingPongMovement : IAIBehavior
     private double _totalElapsedTimeMs = 0;
 
 
+  
     public void Update(AIContext context)
     {
         Status = BehaviorStatus.Running;
@@ -141,5 +142,13 @@ public class PingPongMovement : IAIBehavior
     public BehaviorStatus GetNextEvent(AIContext context)
     {
         return Status;
+    }
+
+    public IAIBehavior GetDeepCopy()
+    {
+        var tempPingPongMovement = new PingPongMovement();
+        tempPingPongMovement.MovementDurationMs = MovementDurationMs;
+
+        return tempPingPongMovement;
     }
 }

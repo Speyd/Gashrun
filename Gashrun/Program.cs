@@ -72,9 +72,19 @@ using AnimationLib.Enum;
 using AnimationLib.Core.Utils;
 using System.Diagnostics;
 using InteractionFramework.Death;
+using HitBoxLib.Data.HitBoxObject;
+using HitBoxLib.HitBoxSegment;
+using ProtoRender.Map;
+using ProtoRender.RenderAlgorithm;
+using ProtoRender.RenderInterface;
+using ObstacleLib.SpriteLib.Render;
+using RayTracingLib.Detection;
+using ObstacleLib;
+using BehaviorPatternsFramework.PatternWait;
+using BehaviorPatternsFramework.PatternEmotion;
 
 
-Screen.Initialize(1000, 600);
+Screen.Initialize(1000, 600, true);
 
 #region Static Properties
 FPS.BufferSize = 50;
@@ -256,15 +266,22 @@ SoundCloseDoor.Sound.Attenuation = 1.5f;
 #region VisualImpactData
 
 #region Falling Particles
-Frame spriteEffectFallingParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new() { FrameLoadMode = FrameLoadMode.FullFrame, ColorChannelFilter = ColorChannelFilter.RGB, StartFilterRGBA = new Color(0, 0, 0), EndFilterRGBA = new Color(80, 80, 80) } }, VisualEffectBulletGlassGif);
+Frame spriteEffectFallingParticlesHitFrame = new Frame(new ImageLoadOptions() { ProcessorOptions = new()
+{
+    FrameLoadMode = FrameLoadMode.FullFrame,
+    ColorChannelFilter = ColorChannelFilter.RGB,
+    StartFilterRGBA = new Color(0, 0, 0),
+    EndFilterRGBA = new Color(10, 10, 10)
+}}, VisualEffectBulletGlassGif);
+
 spriteEffectFallingParticlesHitFrame.BaseSelector = new AnimationSelector();
-spriteEffectFallingParticlesHitFrame.SpeedAnimation = 40;
+spriteEffectFallingParticlesHitFrame.SpeedAnimation = 30;
 
 SpriteObstacle spriteEffectFallingParticlesHit = new SpriteObstacle(spriteEffectFallingParticlesHitFrame);
 spriteEffectFallingParticlesHit.IsPassability = true;
-spriteEffectFallingParticlesHit.Scale = 120;
+spriteEffectFallingParticlesHit.Scale = 80;
 
-VisualImpactData visualImpactEffectFallingParticles = new(spriteEffectFallingParticlesHit, 1000, false);
+VisualImpactData visualImpactEffectFallingParticles = new(spriteEffectFallingParticlesHit, 600, false);
 #endregion
 
 #region Explosion Particles
@@ -374,7 +391,6 @@ Frame t4 = new Frame(new ImageLoadOptions() { LoadAsync = false }, PathResolver.
 
 
 AnimationClip animation = new AnimationClip(new ImageLoadOptions() { LoadAsync = false }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "1")));
-//animation.AddElement(t1);
 animation.AddElement(t2);
 animation.AddElement(t3);
 animation.AddElement(t4);
@@ -453,6 +469,11 @@ devil.DisplayName.RenderOrder = RenderOrder.DialogItem;
 Frame devilDeathFrame = new Frame(new ImageLoadOptions() { LoadAsync = true }, PathResolver.GetPath(Path.Combine("Resources", "Image", "Sprite", "Demon", "9")));
 devilDeathFrame.BaseSelector = new AnimationSelector();
 devil.DeathAnimation = new DeathEffect(devilDeathFrame, DeathPhase.FrozenFinalFrame, 5500);
+var devilDeathSound = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "ebat-ty-urod.wav")));
+devilDeathSound.Sound.Pitch = 0.5f;
+devilDeathSound.Sound.MinDistance = 30f;
+devilDeathSound.Sound.Attenuation = 0.5f;
+devil.DeathSound = devilDeathSound;
 #endregion
 
 #region Rebbit
@@ -472,7 +493,35 @@ rabbit.HitBox[CoordinatePlane.Y, SideSize.Smaller]?.SetOffset(20);
 rabbit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(20);
 rabbit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(200);
 rabbit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(200);
+
+var rabbit1 = rabbit.GetDeepCopy();
+var rabbit2 = rabbit.GetDeepCopy();
+var rabbit3 = rabbit.GetDeepCopy();
+var rabbit4 = rabbit.GetDeepCopy();
+var rabbit5 = rabbit.GetDeepCopy();
+var rabbit6 = rabbit.GetDeepCopy();
+var rabbit7 = rabbit.GetDeepCopy();
+var rabbit8 = rabbit.GetDeepCopy();
+var rabbit9 = rabbit.GetDeepCopy();
+var rabbit10 = rabbit.GetDeepCopy();
+
+
 map?.AddObstacle(14, 12, rabbit);
+map?.AddObstacle(15, 12, rabbit1);
+map?.AddObstacle(14, 13, rabbit2);
+map?.AddObstacle(15, 16, rabbit3);
+map?.AddObstacle(11, 12, rabbit4);
+map?.AddObstacle(12, 11, rabbit5);
+map?.AddObstacle(13, 13, rabbit6);
+map?.AddObstacle(14, 14, rabbit7);
+map?.AddObstacle(15, 15, rabbit8);
+map?.AddObstacle(15, 11, rabbit9);
+map?.AddObstacle(11, 11, rabbit10);
+
+SoundDynamic vd = new SoundDynamic(PathResolver.GetPath(Path.Combine("Resources", "verka-serducka.wav")));
+vd.Sound.MinDistance = 40f;
+vd.Sound.Attenuation = 0f;
+vd.Play(map, rabbit); 
 #endregion
 
 #endregion
@@ -927,7 +976,7 @@ devilBulletUnit.HitBox[CoordinatePlane.Y, SideSize.Larger]?.SetOffset(10);
 devilBulletUnit.HitBox[CoordinatePlane.Z, SideSize.Smaller]?.SetOffset(100);
 devilBulletUnit.HitBox[CoordinatePlane.Z, SideSize.Larger]?.SetOffset(100);
 
-UnitBullet BulletDevil = new UnitBullet(20, 15, devilBulletUnit, null) { SoundFly = SoundBulletFlyWall };
+UnitBullet BulletDevil = new UnitBullet(20, 10, devilBulletUnit, null) { SoundFly = SoundBulletFlyWall };
 #endregion
 
 #region Gun
@@ -1098,6 +1147,16 @@ unit?.Control.AddBottomBind(pistolDevil.UIAnimation.BottomBinding);
 
 #region Rabbit
 rabbit.behavioral = new AIController(rabbit);
+rabbit1.behavioral = new AIController(rabbit1);
+rabbit2.behavioral = new AIController(rabbit2);
+rabbit3.behavioral = new AIController(rabbit3);
+rabbit4.behavioral = new AIController(rabbit4);
+rabbit5.behavioral = new AIController(rabbit5);
+rabbit6.behavioral = new AIController(rabbit6);
+rabbit7.behavioral = new AIController(rabbit7);
+rabbit8.behavioral = new AIController(rabbit8);
+rabbit9.behavioral = new AIController(rabbit9);
+rabbit10.behavioral = new AIController(rabbit10);
 
 AIStateMachine machineMovementRabbit = new();
 var blockedMovementRabbit = (AIContext ctx) =>
@@ -1105,7 +1164,7 @@ var blockedMovementRabbit = (AIContext ctx) =>
     ctx.Controller?.GetMachine(AIBehaviorType.Pursuit)?.IsRunning == true;
 
 machineMovementRabbit.AddBehavior(new MoveBehavior());
-machineMovementRabbit.AddBehavior(new JumpBehavior() { IsBlocked = blockedMovementRabbit, 
+machineMovementRabbit.AddBehavior(new JumpBehavior() {
 FuncSuccess = (cxt) =>
 {
     if (rabbit.Animation.CurrentFrame is not null)
@@ -1115,19 +1174,41 @@ FuncSuccess = (cxt) =>
     }
 },
 });
-machineMovementRabbit.AddBehavior(new WaitBehavior() { WaitDurationMs = 200 });
-machineMovementRabbit.AddBehavior(new MoveCamera() { AngleStrategy = new RandomAngleStrategy() });
+machineMovementRabbit.AddBehavior(new WaitBehavior() { WaitTimeProvider = new RandomWaitTime(500, 1000)});
+machineMovementRabbit.AddBehavior(new MoveCameraBehavior() { AngleStrategy = new RandomAngleStrategy() });
 
 
 machineMovementRabbit.AddTransition<JumpBehavior, MoveBehavior>(BehaviorStatus.Success);
-machineMovementRabbit.AddTransition<MoveBehavior, MoveCamera>(BehaviorStatus.Success);
-machineMovementRabbit.AddTransition<MoveCamera, WaitBehavior>(BehaviorStatus.Success);
+machineMovementRabbit.AddTransition<MoveBehavior, MoveCameraBehavior>(BehaviorStatus.Success);
+machineMovementRabbit.AddTransition<MoveCameraBehavior, WaitBehavior>(BehaviorStatus.Success);
 machineMovementRabbit.AddTransition<WaitBehavior, JumpBehavior>(BehaviorStatus.Success);
 
 machineMovementRabbit.SetBehavior<JumpBehavior>();
-rabbit.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit);
+rabbit.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit1.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit2.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit3.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit4.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit5.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit6.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit7.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit8.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit9.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+rabbit10.behavioral.AddStateMachine(AIBehaviorType.Movement, machineMovementRabbit.GetDeepCopy());
+
+
 
 rabbit.behavioral.Start();
+rabbit1.behavioral.Start();
+rabbit2.behavioral.Start();
+rabbit3.behavioral.Start();
+rabbit4.behavioral.Start();
+rabbit5.behavioral.Start();
+rabbit6.behavioral.Start();
+rabbit7.behavioral.Start();
+rabbit8.behavioral.Start();
+rabbit9.behavioral.Start();
+rabbit10.behavioral.Start();
 #endregion
 
 #region Devil
@@ -1142,9 +1223,6 @@ devil.behavioral.AddStateMachine(AIBehaviorType.Vision, machineVision);
 var blockedFromZone = (AIContext ctx) =>  ctx.Controller?.GetMachine(AIBehaviorType.ZoneControl)?.IsRunning == true;
 AIStateMachine machineZone = new();
 machineZone.AddBehavior(new ZoneRestrictionBehavior(new(devil.CellX, devil.CellY)) { Radius = 300 });
-//machineZone.AddTransition<ZoneRestrictionBehavior, ZoneRestrictionBehavior>(BehaviorStatus.Success);
-//machineZone.SetBehavior<ZoneRestrictionBehavior>();
-//devil.behavioral.AddStateMachine(AIBehaviorType.ZoneControl, machineZone);
 
 AIStateMachine machineEmotion = new(true);
 machineEmotion.AddBehavior(new PingPongMovement() { MovementDurationMs = 400, IsBlocked = blockedFromZone });
@@ -1165,27 +1243,23 @@ devil.behavioral.AddStateMachine(AIBehaviorType.Pursuit, machinePursuit);
 AIStateMachine machineCombat = new();
 InfoGun infoGunMachineCombatDevil = new(pistolDevil.ShootBinding!, pistolDevil.Magazine.UpdateReloadStatus, BulletHandler.SleepMs)
 {
-    GetBulletHorizontalSpeed = () => pistol.Magazine.GetNextBullet()?.HorizontalSpeed ?? 0f,
-    GetBulletVerticalSpeed = () => pistol.Magazine.GetNextBullet()?.VerticalSpeed ?? 0f
+    GetHorizontalBulletSpeed = () => pistol.Magazine.GetNextBullet()?.SpeedHorizontal ?? 0f,
+    GetVerticalBulletSpeed = () => pistol.Magazine.GetNextBullet()?.SpeedVertical ?? 0f,
+
 };
 List<IAimStrategy> aimStrategiesMachineCombatDevil = new List<IAimStrategy>()
 {
     new DirectAimStrategy(),
     new PredictiveAimStrategy(),
 };
-List<IAimStrategy> aimStrategiesMachineCombatDevil1 = new List<IAimStrategy>()
-{
-    //new DirectAimStrategy(),
-    new PredictiveAimStrategy(),
-};
-
 
 machineCombat.AddBehavior(new AttackBehavior(infoGunMachineCombatDevil) 
 { 
     AimHorizontalStrategies = aimStrategiesMachineCombatDevil, 
-    AimVerticalStrategies = aimStrategiesMachineCombatDevil1,
+    AimVerticalStrategies = aimStrategiesMachineCombatDevil,
     IsBlocked = blockedFromZone }
 );
+
 var dodgeStepsDevil = new List<DodgeStep>()
 { 
     new(DodgeDirection.Left, 100),
@@ -1255,21 +1329,5 @@ TriggerHandler.AddTriger(unit!, unitTriggerTouchRedBarrier);
 #endregion
 
 #endregion
-
-
-//FadingSprite fadingSprite = new FadingSprite(ImageLoader.Load(null, true, PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall3.png"))).First(), FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
-//fadingSprite.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
-//fadingSprite.Sprite.Scale = new Vector2f(0.5f, 0.5f);
-//FadingSprite fadingSprite1 = new FadingSprite(ImageLoader.Load(null, true, PathResolver.GetPath(Path.Combine("Resources", "Image", "WallTexture", "Wall1.png"))).First(), FadingType.Appears, FadingTextLife.OneShotFreeze, 2000, null);
-//fadingSprite1.PositionOnScreen = new Vector2f(Screen.GetPercentWidth(50), Screen.GetPercentHeight(50));
-//fadingSprite1.Sprite.Scale = new Vector2f(0.5f, 0.5f);
-
-//TriggerCollision triggerHitBoxTouch1 = new TriggerCollision(devil, ObjectSide.Bottom, ObjectSide.Top,
-//    (owner) => { fadingSprite.Controller.FadingType = FadingType.Appears; fadingSprite.Restart(); fadingSprite.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite.Owner = owner; },
-//    (owner) => { fadingSprite1.Controller.FadingType = FadingType.Appears; fadingSprite1.Restart(); fadingSprite1.Controller.FadingTextLife = FadingTextLife.PingPongDispose; fadingSprite1.Owner = owner; });
-
-//TriggerHandler.AddTriger(unit, triggerHitBoxTouch1);
-
-
 
 GameManager.Start();
